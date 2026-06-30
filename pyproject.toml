@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coastal-gap-reconstruction"
+version = "0.1.0"
+description = "Reusable utilities for retrospective reconstruction (imputation) of sparse coastal sensor time series, benchmarked on daily chlorophyll-a at a Chilean coastal monitoring station."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Matteo Faverio" },
+]
+dependencies = [
+    "pandas>=1.5",
+    "numpy>=1.23",
+]
+
+[project.optional-dependencies]
+plotting = ["matplotlib>=3.6"]
+stats = ["scipy>=1.9"]
+tsicl = ["torch>=2.0"]
+notebooks = ["jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

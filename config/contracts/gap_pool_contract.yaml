@@ -1,0 +1,60 @@
+# Canonical artificial-gap pool contract.
+#
+# Companion to target_contract.yaml. Defines the structure and invariants of the canonical
+# artificial-gap validation pool used for all benchmark comparisons in this repository.
+
+canonical_gap_pool:
+  version: v1
+  path: data_public/chlorophyll/chlorophyll_validation_gaps.csv
+  row_count: 681
+
+  allowed_gap_lengths: [1, 3, 7, 10, 14, 21, 30, 45, 60]
+
+  scenario_only_lengths:
+    - length: 256
+      rule: "Scenario-only. Must never appear in the canonical validation pool or be cited as a
+        validation statistic. See docs/evidence_hierarchy.md."
+
+  required_columns:
+    - gap_id
+    - gap_length
+    - start_date
+    - end_date
+    - n_hidden_days
+    - season
+    - year
+    - target_mean_true
+    - target_max_true
+    - chl_90th_threshold
+    - is_high_chl_event
+    - is_sustained_event
+    - is_background
+    - pre_context_available_days
+    - post_context_available_days
+    - context_constrained
+    - regime
+    - target_table_checksum
+
+  scoring_mask_rule: >
+    Only originally-observed days within a gap window are scored (n_hidden_days /
+    target_mean_true / target_max_true are computed only over days where
+    target_eligible_default == True before masking). A gap day that was already missing in the
+    target table before artificial masking must never be scored as if a true value existed for it.
+
+  event_label_definitions:
+    is_high_chl_event: "target_mean_true > chl_90th_threshold."
+    is_sustained_event: "Gap-level sustained-event label using a fixed mean-value threshold,
+      computed independently of any single benchmark run."
+    is_background: "Neither is_high_chl_event nor is_sustained_event."
+
+  context_admissibility_rules:
+    pre_context_available_days: "Count of eligible-observed days strictly before the gap window."
+    post_context_available_days: "Same, strictly after the gap window."
+    context_constrained: "True if pre/post context availability is below the threshold required
+      for retrospective (bidirectional) context use. Models using pre/post-gap features must
+      check this flag, not assume context availability."
+    regime: "strict_observed_only -- gap windows are verified not contaminated against the
+      target table; no real-missing day leaks into an artificial gap's ground truth."
+
+gap_id_uniqueness:
+  rule: "All gap_id values in the canonical pool must be unique."

@@ -1,0 +1,23 @@
+table_section,covariate_public_name,n_gaps,mae_mean,rmse_mean,bias_mean,evidence_note,comparison,context_mode,delta_mae_mean,delta_mae_ci_lo,delta_mae_ci_hi,significant
+covariate_arm_performance,Solar x upwelling interaction,681,0.1981,0.2325,-0.0015,,,,,,,
+covariate_arm_performance,Upwelling x SST cooling interaction,681,0.1985,0.2336,-0.006,,,,,,,
+covariate_arm_performance,Wind/upwelling forcing only,681,0.1985,0.2332,0.0063,,,,,,,
+covariate_arm_performance,Curated low-redundancy physical set,681,0.1988,0.2335,-0.0112,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + wind/upwelling,681,0.1993,0.2341,0.0092,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + availability proxy,681,0.1995,0.2345,-0.003,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + solar,681,0.1997,0.235,-0.0019,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + PLV meteorological,681,0.201,0.2361,-0.0052,,,,,,,
+covariate_arm_performance,No covariate (target-only baseline),681,0.2014,0.2359,-0.0048,,,,,,,
+covariate_arm_performance,Solar radiation only,681,0.2015,0.2365,-0.0028,,,,,,,
+covariate_arm_performance,PLV meteorological (combined),681,0.2026,0.2379,-0.0028,,,,,,,
+covariate_arm_performance,Availability/weather proxy only,681,0.203,0.2377,-0.0038,,,,,,,
+covariate_arm_performance,SST thermal only,681,0.2076,0.2427,0.0021,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + SST,681,0.2084,0.2432,0.0051,,,,,,,
+covariate_arm_performance,Ocean current/transport only,681,0.2179,0.2526,0.0115,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + current/transport,681,0.218,0.2528,0.0126,,,,,,,
+covariate_arm_performance,Satellite chlorophyll proxy + current/transport (duplicate config),681,0.218,0.2528,0.0126,,,,,,,
+covariate_arm_performance,Full (redundant) physical set,681,0.2237,0.2581,0.02,,,,,,,
+placebo_robustness_test,,671,,,,,Curated physical-forcing covariate vs. randomized/shuffled control,full_series,-0.00226,-0.0041,-0.00048,True
+placebo_robustness_test,,671,,,,,Curated physical-forcing covariate vs. randomized/shuffled control,full_series,-0.00404,-0.00593,-0.00224,True
+placebo_robustness_test,,671,,,,,Curated physical-forcing covariate vs. randomized/shuffled control,edge_balanced,-0.00178,-0.00336,-0.00025,True
+placebo_robustness_test,,671,,,,,Curated physical-forcing covariate vs. randomized/shuffled control,edge_balanced,-0.00281,-0.00453,-0.00119,True

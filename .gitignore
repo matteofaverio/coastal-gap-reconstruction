@@ -1,0 +1,31 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local data scratch folders (not the tracked data_public/ or results_public/ trees)
+data_local/
+scratch/
+*.tmp
+
+# Local TS-ICL checkpoint/cache directories a user might download
+.tsicl_cache/
+checkpoints/
+*.ckpt
+*.pt
+
+# OS cruft
+.DS_Store
