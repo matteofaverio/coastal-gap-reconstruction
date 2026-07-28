@@ -1,26 +1,32 @@
 # Live gap-reconstruction demo
 
-Reconstructs a 14-day gap in a daily chlorophyll-a time series with eight methods,
+`gap_reconstruction_walkthrough.ipynb` is a step-by-step, visual walkthrough that
+reconstructs a 14-day gap in a daily chlorophyll-a time series with eight methods,
 including a **live, zero-shot run of TS-ICL** (no training or fine-tuning on this
-data). This is the hands-on companion to the workflow described in the repository
-root `README.md`.
+data). Every step shows a figure inline before moving to the next one.
 
 ## Quick start
 
 ```bash
-bash demo/run_demo.sh
+bash run_demo.sh
 ```
+
+(or `bash demo/run_demo.sh` from the repository root.)
 
 This creates an isolated virtual environment (`.venv_tsicl_demo/`, git-ignored),
 installs everything needed, registers a Jupyter kernel, and executes the notebook
 end to end. Tested on macOS (Apple Silicon, CPU-only inference -- TS-ICL has no
-CUDA GPU on that machine and runs on CPU). Total time for a first run, including
-installing packages: **under 2 minutes**. Once the environment exists, re-running
-just the notebook takes well under a minute.
+CUDA GPU on that machine and runs on CPU).
 
-Output: `demo/gap_reconstruction_walkthrough_executed.ipynb` (the notebook with all
-outputs filled in) and `demo/outputs/` (a figure, a results CSV, and a runtime
-summary).
+**Setup time** (first run, installing packages): under 2 minutes.
+**Execution time** (once the environment exists): well under 30 seconds --
+TS-ICL's three live calls together take well under a second; most of the wall
+time is model/kernel startup, not inference.
+
+Output: `gap_reconstruction_walkthrough_executed.ipynb` (the notebook with every
+figure and value filled in) and `outputs/demo_reconstruction_results.csv` (the one
+exported table -- see Section 11 of the notebook). No image files are written;
+every figure lives inline in the executed notebook.
 
 ## What "live" means here
 
@@ -36,12 +42,12 @@ This needs internet access once, to install the package and fetch the checkpoint
 After that, everything (including re-running the notebook) works offline.
 
 **If live TS-ICL genuinely cannot run** (no internet on first use, an incompatible
-environment, etc.), the notebook detects the failure explicitly and falls back to
-`data/cached_tsicl_predictions.csv` / `data/cached_tsicl_predictions_real_gap.csv` --
-real TS-ICL output saved from an earlier live run on this same demo data, not
-fabricated numbers. The notebook always prints, in the cell output and in the final
-plot title, whether it is showing live or cached TS-ICL results. It never silently
-substitutes one for the other.
+environment, etc.), the notebook detects the failure explicitly (Section 8) and
+falls back to `data/cached_tsicl_predictions.csv` /
+`data/cached_tsicl_predictions_real_gap.csv` -- real TS-ICL output saved from an
+earlier live run on this same demo data, not fabricated numbers. The notebook
+prints, in plain text, whether it is running live or falling back. It never
+silently substitutes one for the other.
 
 ## Manual setup (equivalent to `run_demo.sh`)
 
@@ -82,36 +88,83 @@ model or a derivative as a hosted/SaaS service. Neither restriction affects runn
 this notebook. Read the license yourself before other uses:
 https://github.com/EDF-Lab/ts-icl.
 
-## What the notebook does
+## Notebook sequence
 
-1. Loads `data/chlorophyll_demo_series.csv` (daily in-situ chlorophyll-a, plus a
-   satellite chlorophyll proxy, wind speed, and sea-surface temperature covariates
-   -- all from this repository's public `data_public/`).
-2. Audits missingness in the loaded window.
-3. Hides a known, real 14-day interval on purpose (an *artificial gap*) and keeps
-   the true values aside, only for scoring at the end.
-4. Reconstructs that interval with: persistence, climatology, linear interpolation,
-   a Gaussian process, an external-covariates-only tabular model
-   (HistGradientBoostingRegressor), a gap-edge residual model, TS-ICL target-only,
-   TS-ICL with a satellite-chlorophyll covariate, and TS-ICL with a physical
-   covariate bundle (wind + SST).
-5. Scores every method against the withheld truth (mean absolute error) and prints
-   a runtime table.
-6. Plots all reconstructions, including TS-ICL's q05-q95 predictive interval.
-7. Applies the same live TS-ICL call to one real gap (2015-07-01 to 2015-07-14, no
-   withheld truth) and labels the output explicitly as a candidate, not validation
-   evidence.
-8. Exports `outputs/demo_reconstruction_results.csv` with one row per date and
-   method, carrying method name, reconstructed value, q05/q95 where available, gap
-   type (artificial/real), and a `tsicl_mode` column recording `live` or
-   `cached_fallback`.
+Each numbered section states a short scientific question, runs a short code cell,
+and immediately shows a figure. The full sequence:
+
+| # | Section | Scientific purpose |
+|---|---|---|
+| 1 | Inspect the available data | Which series is the local sensor, which are external products |
+| 2 | Select an observed interval | Confirm the demonstration window is fully observed, so it can be scored later |
+| 3 | Create the artificial gap | Make masking and withheld truth visible, not just stated |
+| 4 | Simple baselines | Persistence, climatology, interpolation -- the reference every other method must beat |
+| 5 | Gaussian process | Target-only probabilistic reconstruction with a predictive interval |
+| 6 | External tabular model | What a model that never sees target history receives instead |
+| 7 | Gap-edge residual correction | Decompose the reconstruction into interpolation + learned correction |
+| 8 | TS-ICL, live, zero-shot | Same pretrained model, three input configurations, no local fitting |
+| 9 | Compare all methods | Small multiples + one MAE bar chart, one illustrative gap |
+| 10 | Apply to a real gap | No withheld truth -- candidate output only |
+| 11 | Export and reuse | One operational CSV, plus a minimal adaptation example |
+
+## Mechanical vs. scientific cells
+
+Cells tagged `hide-input` (the imports/path-setup cell near the top) are mechanical
+setup, not a scientific step -- collapse them in JupyterLab via the cell toolbar
+("Hide code") if you want a cleaner read. Every other cell is a deliberate
+scientific step and is meant to stay visible; the notebook runs identically whether
+cells are collapsed or not -- no JupyterLab extension is required.
+
+## Where the implementation lives
+
+The notebook calls into three small modules under `src/`, kept out of the notebook
+so the walkthrough stays readable:
+
+- `src/demo_helpers.py` -- data loading, artificial-gap construction, export.
+- `src/methods.py` -- the eight reconstruction methods (each returns a
+  `MethodResult`: prediction table + runtime + covariates used).
+- `src/plotting.py` -- one function per figure; every function returns
+  `(fig, axes)` and never calls `plt.show()` or `plt.savefig()` -- the notebook
+  cell calls `plt.show()` explicitly after every plotting call, and no method here
+  writes an image file. Only `demo_helpers.export_csv()` writes to disk, and only
+  for the one operational CSV in Section 11.
+
+Read these files directly to inspect exactly how each method is implemented --
+the notebook shows what each method does, these modules show how.
+
+## Output CSV schema
+
+`outputs/demo_reconstruction_results.csv`, one row per date and method:
+
+| Column | Meaning |
+|---|---|
+| date | Calendar date |
+| original_target | True value, only for artificial-gap rows (empty for the real gap) |
+| observed_or_missing | `artificially_hidden` or `really_missing` |
+| method | Method name |
+| reconstructed_median | Point/median reconstruction |
+| q05, q95 | Predictive interval, where the method provides one (empty otherwise) |
+| artificial_or_real_gap | `artificial` or `real` |
+| validation_status | `single_illustrative_gap` or `candidate_not_validation_evidence` |
+| covariates_used | Comma-separated covariate column names, or `none` |
 
 ## Adapting this to your own series
 
-See the last markdown cell in the notebook ("Adapting this notebook to another
-sensor or variable") for the full checklist. In short: swap `data/chlorophyll_demo_series.csv`
-for your own `date` + target (+ optional covariate) table, update the column names
-used in the notebook, and re-run. TS-ICL itself needs no retraining for a new
-target or station -- that is the point of a zero-shot model -- but you still have
-to choose, align, and quality-control whichever covariates you pass in; TS-ICL
-does not do that for you.
+See the notebook's final section ("Use your own series") for a minimal code
+example. In short:
+
+1. Load your own `date` + target (+ optional covariate) table.
+2. Pass your target column name to `dh.create_artificial_gap(..., target_column=...)`.
+3. State explicitly whether you are modelling the raw unit or a transformed scale
+   (this demo uses `log10`); do not silently mix the two.
+4. Pick an artificial-gap interval with enough observed context on both sides --
+   `create_artificial_gap` raises if the interval isn't fully observed.
+5. The four "live" classical methods (persistence, climatology, interpolation, GP)
+   need no code changes beyond the column name.
+6. TS-ICL is called the same way regardless of target: `covariates=None` for
+   target-only, or an aligned `(T, C)` array for any number of covariate channels
+   (see `src/methods.py:run_tsicl`). There is no separate "installation-free" mode --
+   if `tsicl` and its checkpoint are available in the active environment, it runs
+   live; if not, the notebook falls back to cached output explicitly.
+7. Do not evaluate a gap length your own validation has not covered without
+   flagging it as unvalidated.

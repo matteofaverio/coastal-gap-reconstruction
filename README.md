@@ -4,6 +4,31 @@ A reproducible research archive and reusable benchmark workflow for
 retrospective reconstruction (imputation) of gaps in coastal sensor time
 series.
 
+## Visual walkthrough
+
+The fastest way to see this repository work: **[`demo/gap_reconstruction_walkthrough.ipynb`](demo/gap_reconstruction_walkthrough.ipynb)**
+reconstructs a real 14-day chlorophyll gap with eight methods, step by step,
+with an inline figure at every step -- including a **live, zero-shot run of
+TS-ICL** on your own machine.
+
+```bash
+bash demo/run_demo.sh
+```
+
+- **Setup time** (first run, installing packages): under 2 minutes.
+- **Execution time** (once the environment exists): well under 30 seconds.
+- **What it shows**: the daily chlorophyll target and its covariates; an
+  artificial gap created and masked on screen; each method's reconstruction
+  plotted against the withheld truth; TS-ICL run live in three configurations
+  (target-only, + satellite chlorophyll, + wind/SST); and, last, the same
+  live model applied to one real, never-observed gap, explicitly labeled as a
+  candidate output, not validation evidence.
+
+The executed notebook is the visual reference -- there are no separate
+screenshot or figure files to keep in sync with it. Full details (exact
+commands, package versions, TS-ICL licensing, output schema) are in
+`demo/README.md`; Section 5 below is a shorter pointer to the same thing.
+
 ## 1. What this repository is, and why it matters
 
 Coastal monitoring sensors go offline -- biofouling, maintenance,
@@ -165,7 +190,9 @@ bash demo/run_demo.sh
 This creates an isolated, git-ignored virtual environment, installs
 everything needed (including the real `tsicl` package and its pretrained
 checkpoint), and executes the demo notebook end to end. Tested time for a
-first run, including installing packages: under 2 minutes.
+first run, including installing packages: under 2 minutes. The notebook's
+figures are inline only -- no image files are written; the one exported
+artifact is `demo/outputs/demo_reconstruction_results.csv`.
 
 **Everything about the demo -- exact commands, what "live" vs. "cached
 fallback" TS-ICL output means, package versions, and TS-ICL's license and
