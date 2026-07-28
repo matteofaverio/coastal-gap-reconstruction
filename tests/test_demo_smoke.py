@@ -43,7 +43,13 @@ EXPECTED_OUTPUT_FILES = [
 # These are the only files a fresh demo run is allowed to produce under
 # demo/outputs/ -- anything else (in particular any image file) would mean a
 # plotting function started saving to disk again.
-ALLOWED_OUTPUT_FILENAMES = {"demo_reconstruction_results.csv"}
+ALLOWED_OUTPUT_FILENAMES = {
+    "demo_reconstruction_results.csv",
+    # One-off diagnostic audit from demo/search_demo_gap.py (not produced by a
+    # normal demo run, but committed alongside it -- see the selection writeup
+    # in reports/VISUAL_DEMO_AND_PUBLIC_PUSH_READINESS_HANDOFF.md).
+    "demo_gap_selection_audit.csv",
+}
 
 
 def _load_notebook(path: Path) -> dict:

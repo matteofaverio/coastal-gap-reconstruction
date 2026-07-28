@@ -53,7 +53,13 @@ def run_climatology(gap: ArtificialGap, full_record: pd.DataFrame) -> MethodResu
 
     Needs multi-year history to be meaningful, so it is computed from
     `full_record`, not from `gap.context` alone (a single-season local window
-    has no other observations at the same day-of-year).
+    has no other observations at the same calendar month).
+
+    Uses a **monthly** climatology (mean over all years for the same calendar
+    month, 12 bins), not a day-of-year climatology: day-of-year bins are too
+    thin given ~11 years of record (each day-of-year has only a handful of
+    observations), which makes a day-of-year climatology noisier than the
+    smooth, low-variance reference a climatology baseline is supposed to be.
     """
     t0 = time.time()
     record = full_record.copy()
@@ -61,11 +67,11 @@ def run_climatology(gap: ArtificialGap, full_record: pd.DataFrame) -> MethodResu
     is_gap_in_record = (record["date"] >= gap.gap_start) & (record["date"] <= gap.gap_end)
     record.loc[is_gap_in_record, "log10_target"] = np.nan
 
-    doy = record["date"].dt.dayofyear
-    climatology_by_doy = record.groupby(doy)["log10_target"].mean()
+    month = record["date"].dt.month
+    climatology_by_month = record.groupby(month)["log10_target"].mean()
 
     prediction = gap.truth[["date"]].copy()
-    prediction["value"] = 10 ** prediction["date"].dt.dayofyear.map(climatology_by_doy)
+    prediction["value"] = 10 ** prediction["date"].dt.month.map(climatology_by_month)
     return MethodResult("climatology", prediction, time.time() - t0)
 
 

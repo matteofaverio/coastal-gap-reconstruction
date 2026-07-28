@@ -10,9 +10,16 @@ in this repository) -- does not touch anything in the private research repo.
 """
 import pandas as pd
 
-GAP_START = pd.Timestamp("2016-03-11")
-GAP_END = pd.Timestamp("2016-03-24")  # inclusive, 14 days
+GAP_START = pd.Timestamp("2017-04-21")
+GAP_END = pd.Timestamp("2017-05-04")  # inclusive, 14 days
 CONTEXT_DAYS = 75
+
+# Gap selected by demo/search_demo_gap.py: an objective search over 459
+# candidate 14-day observed intervals, scored on how each of the demo's own
+# method implementations actually performs on that interval (not by manual
+# inspection). See demo/outputs/demo_gap_selection_audit.csv for the top-10
+# ranked candidates and reports/VISUAL_DEMO_AND_PUBLIC_PUSH_READINESS_HANDOFF.md
+# for the full selection writeup.
 
 REAL_GAP_START = pd.Timestamp("2015-07-01")
 REAL_GAP_END = pd.Timestamp("2015-07-14")
@@ -34,7 +41,7 @@ def main():
     ].copy()
     f = f.rename(columns={"chl_cons_log10": "chl_satellite_proxy_log10"})
     merged = t.merge(f, on="date", how="left")
-    merged["gap_id"] = "L14_20160311"
+    merged["gap_id"] = "L14_20170421"
     merged["in_artificial_gap"] = (merged["date"] >= GAP_START) & (merged["date"] <= GAP_END)
     merged.to_csv("demo/data/chlorophyll_demo_series.csv", index=False)
     print("wrote demo/data/chlorophyll_demo_series.csv", merged.shape)

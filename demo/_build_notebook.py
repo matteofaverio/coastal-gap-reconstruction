@@ -65,7 +65,7 @@ from src import plotting as pl
 RNG_SEED = 0
 np.random.seed(RNG_SEED)
 
-GAP_START, GAP_END = "2016-03-11", "2016-03-24"
+GAP_START, GAP_END = "2017-04-21", "2017-05-04"
 """, tags=["hide-input"])
 
 # ===========================================================================
@@ -135,6 +135,10 @@ md("""\
 
 The values above still exist in memory (kept as `truth`, for scoring only).
 Every method below sees only the masked series in panel B.
+
+*This interval was selected automatically from observed 14-day candidates to
+provide a clear demonstration of the workflow; it is an illustrative example,
+not the full benchmark.*
 """)
 
 code("""\

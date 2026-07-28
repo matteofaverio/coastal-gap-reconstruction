@@ -39,7 +39,7 @@ def full_record() -> pd.DataFrame:
 
 @pytest.fixture(scope="module")
 def gap(data: pd.DataFrame):
-    return dh.create_artificial_gap(data, start="2016-03-11", end="2016-03-24")
+    return dh.create_artificial_gap(data, start="2017-04-21", end="2017-05-04")
 
 
 def test_artificial_gap_masks_target_only(gap) -> None:
@@ -73,7 +73,7 @@ def test_create_artificial_gap_rejects_incomplete_interval(data: pd.DataFrame) -
 def test_create_artificial_gap_rejects_duplicate_dates(data: pd.DataFrame) -> None:
     dup = pd.concat([data, data.iloc[[0]]], ignore_index=True)
     with pytest.raises(ValueError):
-        dh.create_artificial_gap(dup, start="2016-03-11", end="2016-03-24")
+        dh.create_artificial_gap(dup, start="2017-04-21", end="2017-05-04")
 
 
 def test_context_excludes_gap_rows(gap) -> None:
@@ -139,7 +139,7 @@ def test_gap_edge_and_external_tabular_do_not_reproduce_truth_exactly(gap, full_
 def test_build_export_table_schema() -> None:
     rows = [
         {
-            "date": "2016-03-11",
+            "date": "2017-04-21",
             "original_target": 4.8,
             "observed_or_missing": "artificially_hidden",
             "method": "persistence",
