@@ -1,0 +1,5 @@
+gap_class,length_range_days,n_gaps,total_missing_days,median_length_days,max_length_days
+short,1-7,105,146,1.0,6
+medium,8-30,10,151,14.0,25
+long,31-90,8,394,46.5,71
+very_long,>90,2,417,208.5,256

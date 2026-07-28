@@ -1,0 +1,148 @@
+% ============================================================
+% CEAZA Coastal Sensor Reconstruction --- Internship Report
+% Case Study 1: Chlorophyll-a (BTGCLF channel).  Case Study 2: Dissolved Oxygen (BTGOXD2 channel).
+% ============================================================
+\documentclass[11pt, a4paper]{article}
+\setlength{\parindent}{0pt}
+
+% ── Packages ──────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black,
+            breaklinks=true]{hyperref}
+\usepackage{natbib}
+\usepackage{csvsimple}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{ragged2e}
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newlist{tabitemize}{itemize}{1}
+\setlist[tabitemize]{
+  label=\textbullet,
+  leftmargin=*,
+  nosep,
+  topsep=0pt,
+  partopsep=0pt,
+  parsep=0pt,
+  itemsep=0pt,
+  before=\vspace{-0.6\baselineskip},
+}
+\usepackage{float}
+
+% ── Float-page vertical placement ───────────────────────────
+% article.cls default float-page glue (\@fptop = 0pt plus 1fil, matched by \@fpbot)
+% vertically centers a lone float on a float-only page, which looks like an
+% unprofessional blank gap above the figure. Zeroing \@fptop makes lone floats on
+% float-only pages sit at the top of the page instead; all remaining slack goes
+% below via the unchanged \@fpbot.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\makeatother
+
+% ── Draft-status / metadata placeholder commands ────────────
+\newcommand{\TODO}[1]{\textcolor{gray!70!black}{\textit{[pending: #1]}}}
+\newcommand{\DRAFTMETA}[1]{\textcolor{gray!70!black}{\textit{#1}}}
+\newcommand{\NOTE}[1]{\textcolor{gray}{\small\textit{Note: #1}}}
+
+% ── Figure-slot placeholder (for figures not yet built at manuscript quality) ──
+% Compact placeholder for a figure not yet built at manuscript quality: renders
+% only a slim bordered box with the caption, so the compiled report reads as a
+% manuscript with figures pending rather than an internal planning document. The
+% full intended-message/panel/evidence-tier brief for each slot lives in a LaTeX
+% comment immediately above the \FIGSLOT call in the source, and is consolidated
+% in docs/project_state/FINAL_REPORT_FIGURE_STORYBOARD_D9.md for whoever builds
+% the final figure. First argument is the figure label; second is the caption.
+\newcommand{\FIGSLOT}[2]{%
+  \begin{figure}[htbp]
+    \centering
+    \fbox{\begin{minipage}{0.75\textwidth}
+      \centering
+      \vspace{0.15cm}
+      \small\textit{Figure pending --- see accompanying repository for the figure storyboard.}
+      \vspace{0.15cm}
+    \end{minipage}}
+    \caption{#2}
+    \label{fig:#1}
+  \end{figure}
+}
+
+% ── Scientific shorthand ────────────────────────────────────
+\newcommand{\chl}{Chl\,\textit{a}}
+\DeclareSIUnit{\ug}{\micro\gram}
+
+% ── Title ─────────────────────────────────────────────────
+\title{
+  Benchmarking Imputation in Sparse Coastal Sensor Records:\\
+  Chlorophyll-\textit{a} and Dissolved Oxygen in Tongoy Bay, Chile
+}
+
+\author{
+  Matteo Faverio
+}
+\date{}
+% ═══════════════════════════════════════════════════════════
+\begin{document}
+\maketitle
+
+% ── Abstract ──────────────────────────────────────────────
+\begin{abstract}
+  Coastal monitoring stations produce long in-situ time series that are chronically interrupted by
+  sensor outages, often precisely when the underlying signal is most dynamic. This report develops
+  and benchmarks a workflow for reconstructing these historical gaps at Tongoy Bay, Chile, using
+  in-situ chlorophyll-\textit{a} (\chl{}) as the primary case study and in-situ dissolved oxygen as a second case testing whether the workflow transfers to a
+  different sensor. Methods are ranked under an artificial-gap benchmark that hides observed values
+  and scores each reconstruction against the withheld truth; outputs for the stations' real gaps
+  have no withheld truth and are reported only as illustrative reconstructions, while being useful material for the hosting research center (CEAZA) and its modelling activities. For chlorophyll, an
+  engineered tabular model built on external satellite and physical predictors never beats simple
+  linear interpolation, while a pretrained time-series foundation model (TS-ICL) applied zero-shot
+  is the strongest single method. An architecture-independent covariate probe finds that wind/upwelling forcing
+  carries a genuine physical signal, and high-\chl{} events remain difficult for every method tested. The same model ladder transfers to oxygen: linear
+  interpolation is again the floor, no engineered tabular model beats it, and TS-ICL again improves
+  on the pooled average, but is weaker than interpolation in both tails of the oxygen distribution and worst in sustained
+  tail episodes. Together the two cases show when model complexity helps over a strong classical floor, which physical channels carry a reconstructable signal, and where distributional extremes
+  remain difficult.
+\end{abstract}
+
+% ── Sections ───────────────────────────────────────────────
+
+\input{sections/01_introduction}
+\newpage
+\input{sections/02_data_and_case_studies}
+\newpage
+\input{sections/03_methodology}
+\newpage
+\input{sections/04_chlorophyll_results}
+\newpage
+\input{sections/05_oxygen_case_study}
+\newpage
+\input{sections/06_synthesis}
+\newpage
+\input{sections/07_discussion_limitations}
+\newpage
+
+% ── References ─────────────────────────────────────────────
+\bibliographystyle{apalike}
+\bibliography{references}
+\newpage
+
+% ── Appendix  ─────────────────────────────────────────────
+\appendix
+\input{sections/99_appendix_reproducibility}
+
+\end{document}

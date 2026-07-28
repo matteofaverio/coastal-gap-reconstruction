@@ -1,0 +1,395 @@
+% References for BTGCLF CHL reconstruction project.
+% Internal provenance/verification notes for each entry (who verified what, when, from
+% which source) are tracked in docs/reports/supervisor_report_remaining_todos.md and
+% docs/reports/citation_queries_for_chatgpt.md, not in the `note` fields below -- bibtex
+% styles print `note` fields directly in the compiled bibliography, so those fields must
+% contain only reader-facing citation content.
+
+% ── Data products ────────────────────────────────────────────────────────────
+
+@misc{glorys12,
+  author       = {{Copernicus Marine Service}},
+  title        = {{Global Ocean Physics Reanalysis (GLORYS12)}},
+  year         = {2021},
+  doi          = {10.48670/moi-00021},
+  note         = {%
+    Product ID: \texttt{GLOBAL\_MULTIYEAR\_PHY\_001\_030}.
+    Primary daily dataset: \texttt{cmems\_mod\_glo\_phy\_my\_0.083deg\_P1D-m} (version 202311).
+    Spatial resolution: 1/12° (\(\approx\)8 km at 30°S).
+    Temporal coverage: 1993-01-01 to 2026-05-26 (product end at time of extraction).
+    \url{https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030}.%
+  },
+}
+
+@misc{mur_sst,
+  author       = {{JPL MUR MEaSUREs Project}},
+  title        = {{GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1)}},
+  year         = {2015},
+  doi          = {10.5067/GHGMR-4FJ04},
+  note         = {PO.DAAC, CA, USA. \url{https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1}.},
+}
+
+@article{ostia_sst,
+  author  = {Good, S. and Fiedler, E. and Mao, C. and Martin, M. J. and Maycock, A.
+             and Reid, R. and Roberts-Jones, J. and Searle, T. and Waters, J.
+             and While, J. and Worsfold, M.},
+  title   = {The Current Configuration of the {OSTIA} System for Operational Production
+             of Foundation Sea Surface Temperature and Ice Concentration Analyses},
+  journal = {Remote Sensing},
+  year    = {2020},
+  volume  = {12},
+  number  = {4},
+  pages   = {720},
+  doi     = {10.3390/rs12040720},
+}
+
+@misc{globcolour_chl,
+  author       = {{ACRI-ST / Copernicus Marine Service}},
+  title        = {{Global Ocean Colour (Copernicus-GlobColour), Bio-Geo-Chemical, L4
+                   (monthly and interpolated) from Satellite Observations}},
+  year         = {2022},
+  doi          = {10.48670/moi-00281},
+  note         = {%
+    CMEMS Product: \texttt{OCEANCOLOUR\_GLO\_BGC\_L4\_MY\_009\_104}.
+    Dataset: \texttt{cmems\_obs-oc\_glo\_bgc-plankton\_my\_l4-gapfree-multi-4km\_P1D}.
+    Spatial resolution: 4 km (1/24°).
+    Active sensors over 2015--2026: MODIS-Aqua, VIIRS-NPP, Sentinel-3A/B OLCI
+    (SeaWiFS ended 2010, MERIS ended 2012).
+    Level-4 gap-filling via spatial interpolation; flag==2 cells are gap-filled.
+    \url{https://data.marine.copernicus.eu/product/OCEANCOLOUR_GLO_BGC_L4_MY_009_104}.%
+  },
+}
+
+@misc{cmems_wind,
+  author       = {{Copernicus Marine Service}},
+  title        = {{Global Ocean Hourly Reprocessed Sea Surface Wind and Stress from
+                   Scatterometer and Model}},
+  year         = {2021},
+  doi          = {10.48670/moi-00185},
+  note         = {%
+    Product ID: \texttt{WIND\_GLO\_PHY\_L4\_MY\_012\_006} (multi-year reprocessed variant).
+    Bias-corrected ERA5 fields using ASCAT (Metop-A/B/C) and historical QuikSCAT/ERS
+    scatterometer observations; $\approx$0.25° spatial resolution.
+    Temporal coverage: 1994-06-01 onward (monthly updates).
+    \url{https://data.marine.copernicus.eu/product/WIND_GLO_PHY_L4_MY_012_006}.%
+  },
+}
+
+@misc{multiobs_currents,
+  author       = {{Copernicus Marine Service}},
+  title        = {{Global Total (COPERNICUS-GLOBCURRENT), Ekman and Geostrophic Currents
+                   at the Surface and 15m}},
+  year         = {2022},
+  doi          = {10.48670/mds-00327},
+  note         = {%
+    Product ID: \texttt{MULTIOBS\_GLO\_PHY\_MYNRT\_015\_003}.
+    Multiyear dataset: \texttt{cmems\_obs-mob\_glo\_phy-cur\_my\_0.25deg\_P1D-m} (version 202411).
+    MY coverage: 1993-01-01 to 2026-03-31; NRT appended for 2026-04-01 to 2026-05-31.
+    Variables used: geostrophic (\texttt{ugos}/\texttt{vgos}) and Ekman (\texttt{ue}/\texttt{ve})
+    components at 1/4° ($\approx$28 km at 30°S). Total current (\texttt{uo}/\texttt{vo}) is NaN
+    at the Tongoy coastal cell due to coastal masking.
+    \url{https://data.marine.copernicus.eu/product/MULTIOBS_GLO_PHY_MYNRT_015_003}.%
+  },
+}
+
+@misc{plv_lighthouse_location,
+  author       = {{[PENDING -- not citable as an authoritative source; Wikipedia article on
+                   the Point Lengua de Vaca lighthouse, used internally only to sanity-check
+                   the approximate PLV station location, never cited in main text]}},
+  title        = {{Point Lengua de Vaca (lighthouse) -- coordinate sanity-check only}},
+  year         = {2026},
+  note         = {%
+    Not a manuscript-grade citation: this is a Wikipedia lighthouse-location article, not an
+    SHOA navigational chart or CEAZA station-metadata record. Headland/lighthouse coordinates
+    given there (30\textdegree{}14'17"S, 71\textdegree{}37'38"W) are used only to confirm the
+    PLV station coordinates used in this report are in the right place, not as the cited
+    source for those coordinates. An authoritative CEAZA station-metadata citation for PLV
+    is tracked as open in \texttt{report/bibliography\_completion\_plan.md} and
+    Section~\ref{sec:limitations}.
+    \url{https://en.wikipedia.org/wiki/Point_Lengua_de_Vaca}.%
+  },
+}
+
+@misc{aviso_fsle,
+  author       = {{AVISO+}},
+  title        = {{Altimetric Finite-Size Lyapunov Exponents (FSLE)}},
+  year         = {2022},
+  note         = {%
+    Not used in the current reconstruction; deferred to future work.
+    \url{https://www.aviso.altimetry.fr}.%
+  },
+}
+
+@misc{oscar_currents,
+  author       = {{ESR}},
+  title        = {{OSCAR Level 4 Ocean Surface Current Analysis (V2.0)}},
+  year         = {2021},
+  note         = {NASA PO.DAAC. Benchmark product; not used in modelling.},
+}
+
+% ── Methods ──────────────────────────────────────────────────────────────────
+
+@article{haller2015lagrangian,
+  author  = {Haller, G.},
+  title   = {Lagrangian Coherent Structures},
+  journal = {Annual Review of Fluid Mechanics},
+  year    = {2015},
+  volume  = {47},
+  pages   = {137--162},
+  doi     = {10.1146/annurev-fluid-010313-141322},
+}
+
+@article{d2004definition,
+  author  = {d'Ovidio, F. and Fern\'{a}ndez, V. and Hern\'{a}ndez-Garc\'{i}a, E. and L\'{o}pez, C.},
+  title   = {Mixing structures in the {Mediterranean} Sea from finite-size {Lyapunov} exponents},
+  journal = {Geophysical Research Letters},
+  year    = {2004},
+  volume  = {31},
+  pages   = {L17203},
+  doi     = {10.1029/2004GL020328},
+}
+
+@article{breiman2001random,
+  author  = {Breiman, L.},
+  title   = {Random Forests},
+  journal = {Machine Learning},
+  year    = {2001},
+  volume  = {45},
+  pages   = {5--32},
+  doi     = {10.1023/A:1010933404324},
+}
+
+@article{geurts2006extremely,
+  author  = {Geurts, P. and Ernst, D. and Wehenkel, L.},
+  title   = {Extremely Randomized Trees},
+  journal = {Machine Learning},
+  year    = {2006},
+  volume  = {63},
+  pages   = {3--42},
+  doi     = {10.1007/s10994-006-6226-1},
+}
+
+@book{hastie2009elements,
+  author    = {Hastie, T. and Tibshirani, R. and Friedman, J.},
+  title     = {The Elements of Statistical Learning},
+  publisher = {Springer},
+  year      = {2009},
+  edition   = {2nd},
+  doi       = {10.1007/978-0-387-84858-7},
+}
+
+@book{rasmussen2006gaussian,
+  author    = {Rasmussen, C. E. and Williams, C. K. I.},
+  title     = {Gaussian Processes for Machine Learning},
+  publisher = {MIT Press},
+  year      = {2006},
+  note      = {ISBN 0-262-18253-X. Standard reference for Gaussian process regression and
+               the Mat\'{e}rn covariance family.},
+}
+
+@book{durbin2012time,
+  author    = {Durbin, J. and Koopman, S. J.},
+  title     = {Time Series Analysis by State Space Methods},
+  publisher = {Oxford University Press},
+  year      = {2012},
+  edition   = {2nd},
+  doi       = {10.1093/acprof:oso/9780199641178.001.0001},
+}
+
+@article{bailey2006multisensor,
+  author  = {Bailey, S. W. and Werdell, P. J.},
+  title   = {A multi-sensor approach for the on-orbit validation of ocean color satellite
+             data products},
+  journal = {Remote Sensing of Environment},
+  year    = {2006},
+  volume  = {102},
+  number  = {1--2},
+  pages   = {12--23},
+  doi     = {10.1016/j.rse.2006.01.015},
+}
+
+% ── Regional oceanography ────────────────────────────────────────────────────
+
+@article{montecino2009humboldt,
+  author  = {Montecino, V. and Lange, C. B.},
+  title   = {The {Humboldt} Current System: Ecosystem Components and Processes,
+             Fisheries, and Sediment Studies},
+  journal = {Progress in Oceanography},
+  year    = {2009},
+  volume  = {83},
+  number  = {1--4},
+  pages   = {65--79},
+  doi     = {10.1016/j.pocean.2009.07.041},
+}
+
+@misc{ceazamet_network,
+  author = {{CEAZA}},
+  title  = {{CEAZAMET: Red de Estaciones de Monitoreo Ambiental Automatico
+             (CEAZA Environmental Monitoring Network)}},
+  year   = {2026},
+  note   = {\url{https://www.ceazamet.cl}, \url{https://www.ceaza.cl}.},
+}
+
+@article{moritz2017imputets,
+  author  = {Moritz, S. and Bartz-Beielstein, T.},
+  title   = {imputeTS: Time Series Missing Value Imputation in {R}},
+  journal = {The R Journal},
+  year    = {2017},
+  volume  = {9},
+  number  = {1},
+  pages   = {207--218},
+  doi     = {10.32614/RJ-2017-009},
+}
+
+@article{ramajo2019scallops,
+  author  = {Ramajo, Laura and Fern\'{a}ndez, Carolina and N\'{u}\~{n}ez, Yolanda
+             and Caballero, Paz and Lardies, Marco A. and Poupin, Mar\'{i}a Josefina},
+  title   = {Physiological Responses of Juvenile {Chilean} Scallops
+             ({Argopecten purpuratus}) to Isolated and Combined Environmental
+             Drivers of Coastal Upwelling},
+  journal = {ICES Journal of Marine Science},
+  year    = {2019},
+  volume  = {76},
+  number  = {6},
+  pages   = {1836--1849},
+  doi     = {10.1093/icesjms/fsz080},
+  note    = {Tongoy Bay as a principal \textit{Argopecten purpuratus} culture area under
+             seasonal influence of the Punta Lengua de Vaca upwelling centre, including
+             upwelling-driven dissolved-oxygen variability.},
+}
+
+@article{moraga2001plv,
+  author  = {Moraga, Julio and Valdebenito, Eugenia and Rutllant, Jos\'{e}},
+  title   = {Oceanographic Conditions During a Relaxation Phase of a Winter Upwelling
+             Event off Point Lengua de Vaca, Coquimbo},
+  journal = {Investigaciones Marinas},
+  year    = {2001},
+  volume  = {29},
+  number  = {1},
+  pages   = {59--71},
+  doi     = {10.4067/S0717-71782001000100006},
+  note    = {Physical-oceanography context for the Punta Lengua de Vaca (PLV) upwelling
+             centre and its influence on Tongoy and Guanaquero bays; includes PLV
+             meteorological wind records.},
+}
+
+@misc{ceaza_tongoy_oxygen_alerts_2024,
+  author = {{Centro Cient\'{i}fico CEAZA}},
+  title  = {{Empresas acu\'{i}colas de Tongoy se apoyan en alertas de baja de ox\'{i}geno
+             en el oc\'{e}ano para gestionar sus cultivos}},
+  year   = {2024},
+  note   = {CEAZA news item, 2024-12-11. Local aquaculture-industry relevance of
+            low-dissolved-oxygen alerts at Tongoy.},
+}
+
+@article{chavez2009comparison,
+  author  = {Chavez, F. P. and Messi\'{e}, M.},
+  title   = {A Comparison of Eastern Boundary Upwelling Ecosystems},
+  journal = {Progress in Oceanography},
+  year    = {2009},
+  volume  = {83},
+  number  = {1--4},
+  pages   = {80--96},
+  doi     = {10.1016/j.pocean.2009.07.032},
+}
+
+@misc{lenaour2026tsicl,
+  author       = {Le Naour, Etienne and Nabil, Tahar and Petralia, Adrien},
+  title        = {{TS-ICL}: A Flexible Time-Indexed Foundation Model for Time Series via
+                   In-Context Learning},
+  year         = {2026},
+  eprint       = {2606.05878},
+  archiveprefix = {arXiv},
+  url          = {https://arxiv.org/abs/2606.05878},
+}
+
+@misc{tsicl_software,
+  author       = {{EDF Lab}},
+  title        = {{TS-ICL}: Time-Series In-Context Learning (software repository)},
+  year         = {2026},
+  url          = {https://github.com/EDF-Lab/ts-icl},
+  note         = {Accessed 2026. Pretrained zero-shot time-series foundation model used in
+                   this report's benchmark; see \citet{lenaour2026tsicl} for the method
+                   description.},
+}
+
+@book{kampf2016upwelling,
+  author    = {K{\"a}mpf, Jochen and Chapman, Peter},
+  title     = {Upwelling Systems of the World: A Scientific Journey to the Most Productive Marine Ecosystems},
+  publisher = {Springer},
+  address   = {Cham},
+  year      = {2016}
+}
+
+@article{friedman2001greedy,
+  author  = {Friedman, Jerome H.},
+  title   = {Greedy Function Approximation: A Gradient Boosting Machine},
+  journal = {The Annals of Statistics},
+  year    = {2001},
+  volume  = {29},
+  number  = {5},
+  pages   = {1189--1232},
+  doi     = {10.1214/aos/1013203451}
+}
+
+@misc{faverio2026coastal_gap_repository,
+  author       = {Faverio, Matteo},
+  title        = {Coastal Gap Reconstruction},
+  year         = {2026},
+  howpublished = {\url{https://github.com/matteofaverio/coastal-gap-reconstruction}},
+  note         = {GitHub repository, accessed 2026-07-10}
+}
+
+@misc{ceazamet_btg_station,
+  author       = {{CEAZA}},
+  title        = {{CEAZAMET}: Tongoy buoy ({BTG}) station page},
+  year         = {2026},
+  howpublished = {\url{https://www.ceazamet.cl/index.php?pag=mod_estacion&e_cod=BTG&p_cod=ceazamet}},
+  note         = {Centro de Estudios Avanzados en Zonas {\'A}ridas, accessed 2026-07-10}
+}
+
+@article{garnesson2019globcolour,
+  author  = {Garnesson, Philippe and Mangin, Antoine and Fanton d'Andon, Odile and Demaria, Julien and Bretagnon, Marine},
+  title   = {The {CMEMS} {GlobColour} chlorophyll-a product based on satellite observation},
+  journal = {Ocean Science},
+  year    = {2019},
+  volume  = {15},
+  pages   = {819--830},
+  doi     = {10.5194/os-15-819-2019}
+}
+
+@misc{jpl_mur_sst,
+  author       = {{JPL MUR MEaSUREs Project}},
+  title        = {{GHRSST} Level 4 {MUR} Global Foundation Sea Surface Temperature Analysis, Version 4.1},
+  year         = {2015},
+  publisher    = {{NASA Physical Oceanography Distributed Active Archive Center}},
+  howpublished = {\url{https://doi.org/10.5067/GHGMR-4FJ04}},
+  doi          = {10.5067/GHGMR-4FJ04},
+  note         = {Accessed 2026-07-10}
+}
+
+@misc{copernicus_wind_l4,
+  author       = {{E.U. Copernicus Marine Service Information}},
+  title        = {Global Ocean Hourly Sea Surface Wind and Stress from Scatterometer and Model},
+  year         = {2026},
+  howpublished = {\url{https://data.marine.copernicus.eu/product/WIND_GLO_PHY_L4_NRT_012_004/description}},
+  note         = {Product WIND\_GLO\_PHY\_L4\_NRT\_012\_004, accessed 2026-07-10}
+}
+
+@article{lellouche2021glorys12,
+  author  = {Lellouche, Jean-Michel and others},
+  title   = {The {Copernicus} Global 1/12{\textdegree} Oceanic and Sea Ice {GLORYS12} Reanalysis},
+  journal = {Frontiers in Earth Science},
+  year    = {2021},
+  volume  = {9},
+  pages   = {698876},
+  doi     = {10.3389/feart.2021.698876}
+}
+
+@misc{copernicus_glorys12,
+  author       = {{E.U. Copernicus Marine Service Information}},
+  title        = {Global Ocean Physics Reanalysis},
+  year         = {2026},
+  howpublished = {\url{https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description}},
+  note         = {GLORYS12V1 product, accessed 2026-07-10}
+}

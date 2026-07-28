@@ -1,0 +1,713 @@
+% ============================================================
+% Internship presentation --- CEAZA coastal sensor reconstruction
+% Benchmarking Imputation in Sparse Coastal Sensor Records:
+% Chlorophyll-a and Dissolved Oxygen in Tongoy Bay, Chile
+%
+% Compiles from manuscript/presentation/ with Tectonic:
+%   tectonic main.tex
+% Report figures are reused via relative paths (../figures/...).
+% No report source file is modified by this deck.
+%
+% Design note: beamer's named size macros (\small, \Large, ...) are fragile
+% *inside* a bare TikZ node with line-width/fill options. All multi-size box
+% content therefore lives inside a \parbox / minipage placed in the node.
+% ============================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% ── Fonts / base ─────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usefonttheme{serif}            % serif body + serif math (matches the report)
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing,calc,fit}
+\usepackage{appendixnumberbeamer}
+\usepackage{natbib}
+
+\setbeamertemplate{navigation symbols}{}
+\beamertemplatenavigationsymbolsempty
+
+% ── Palette (derived from the report figures) ────────────────
+\definecolor{ink}{HTML}{2B2B2B}       % body text
+\definecolor{accent}{HTML}{1E6E7A}    % deep teal: titles, rules, structure
+\definecolor{accentlt}{HTML}{2A7F8E}  % teal: observed target / chlorophyll
+\definecolor{tsviolet}{HTML}{5E4B9B}  % TS-ICL (winning arm)
+\definecolor{slate}{HTML}{5F7F8A}     % simple baselines / interpolation
+\definecolor{cgreen}{HTML}{1B9E77}    % Gaussian process / reconstruction
+\definecolor{cblue}{HTML}{3B6FA0}     % external tabular / oxygen
+\definecolor{camber}{HTML}{C0791F}    % gap-edge residual
+\definecolor{cred}{HTML}{B24743}      % hidden truth / caution
+\definecolor{faint}{HTML}{8A9299}     % secondary text / footers
+\definecolor{panel}{HTML}{F4F6F7}     % light block fill
+
+% ── Beamer colours ───────────────────────────────────────────
+\setbeamercolor{normal text}{fg=ink}
+\setbeamercolor{frametitle}{fg=accent}
+\setbeamercolor{structure}{fg=accent}
+\setbeamercolor{itemize item}{fg=accent}
+\setbeamercolor{itemize subitem}{fg=accentlt}
+
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries,family=\sffamily}
+\setbeamerfont{title}{size=\LARGE,series=\bfseries,family=\sffamily}
+
+\setbeamertemplate{itemize item}{\small\color{accent}\ensuremath{\bullet}}
+\setbeamertemplate{itemize subitem}{\scriptsize\color{accentlt}\ensuremath{\circ}}
+\setbeamertemplate{enumerate item}{\color{accent}\insertenumlabel.}
+
+% ── Frame title: assertion + thin accent rule ────────────────
+% (generous top vskip so the title never sits flush against the slide edge)
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \vskip0.85em
+  \hbox to\paperwidth{\hskip0.75cm
+    \vtop{\hsize=\dimexpr\paperwidth-1.5cm\relax\raggedright
+      {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
+      \vskip3pt{\color{accent}\hrule height1pt}%
+    }\hskip0.75cm}%
+  \vskip2pt
+}
+
+% ── Footline: protected band (separator rule + short title / author / number) ──
+\setbeamertemplate{footline}{%
+  \vskip3pt
+  {\color{faint!45}\hrule height0.4pt width\paperwidth}
+  \vskip3pt
+  \hbox to\paperwidth{\hskip0.75cm
+    {\scriptsize\color{faint}Reconstructing gaps in coastal sensor records}%
+    \hfil{\scriptsize\color{faint}Matteo Faverio\;\textperiodcentered\;CEAZA}\hfil
+    {\scriptsize\color{faint}\insertframenumber}\hskip0.75cm}%
+  \vskip4pt
+}
+
+% ── Scientific shorthand ─────────────────────────────────────
+\newcommand{\chl}{Chl\,\textit{a}}
+\newcommand{\dMAE}{\ensuremath{\Delta}MAE}
+\newcommand{\logten}{\ensuremath{\log_{10}}}
+
+% ── Robust boxes (multi-size content lives in a parbox/minipage) ─
+% coloured numeric callout card: fixed-height minipage, sized generously enough
+% that even a two-line label never pushes the box's natural content past the
+% declared height; minipage [c] vcentering (not \vspace) supplies the padding,
+% so the gap between text and border is real and identical on every card.
+\newcommand{\statcard}[3]{%
+  \begin{tikzpicture}
+    \node[rounded corners=3pt,draw=#1,line width=0.9pt,fill=#1!7,inner sep=0pt,
+          minimum width=2.95cm]
+      {\begin{minipage}[c][1.85cm][c]{2.95cm}\centering
+         {\large\bfseries\color{#1}#2}\par\vskip5pt{\scriptsize\color{ink}#3}
+       \end{minipage}};
+  \end{tikzpicture}%
+}
+% highlighted takeaway strip (column-aware via \linewidth; ragged-right avoids
+% the awkward hyphenation that full justification produces in narrow columns)
+\newcommand{\takeaway}[1]{%
+  \par\vspace{3pt}\noindent
+  \begin{tikzpicture}
+    \node[rounded corners=2pt,draw=accent!55,line width=0.7pt,fill=accent!10,inner sep=7pt]
+      {\parbox{\dimexpr\linewidth-22pt\relax}{\raggedright\color{ink}#1}};
+  \end{tikzpicture}\par
+}
+% caution strip (red)
+\newcommand{\caution}[1]{%
+  \par\vspace{3pt}\noindent
+  \begin{tikzpicture}
+    \node[rounded corners=2pt,draw=cred!55,line width=0.7pt,fill=cred!8,inner sep=7pt]
+      {\parbox{\dimexpr\linewidth-22pt\relax}{\raggedright\color{ink}#1}};
+  \end{tikzpicture}\par
+}
+% generic rounded panel (#1 colour, #2 parbox width, #3 content)
+\newcommand{\cmpbox}[3]{%
+  \begin{tikzpicture}
+    \node[rounded corners=3pt,draw=#1,line width=1pt,fill=#1!7,inner sep=7pt]
+      {\parbox{#2}{\raggedright\color{ink}#3}};
+  \end{tikzpicture}%
+}
+% discreet source line (bottom of frame)
+\newcommand{\srcline}[1]{\vfill\hbox to\linewidth{{\tiny\color{faint}#1}\hfil}}
+
+% dashed placeholder frame for an asset not yet supplied by the user
+% #1 width, #2 height, #3 label line, #4 sub-label line
+\newcommand{\assetplaceholder}[4]{%
+  \begin{tikzpicture}
+    \node[rounded corners=3pt,draw=faint,line width=1pt,dash pattern=on 4pt off 3pt,
+          fill=panel,minimum width=#1,minimum height=#2,align=center,inner sep=10pt]
+      {\parbox{\dimexpr#1-24pt\relax}{\centering\color{faint}%
+        {\small\bfseries #3}\\[4pt]{\scriptsize #4}}};
+  \end{tikzpicture}%
+}
+
+\newcommand{\yes}{\textcolor{cgreen}{\textbf{\checkmark}}}
+\newcommand{\weak}{\textcolor{camber}{\textbf{\raisebox{0.1ex}{$\sim$}}}}
+\newcommand{\no}{\textcolor{cred}{\textbf{$\times$}}}
+
+% ── Metadata ─────────────────────────────────────────────────
+\title{Reconstructing gaps in coastal sensor records}
+\author{Matteo Faverio}
+\date{2026}
+
+% ═════════════════════════════════════════════════════════════
+\begin{document}
+
+% ───────────────────────── SLIDE 1 ──────────────────────────
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+  \vskip0.6cm
+  \hbox to\paperwidth{\hskip1.1cm\vtop{\hsize=\dimexpr\paperwidth-2.2cm\relax\raggedright
+    {\color{accent}\rule{2.6cm}{2.2pt}}\par\vskip0.5cm
+    {\sffamily\bfseries\fontsize{25}{29}\selectfont\color{ink}
+      Reconstructing gaps in coastal\\ sensor records\par}
+    \vskip0.30cm
+    {\sffamily\large\color{accentlt}Benchmarking imputation of chlorophyll-\textit{a} and
+      dissolved oxygen\\ in Tongoy Bay, Chile\par}
+    \vskip0.55cm
+    {\color{faint}\rule{\linewidth}{0.5pt}}\par\vskip0.32cm
+    {\sffamily\large\color{ink}\textbf{Matteo Faverio}\par}
+    \vskip0.08cm
+    {\sffamily\footnotesize\color{faint}Institut Polytechnique de Paris\par}
+    \vskip0.03cm
+    {\sffamily\footnotesize\color{faint}CEAZA --- Centro de Estudios Avanzados en Zonas \'Aridas
+      \;\textperiodcentered\; 2026\par}
+  }\hskip1.1cm}
+  \vfill
+  \hbox to\paperwidth{\hskip1.1cm\parbox{\dimexpr\paperwidth-2.2cm\relax}{%
+    {\footnotesize\color{accent}Objective:} {\footnotesize\color{faint}a reusable workflow
+     for reconstructing gaps in coastal sensor records.}}\hfil}
+  \vskip0.55cm
+\end{frame}}
+
+% ───────────────────────── SLIDE 2A ─────────────────────────
+\begin{frame}[t]{Long coastal records are valuable but incomplete}
+  \vskip10pt
+  \begin{center}
+    \includegraphics[width=0.82\textwidth,trim=0 6 0 6,clip]{figures/fig1_site_context.jpg}
+  \end{center}
+  \vskip12pt
+  {\footnotesize\color{ink}\centering Two sensors on the Tongoy buoy record chlorophyll-\textit{a}
+   and dissolved oxygen over 2015--2026.\par}
+\end{frame}
+
+% ───────────────────────── SLIDE 2B ─────────────────────────
+\begin{frame}[t]{The record is interrupted by real gaps}
+  \vskip1pt
+  \begin{center}
+    \statcard{accentlt}{24.5\%}{chlorophyll days missing}\hspace{0.5cm}%
+    \statcard{cblue}{27.8\%}{oxygen days missing}
+  \end{center}
+  \vskip1pt
+  \begin{center}
+    \includegraphics[width=0.70\textwidth]{figures/fig_chl_target_and_gaps.pdf}
+  \end{center}
+  \vskip1pt
+  {\footnotesize\color{ink}Reconstruct interrupted historical records, keeping real gaps separate
+   from validation evidence.}
+\end{frame}
+
+% ───────────────────────── SLIDE 3 ──────────────────────────
+\begin{frame}[t]{Missing values sit in a dynamic, multiscale system}
+  \vskip6pt
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+      \vskip0.35cm
+      \centering
+      \includegraphics[width=0.92\linewidth]{figures/fig_upwelling_schematic.png}
+      \vskip0.10cm
+      {\scriptsize\color{ink}Wind-driven offshore transport and coastal upwelling near Tongoy.}\\[1pt]
+      {\scriptsize\color{faint}Montecino \& Lange (2009).}
+    \end{column}
+    \begin{column}{0.53\textwidth}
+      \vskip0.35cm
+      \centering
+      \includegraphics[width=\linewidth]{figures/map.jpg}
+    \end{column}
+  \end{columns}
+  \vskip8pt
+  {\footnotesize\color{ink}The buoy is a nearshore point; external
+   satellite products are coarser grid fields.}
+\end{frame}
+
+% ───────────────────────── SLIDE 4 ──────────────────────────
+\begin{frame}[t]{Skill is measured only where truth is withheld}
+  \vskip6pt
+  \begin{columns}[T]
+    \begin{column}{0.60\textwidth}
+      \vskip0.15cm
+      {\small
+      \textbf{Artificial gap.} Hide known observations, reconstruct them, and score against the
+      withheld truth.\par\vskip0.25cm
+      \textbf{Real gap.} Reconstruct values that were never observed --- no error can be computed.}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \caution{\centering Real-gap reconstructions are \textbf{outputs}, not validation evidence.}
+    \end{column}
+  \end{columns}
+  \vskip0.35cm
+  \begin{center}
+    \resizebox{0.98\textwidth}{!}{\input{figures/fig3_validation_schematic_tikz.tex}}
+  \end{center}
+  \vfill
+  \hbox to\linewidth{{\footnotesize\color{accent}Methods are ranked \emph{only} on artificial gaps ---
+    for chlorophyll and for oxygen alike.}\hfil}
+\end{frame}
+
+% ───────────────────────── SLIDE 5 ──────────────────────────
+\begin{frame}[t]{One task, five information structures}
+  \vskip2pt
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{figures/model_ladder_report.pdf}
+  \end{center}
+  \vskip4pt
+  {\footnotesize\color{ink}All five groups represent
+   temporal context differently and are ranked on the same benchmark.}
+\end{frame}
+
+% ───────────────────────── SLIDE 6 ──────────────────────────
+\begin{frame}[t]{Chlorophyll: TS-ICL edges past a strong baseline}
+  \vskip1pt
+  \begin{center}
+    \includegraphics[width=0.70\textwidth]{figures/fig4_chlorophyll_benchmark_matched.pdf}
+  \end{center}
+  \vskip1pt
+  \begin{center}
+    \statcard{slate}{0.239}{interpolation MAE (\logten)}\hspace{0.4cm}%
+    \statcard{tsviolet}{0.221}{TS-ICL + satellite \chl{} \emph{(best)}}\hspace{0.4cm}%
+    \statcard{cblue}{0.277}{ExtraTrees, external-only}
+  \end{center}
+\end{frame}
+
+% ───────────────────────── SLIDE 7 ──────────────────────────
+\begin{frame}[t]{Wind carries information; blooms stay hard}
+  \vskip4pt
+  \begin{columns}[T]
+    \begin{column}{0.40\textwidth}
+      {\footnotesize\textbf{Covariate signal} (a family counts only if it beats all four
+       disrupted placebos):}
+      \vskip0.10cm
+      \begin{center}\small
+      \begin{tabular}{@{}l c@{}}
+        \toprule
+        Covariate family & Beats placebos\\
+        \midrule
+        Wind / upwelling      & \yes\; 4/4\\
+        Curated physical set  & \yes\; 4/4\\
+        Solar radiation       & \weak\; 2/4\\
+        SST / thermal         & \no\; 1/4\\
+        Ocean currents        & \no\; 0/4\\
+        \bottomrule
+      \end{tabular}
+      \end{center}
+      \vskip0.10cm
+    \end{column}
+    \begin{column}{0.585\textwidth}
+      \centering
+      \includegraphics[width=0.96\linewidth,trim=400 0 2 0,clip]{figures/fig5_event_limitation_matched_v2.pdf}\\[3pt]
+      {\footnotesize\color{ink}\textbf{Every} method has higher error on event gaps 
+      
+      ($\geq$1 day above \chl{} p90).}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ───────────────────────── SLIDE 8 ──────────────────────────
+\begin{frame}[t]{Oxygen: the same workflow transfers}
+  \vskip0pt
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{figures/fig_oxygen_benchmark_primary_v3.pdf}
+  \end{center}
+  \vskip0pt
+  \begin{center}
+    \statcard{slate}{0.733}{interpolation MAE (mg/L)}\hspace{0.4cm}%
+    \statcard{tsviolet}{0.675}{TS-ICL + physical bundle \emph{(best)}}\hspace{0.4cm}%
+    \statcard{cblue}{0.847}{external tabular: 15.5\% higher MAE}
+  \end{center}
+  \vskip0pt
+\end{frame}
+
+% ───────────────────────── SLIDE 9 ──────────────────────────
+\begin{frame}[t]{The gain disappears in the tails}
+  \vskip1pt
+  \begin{center}
+    \includegraphics[width=0.64\textwidth]{figures/fig_oxygen_tail_diagnostics_v6.pdf}
+  \end{center}
+  \vskip1pt
+  \begin{columns}[c]
+    \begin{column}{0.68\textwidth}
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{0pt}
+        \item Gains concentrate in the \textbf{p10--p50 middle}.
+        \item TS-ICL is \textbf{worse than interpolation in both tails}.
+        \item \textbf{Sustained} episodes are hardest (small strata --- read cautiously).
+      \end{itemize}}
+    \end{column}
+    \begin{column}{0.35\textwidth}
+      \caution{\centering\footnotesize Pooled MAE can \textbf{hide failure} where it matters most.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ───────────────────────── SLIDE 10 ─────────────────────────
+\begin{frame}[t]{The workflow transfers; the failure regimes don't}
+  \vskip2pt
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}\centering
+      \cmpbox{accentlt}{\dimexpr\linewidth-24pt\relax}{%
+        {\bfseries\color{accentlt}Chlorophyll-\textit{a}}\par\vskip3pt\small
+        \begin{tabular}{@{}p{2.1cm}>{\raggedright\arraybackslash}p{3.5cm}@{}}
+          Best arm & TS-ICL satellite-proxy\\[2pt]
+          Useful signal & wind / upwelling\\[2pt]
+          Hard regime & high-\chl{} events\\
+        \end{tabular}}
+    \end{column}
+    \begin{column}{0.49\textwidth}\centering
+      \cmpbox{cblue}{\dimexpr\linewidth-24pt\relax}{%
+        {\bfseries\color{cblue}Dissolved oxygen}\par\vskip3pt\small
+        \begin{tabular}{@{}p{2.1cm}>{\raggedright\arraybackslash}p{3.5cm}@{}}
+          Best arm & TS-ICL physical cov.\\[2pt]
+          Useful signal & currents\\[2pt]
+          Hard regime & distribution tails\\
+        \end{tabular}}
+    \end{column}
+  \end{columns}
+  \vskip0.20cm
+  \takeaway{{\bfseries\color{accent}Shared conclusions.}\; \textbf{1.}~Interpolation is a strong
+    reference. \textbf{2.}~External predictors alone are insufficient. \textbf{3.}~Test covariates
+    empirically. \textbf{4.}~Regime diagnostics are required alongside pooled metrics.}
+  \vskip0.08cm
+  {\footnotesize\color{ink}The transferable object is the \textbf{benchmark workflow itself} --- the physical signal and failure regime are target-specific.}
+\end{frame}
+
+% ───────────────────────── SLIDE 11 ─────────────────────────
+\begin{frame}[t]{Limitations}
+  \vskip10pt
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}
+      {\small\bfseries\color{accent}Validation and model limits}
+      \vskip0.16cm
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{0.20cm}
+        \item Real outages such as the 256-day gap exceed the validated gap lengths.
+        \item Only one pretrained sequence architecture was tested.
+        \item Event-day and tail-regime uncertainty calibration remain incomplete.
+      \end{itemize}}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      {\small\bfseries\color{accent}Physical and scope limits}
+      \vskip0.16cm
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{0.20cm}
+        \item External products are coarser than the buoy-scale signal.
+        \item Covariate evidence is correlational, not causal.
+        \item Validation is single-station; generality across CEAZA stations is untested.
+      \end{itemize}}
+    \end{column}
+  \end{columns}
+  \vskip0.30cm
+  \takeaway{\centering{\bfseries\color{accent}Validate against strong baselines, preserve physical
+    context, and examine where average skill fails.}}
+\end{frame}
+
+% ───────────────────────── SLIDE 12 ─────────────────────────
+\begin{frame}[t]{Presented to the CEAZA research community}
+  \vskip4pt
+  \begin{center}
+    \includegraphics[width=8.0cm,trim=0 0 0 220,clip]{figures/poster_photo.jpg}
+  \end{center}
+  \vskip6pt
+  {\small\color{ink}\centering Presented as a CEAZA poster in La Serena.\par}
+\end{frame}
+
+% ───────────────────────── SLIDE 13 ─────────────────────────
+\begin{frame}[t]{Current work: regional ocean-colour forecasting}
+  \vskip1pt
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \centering
+      \includegraphics[width=0.80\linewidth]{figures/regional_chl_l4.pdf}
+    \end{column}
+    \begin{column}{0.51\textwidth}
+      \vskip0.15cm
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{0.14cm}
+        \item From point-sensor reconstruction to \textbf{regional spatial prediction}.
+        \item Forecasts near-future chlorophyll fields from recent satellite ocean-colour and
+          physical forcing over the shelf, 25--33\textdegree{}S.
+        \item Conceived as a \textbf{practical forecasting service}.
+      \end{itemize}}
+      \vskip0.15cm
+      {\scriptsize\color{faint}Regional CMEMS L4
+       gap-free chlorophyll, 2025-12-20, shown for context.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ═══════════════════════ BACKUP SLIDES ══════════════════════
+\appendix
+
+\begin{frame}[t]{Backup --- Daily target definition, QC and missingness}
+  \vskip6pt
+  {\small A day is eligible only if $\geq 18$ valid hourly values ($\geq 75\%$ coverage).
+   Span 2015-07-01 to 2026-05-31 (3988 possible daily records).}
+  \vskip0.4cm
+  \begin{center}\small
+  \begin{tabular}{llrrrr}
+    \toprule
+    Target & Channel / unit & Eligible & Missing & Missing \% & Real gaps\\
+    \midrule
+    Chlorophyll-\textit{a} & BTGCLF, mg\,m$^{-3}$ (\logten) & 3012 & 976 & 24.5\% & 128\\
+    Dissolved oxygen       & BTGOXD2, mg/L               & 2880 & 1108 & 27.8\% & 125\\
+    \bottomrule
+  \end{tabular}
+
+  \vskip0.5cm
+  \begin{tabular}{lrrrr}
+    \toprule
+    Distribution (eligible days) & Median & IQR & p05 & p95\\
+    \midrule
+    Chlorophyll-\textit{a} (mg\,m$^{-3}$) & 3.48 & 5.04 & 0.79 & 15.93\\
+    Dissolved oxygen (mg/L)          & 6.43 & 2.34 & 2.82 & 8.80\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vskip0.3cm
+  {\footnotesize\color{ink}Chlorophyll is right-skewed $\Rightarrow$ modelled on \logten; oxygen modelled directly in mg/L.}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Feature families and leakage control}
+  \vskip4pt
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      {\footnotesize
+      \begin{tabular}{@{}ll@{}}
+        \toprule
+        Feature family & Target\\
+        \midrule
+        Calendar / seasonality        & both\\
+        Target history                & both\\
+        Gap-edge context              & both\\
+        Satellite biological proxy    & \chl{}\\
+        Wind / upwelling forcing      & both\\
+        Solar / atmospheric forcing   & both\\
+        SST / thermal state           & both\\
+        Current / transport           & both\\
+        Local BTG diagnostics         & oxygen\\
+        \bottomrule
+      \end{tabular}}
+      \vskip0.25cm
+      {\footnotesize\color{ink}Tabular arms see one feature vector per day; TS-ICL sees the same
+       information as time-indexed channels.}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \centering
+      {\footnotesize\textbf{Dependency-window leakage control}}\\[4pt]
+      \resizebox{\linewidth}{!}{\input{figures/fig_loco_dependency_window_tikz.tex}}\\[6pt]
+      {\footnotesize\color{ink}A tabular row is dropped when its target-derived window overlaps the
+       hidden interval. External covariates stay available.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Chlorophyll benchmark tables}
+  \vskip4pt
+  \begin{columns}[T]
+    \begin{column}{0.44\textwidth}
+      \centering {\footnotesize Pooled MAE (\logten), 449 gaps}\\[3pt]
+      \small
+      \begin{tabular}{lr}
+        \toprule Method & MAE\\ \midrule
+        TS-ICL satellite-proxy & \textbf{0.221}\\
+        TS-ICL target-only     & 0.225\\
+        Gap-edge residual      & 0.229\\
+        Gaussian process       & 0.234\\
+        Linear interpolation   & 0.239\\
+        External tab.\ (ExtraTrees) & 0.277\\
+        External tab.\ (HGB)   & 0.287\\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \centering {\footnotesize MAE by gap length $L$}\\[3pt]
+      \scriptsize
+      \begin{tabular}{rrrrrrr}
+        \toprule
+        $L$ & Interp & GP & Ext & Edge & TS\,tgt & TS\,sat\\
+        \midrule
+        1  & 0.108 & 0.104 & 0.248 & 0.127 & 0.106 & 0.106\\
+        3  & 0.133 & 0.129 & 0.257 & 0.143 & 0.123 & 0.122\\
+        7  & 0.190 & 0.199 & 0.274 & 0.185 & 0.186 & 0.180\\
+        14 & 0.254 & 0.248 & 0.267 & 0.239 & 0.239 & 0.235\\
+        30 & 0.278 & 0.266 & 0.295 & 0.265 & 0.259 & 0.254\\
+        \bottomrule
+      \end{tabular}
+      \vskip0.3cm
+      {\footnotesize Event / non-event MAE (TS-ICL sat): 0.199 / 0.266;\\ external tabular worst on events (0.235 / 0.366).}
+    \end{column}
+  \end{columns}
+  \vskip0.25cm
+  {\footnotesize\color{ink}TS-ICL satellite-proxy quantile calibration (681-gap pool): 50\%$\to$51.3\%, 80\%$\to$81.8\%, 90\%$\to$91.6\%.}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Oxygen MAE by gap length}
+  \vskip10pt
+  \begin{center}
+  \small
+  \begin{tabular}{rrrrrrrr}
+    \toprule
+    $L$ & $n$ & Interp & Ext & GP & Edge & TS\,tgt & TS\,phys\\
+    \midrule
+    1  & 100 & 0.339 & 0.606 & 0.345 & 0.380 & 0.307 & 0.300\\
+    3  & 100 & 0.635 & 0.805 & 0.642 & 0.674 & 0.618 & 0.562\\
+    7  & 78  & 0.863 & 0.949 & 0.861 & 0.876 & 0.846 & 0.824\\
+    10 & 55  & 0.970 & 0.962 & 0.970 & 0.971 & 0.949 & 0.930\\
+    14 & 36  & 1.078 & 0.998 & 1.086 & 1.094 & 1.027 & 0.949\\
+    21 & 22  & 0.966 & 1.102 & 0.963 & 1.005 & 0.992 & 0.945\\
+    30 & 15  & 1.312 & 1.040 & 1.346 & 1.306 & 1.171 & 1.153\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vskip0.4cm
+  {\footnotesize\color{ink}All values are gap-weighted MAE in mg/L. $n$ = number of gaps at that
+   length. Pooled: interpolation 0.733, TS-ICL physical 0.675 ($-8.0\%$).}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Oxygen paired comparisons}
+  \vskip10pt
+  \begin{center}
+  \small
+  \begin{tabular}{lrr}
+    \toprule
+    Comparator & \dMAE{} vs TS-ICL physical & 95\% CI\\
+    \midrule
+    Interpolation & $-0.059$ & [$-0.086,-0.032$]\\
+    Ext.\ tabular & $-0.172$ & [$-0.229,-0.121$]\\
+    Gaussian process & $-0.064$ & [$-0.091,-0.036$]\\
+    Gap-edge      & $-0.084$ & [$-0.114,-0.056$]\\
+    TS-ICL target & $-0.032$ & [$-0.051,-0.014$]\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vskip0.4cm
+  {\footnotesize\color{ink}Negative \dMAE{} favours TS-ICL physical covariates. All five comparators'
+   95\% gap-cluster bootstrap CIs exclude zero. Pooled: interpolation 0.733, TS-ICL physical 0.675
+   ($-8.0\%$).}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Oxygen tails and the \texorpdfstring{$L{=}30$}{L=30} audit}
+  \vskip4pt
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \centering {\footnotesize Relative improvement by oxygen quantile band}\\[3pt]
+      \scriptsize
+      \begin{tabular}{lrr}
+        \toprule
+        Band (mg/L) & $n$ & Rel.\ impr.\ [95\% CI]\\
+        \midrule
+        $<$p10 ($<$3.78)    & 123 & $-9.8\%$ [$-25.7,+2.2$]\\
+        p10--p25 (3.78--5.10) & 170 & $+25.5\%$ [$+19.0,+32.2$]\\
+        p25--p50 (5.10--6.43) & 223 & $+21.6\%$ [$+15.3,+27.6$]\\
+        p50--p75 (6.43--7.44) & 211 & $+6.7\%$ [$-0.8,+13.9$]\\
+        p75--p90 (7.44--8.30) & 121 & $-5.9\%$ [$-20.3,+6.7$]\\
+        $>$p90 ($>$8.30)    & 79  & $-18.8\%$ [$-35.8,-5.6$]\\
+        \bottomrule
+      \end{tabular}
+      \vskip0.2cm
+      {\scriptsize\color{ink}Sustained high tail ($\geq$7\,d, $n{=}12$): $-123\%$ --- small stratum.}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      {\footnotesize\textbf{$L{=}30$ external-tabular reversal --- diagnostic only}}
+      \vskip0.12cm
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{3pt}
+        \item Only 15 gaps in the stratum.
+        \item Paired-difference 95\% CI [$-0.644,+0.092$] \textbf{includes 0}.
+        \item Driven by a few high-error interpolation cases.
+      \end{itemize}}
+      \vskip0.10cm
+      \caution{\centering Kept as a small-stratum caveat --- \textbf{not} a headline reversal.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[t]{Backup --- TS-ICL covariate placebo battery (chlorophyll)}
+  \vskip1pt
+  \begin{center}
+    \includegraphics[width=0.66\textwidth]{figures/fig_chl_covariate_placebo_summary_v2.pdf}
+  \end{center}
+  \vskip1pt
+  {\footnotesize\color{ink}A family counts only if it beats all four placebos, CI excluding zero.}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Real-gap reconstructions (illustrative only)}
+  \vskip4pt
+  \begin{center}
+    \includegraphics[width=0.98\textwidth]{figures/fig_chl_real_gap_multigap_v1.pdf}
+  \end{center}
+  \vskip2pt
+\end{frame}
+
+\begin{frame}[t]{Backup --- TS-ICL input and architecture}
+  \vskip3pt
+  \begin{columns}[T]
+    \begin{column}{0.36\textwidth}
+      \vskip0.15cm
+      \centering
+      \includegraphics[width=0.88\linewidth]{figures/tsicl_architecture_crop.pdf}
+    \end{column}
+    \begin{column}{0.60\textwidth}
+      \vskip0.1cm
+      {\footnotesize
+      \begin{itemize}\setlength\itemsep{0.10cm}
+        \item Visible target context $\mathbf y_{\mathrm{ctxt}}$ plus the masked hidden interval
+          form one timestamp--value sequence; covariates $\mathbf X_{\mathrm{covar}}$ enter as
+          time-indexed channels.
+        \item Timestamp--value pairs and covariates are encoded, then \textbf{aggregated across
+          channels} into timestamp-specific context representations.
+        \item An \textbf{in-context regressor} (causal self-attention) reconstructs the hidden
+          interval: $\hat{\mathbf y}_G=F(\mathbf y_{\mathrm{ctxt}},\mathbf X_{\mathrm{covar}})$.
+        \item Output includes \textbf{quantile predictions} (q05--q95), not just a point estimate.
+        \item Used \textbf{zero-shot}: pretrained elsewhere, no Tongoy-specific fitting.
+      \end{itemize}}
+    \end{column}
+  \end{columns}
+  \srcline{TS-ICL: Le Naour, Nabil \& Petralia (2026); software: EDF Lab (2026).}
+\end{frame}
+
+\begin{frame}[t]{Backup --- Artificial-gap design and validation support}
+  \vskip4pt
+  \begin{center}\footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}p{1.9cm}>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}p{3.0cm}r>{\raggedright\arraybackslash}p{2.1cm}@{}}
+    \toprule
+    Target & Support & Gap lengths & Gaps & Role\\
+    \midrule
+    Chlorophyll & full TS-ICL pool & 1, 3, 7, 10, 14, 21, 30, 45, 60 & 681 & calibration/placebo\\
+    Chlorophyll & shared ladder support & 1, 3, 7, 14, 30 & 449 & main ranking\\
+    Oxygen      & primary support & 1, 3, 7, 10, 14, 21, 30 & 406 & main + tails\\
+    Oxygen      & exploratory longer & $>$30 & 6 & exploratory only\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vskip0.3cm
+  {\footnotesize
+  \begin{itemize}\setlength\itemsep{0.14cm}
+    \item Gaps are stratified by \textbf{season and year} where the observed record allows it.
+    \item Uncertainty uses a \textbf{gap-cluster bootstrap}: the resampling unit is the whole gap,
+      not the individual day, so within-gap errors are not treated as independent.
+    \item Longer gaps are rarer because they require long uninterrupted \textbf{observed} runs to
+      construct --- this is why claims beyond $L{=}30$--60 are not part of the headline ranking.
+  \end{itemize}}
+\end{frame}
+
+\begin{frame}[t,allowframebreaks]{Backup --- References}
+  \scriptsize
+  \nocite{lenaour2026tsicl,tsicl_software,montecino2009humboldt,kampf2016upwelling,
+    ramajo2019scallops,chavez2009comparison,rasmussen2006gaussian,geurts2006extremely,
+    friedman2001greedy,ceazamet_network,ceazamet_btg_station,faverio2026coastal_gap_repository}
+  \bibliographystyle{apalike}
+  \bibliography{../references}
+\end{frame}
+
+\end{document}

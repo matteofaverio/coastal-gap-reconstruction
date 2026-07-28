@@ -1,0 +1,110 @@
+% TikZ source for Figure 3 (R2 redesign): artificial-gap vs. real-gap validation scope.
+% Included via \input from manuscript/report/sections/03_methodology.tex, inside:
+%   \resizebox{\textwidth}{!}{\input{figures/fig3_validation_schematic_tikz.tex}}
+% Scope of THIS figure: only the distinction between (row 1) artificial-gap validation, where a
+% withheld truth exists and reconstruction can be scored, and (row 2) real-gap reconstruction,
+% where no truth exists and the result is not validation evidence. LOCO, TS-ICL context, tabular
+% training rows and covariate availability are deliberately NOT shown here (separate figure).
+% Storyboard grid: 2 rows (artificial / real) x 3 columns (recorded series -> reconstruction
+% operation -> validation meaning). No packages needed beyond the report's existing TikZ setup
+% (arrows.meta, decorations.pathreplacing); grey hatch is drawn with manual diagonals, not the
+% patterns library.
+\definecolor{vgObserved}{HTML}{2A7F8E}  % observed target (muted teal)
+\definecolor{vgHidden}{HTML}{C0504D}    % artificial mask / withheld truth (muted red)
+\definecolor{vgRecon}{HTML}{1B9E77}     % reconstruction (muted green)
+\definecolor{vgMiss}{HTML}{9AA6B2}      % real missing segment (light grey hatch)
+\definecolor{vgInk}{HTML}{2B2B2B}       % text / rules (dark grey)
+
+\begin{tikzpicture}[x=0.5cm, y=0.5cm, font=\small,
+    obs/.style={fill=vgObserved, draw=vgInk, line width=0.2pt},
+    mask/.style={fill=vgHidden, draw=vgInk, line width=0.2pt},
+    flow/.style={-{Latex[length=2.1mm]}, vgInk, line width=0.7pt},
+    recon/.style={vgRecon, line width=1.3pt, dash pattern=on 3pt off 2pt},
+    rdot/.style={circle, fill=vgRecon, draw=none, inner sep=1.0pt}]
+
+  % --- geometry ---------------------------------------------------------------
+  % columns: X1 recorded series, X2 reconstruction operation, X3 validation meaning
+  % rows:    Y1 artificial gap (top), Y2 real gap (bottom); cell w=0.8, h=0.7, step 1.0
+  \def\XA{0}   \def\XB{13}  \def\XC{25.4}
+  \def\YA{3.4} \def\YB{0.0}
+  % centres (cell centre y = row + 0.35; strip centre x = origin + 4.9)
+
+  % --- column headers ---------------------------------------------------------
+  \node[font=\bfseries, text=vgInk] at (4.9,5.75)  {Recorded series};
+  \node[font=\bfseries, text=vgInk] at (17.9,5.75) {Reconstruction operation};
+  \node[font=\bfseries, text=vgInk, anchor=west] at (24.6,5.75) {Validation meaning};
+
+  % --- row labels -------------------------------------------------------------
+  \node[font=\bfseries, text=vgInk, align=center] at (-2.1,3.75) {Artificial\\gap};
+  \node[font=\bfseries, text=vgInk, align=center] at (-2.1,0.35) {Real\\gap};
+
+  % faint separator between the two storyboard rows
+  \draw[vgMiss, line width=0.3pt] (-3.4,1.95) -- (33.6,1.95);
+
+  % ===========================================================================
+  % ROW 1 -- ARTIFICIAL GAP
+  % ===========================================================================
+  % Col 1: observed series, with the segment that will be masked marked as known values
+  \foreach \i in {0,...,9}{ \fill[obs] (\XA+\i,\YA) rectangle (\XA+\i+0.8,\YA+0.7); }
+  \draw[vgHidden, line width=0.7pt, dash pattern=on 2pt off 1.5pt]
+      (\XA+3.9,\YA-0.12) rectangle (\XA+6.9,\YA+0.82);
+  \draw[decorate,decoration={brace,amplitude=3pt},line width=0.4pt,vgInk]
+      (\XA+3.9,\YA+0.95) -- (\XA+6.9,\YA+0.95)
+      node[midway,above=1pt,font=\footnotesize,text=vgInk] {known values};
+  \node[font=\small, text=vgInk] at (4.9,\YA-0.75) {observed values};
+
+  % Col 2: hide the known segment (red), then reconstruct (green)
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs]  (\XB+\i,\YA) rectangle (\XB+\i+0.8,\YA+0.7); }
+  \foreach \i in {4,5,6}{        \fill[mask] (\XB+\i,\YA) rectangle (\XB+\i+0.8,\YA+0.7); }
+  \draw[recon] plot[smooth] coordinates
+      {(\XB+3.9,\YA+0.35) (\XB+4.4,\YA+0.58) (\XB+5.4,\YA+0.18)
+       (\XB+6.4,\YA+0.55) (\XB+6.9,\YA+0.33)};
+  \foreach \x/\y in {4.4/0.58, 5.4/0.18, 6.4/0.55}{ \node[rdot] at (\XB+\x,\YA+\y) {}; }
+  \node[font=\footnotesize, text=vgHidden] at (\XB+5.0,\YA+1.15) {hide known segment};
+  \node[font=\footnotesize, text=vgRecon]  at (\XB+5.0,\YA-0.55) {reconstruct};
+
+  % Col 3: truth exists -> score error
+  \node[anchor=west, align=left, text=vgInk] at (\XC-0.25,\YA+0.35)
+      {compare reconstruction with\\ hidden observed values\\
+       $\Rightarrow$ compute MAE};
+
+  % ===========================================================================
+  % ROW 2 -- REAL GAP
+  % ===========================================================================
+  % Col 1: observed series with a genuine missing segment (grey hatch, no data)
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs] (\XA+\i,\YB) rectangle (\XA+\i+0.8,\YB+0.7); }
+  \foreach \i in {4,5,6}{
+      \draw[draw=vgMiss,line width=0.4pt] (\XA+\i,\YB) rectangle (\XA+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i,\YB)      -- (\XA+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i+0.4,\YB)  -- (\XA+\i+0.8,\YB+0.35);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i,\YB+0.35) -- (\XA+\i+0.4,\YB+0.7);
+  }
+  \node[font=\small, text=vgInk] at (4.9,\YB-0.75) {real missing segment};
+
+  % Col 2: reconstruction fills the blank gap (no underlying truth to expose)
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs] (\XB+\i,\YB) rectangle (\XB+\i+0.8,\YB+0.7); }
+  \foreach \i in {4,5,6}{
+      \draw[draw=vgMiss,line width=0.4pt] (\XB+\i,\YB) rectangle (\XB+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i,\YB)      -- (\XB+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i+0.4,\YB)  -- (\XB+\i+0.8,\YB+0.35);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i,\YB+0.35) -- (\XB+\i+0.4,\YB+0.7);
+  }
+  \draw[recon] plot[smooth] coordinates
+      {(\XB+3.9,\YB+0.35) (\XB+4.4,\YB+0.58) (\XB+5.4,\YB+0.18)
+       (\XB+6.4,\YB+0.55) (\XB+6.9,\YB+0.33)};
+  \foreach \x/\y in {4.4/0.58, 5.4/0.18, 6.4/0.55}{ \node[rdot] at (\XB+\x,\YB+\y) {}; }
+  \node[font=\footnotesize, text=vgRecon] at (\XB+5.0,\YB-0.55) {reconstruct};
+
+  % Col 3: no truth -> no score
+  \node[anchor=west, align=left, text=vgInk] at (\XC-0.25,\YB+0.35)
+      {nothing to compare against\\
+       $\Rightarrow$ not validation evidence};
+  % ===========================================================================
+  % INTER-COLUMN FLOW ARROWS (both rows)
+  % ===========================================================================
+  \draw[flow] (10.2,\YA+0.35) -- (12.7,\YA+0.35);
+  \draw[flow] (10.2,\YB+0.35) -- (12.7,\YB+0.35);
+  \draw[flow] (23.1,\YA+0.35) -- (24.7,\YA+0.35);
+  \draw[flow] (23.1,\YB+0.35) -- (24.7,\YB+0.35);
+
+\end{tikzpicture}

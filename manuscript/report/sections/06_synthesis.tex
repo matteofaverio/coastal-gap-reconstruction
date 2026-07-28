@@ -1,0 +1,64 @@
+% ── Section 6: Cross-case synthesis ─────────────────────────────
+\section{Cross-Case Synthesis}
+\label{sec:synthesis}
+
+Chlorophyll and
+dissolved oxygen respond to overlapping but different physical and biological processes, have
+different distributions, and fail in different regimes. The transferable object is therefore the
+benchmark workflow itself: define a daily target, construct artificial gaps, enforce leakage control and
+compare methods against withheld truth. Under that workflow, the two targets show a consistent methodological
+hierarchy but different scientific failure modes.
+
+\subsection{What transfers across targets}
+\label{sec:synthesis_transfers}
+
+The first transferable result is that interpolation is a strong floor. In both case studies, simple
+target continuity explains a large fraction of the recoverable signal, especially at short gaps. Methods that add
+external predictors or model complexity must therefore be judged asking whether they improve on the information already carried by the local target trajectory.
+
+The second transferable result is that external tabular prediction alone is not enough. For both
+chlorophyll and oxygen, the external-only model is worse than interpolation. This means that, when
+used as day-wise external predictors without target context, physical forcing data do not reliably replace the
+local continuity of the in-situ record. In a nearshore bay, gridded products can carry useful physical
+information while still being too coarse to reconstruct the sensor target by themselves.
+
+The third transferable result is that pretrained sequence modelling adds skill beyond this floor.
+TS-ICL is the strongest chlorophyll method on both benchmarks and this is operationally important because the model is used
+zero-shot, which means its parameters are not fitted or fine-tuned on Tongoy data. 
+
+\subsection{What changes between targets}
+\label{sec:synthesis_changes}
+
+The covariate evidence is target-specific. For chlorophyll, the clearest physical signal is
+wind forcing, while the tested current inputs do not establish a useful
+reconstruction signal. This is consistent with a biological target whose short events are linked to
+upwelling and surface biomass but are also spatially patchy and difficult for coarse external products
+to capture. For oxygen, current information behaves differently: it is informative in
+isolation, but largely redundant when added to the broader physical covariate bundle. The same
+predictor family can therefore matter differently depending on the target and on the other covariates
+already present.
+
+The main failure mode also changes. For chlorophyll, the hardest regime is high-\chl{} events, since every method has higher error on event gaps than on non-event gaps. For oxygen, the TS-ICL improvement
+is concentrated in the middle of the empirical distribution, while the tails remain difficult. The same general lesson is that the method
+that wins on average is not automatically reliable in the regimes that matter most scientifically.
+
+This distinction is important for interpretation and therefore the benchmark needs both
+pooled comparison and stratified diagnostics. Without the latter, the chlorophyll result
+would overstate event skill and the oxygen one would have done the same with tail reliability.
+
+\subsection{Implications for operational reconstruction}
+\label{sec:synthesis_operational}
+
+The practical implication of the results is the following. First, any candidate method should be benchmarked against
+linear interpolation under artificial gaps. Second, external predictors should be tested as empirical
+information channels and not assumed useful from physical plausibility alone. Third, a selected
+reconstruction method should be accompanied by regime diagnostics.
+
+This is where TS-ICL is operationally attractive. Once the target and covariate channels are
+prepared, it does not require fitting a station-specific model for each sensor or rebuilding a
+large engineered tabular design. Inference is fast, and the same framework can ingest target
+history and covariates as time-indexed channels rather than forcing temporal awareness into a
+large set of hand-built lags, rolling summaries, and gap-edge columns. The channel structure also
+makes diagnostic tests straightforward: a covariate family can be added, removed, or replaced by
+placebo versions to test whether it carries time-aligned information. Eventually, the reconstruction is not only a point estimate but a candidate trajectory
+with an uncertainty band, which is a key factor in real gaps scenarios.

@@ -17,9 +17,10 @@ computed on real gaps is a candidate output, not a score (see
 ## The canonical gap pool
 
 `data_public/chlorophyll/chlorophyll_validation_gaps.csv` contains the
-canonical pool of 681 artificial gaps used for all benchmark comparisons in
-this repository. Each row is one gap, with its length, season, start/end
-date, the true mean/max chlorophyll value over the hidden days (kept for
+canonical pool of artificial gaps (hundreds of gaps, spanning multiple
+lengths and seasons) used for all benchmark comparisons in this
+repository. Each row is one gap, with its length, season, start/end date,
+the true mean/max chlorophyll value over the hidden days (kept for
 scoring), and an event flag.
 
 Gap lengths in the pool: 1, 3, 7, 14, 30, 45, and 60 days. Longer lengths

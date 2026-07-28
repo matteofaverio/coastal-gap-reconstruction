@@ -1,0 +1,82 @@
+% TikZ source: leakage control -- fixed target-derived windows vs. hidden interval.
+% Scope: a tabular training row is excluded when its fixed target-derived
+% feature window overlaps the hidden target interval.
+%
+% Included via:
+%   \resizebox{0.78\textwidth}{!}{\input{figures/fig_loco_dependency_window_tikz.tex}}
+
+\definecolor{vgObserved}{HTML}{2A7F8E}  % observed target (muted teal)
+\definecolor{vgHidden}{HTML}{C0504D}    % hidden target interval (muted red)
+\definecolor{vgKept}{HTML}{3B6FA0}      % kept window (muted blue)
+\definecolor{vgExcl}{HTML}{D98A2B}      % excluded window (muted orange)
+\definecolor{vgInk}{HTML}{2B2B2B}       % text (dark grey)
+
+\begin{tikzpicture}[x=0.42cm, y=0.42cm, font=\small,
+    obs/.style={fill=vgObserved, draw=vgInk, line width=0.2pt},
+    hid/.style={fill=vgHidden, draw=vgInk, line width=0.2pt}]
+
+  % Hidden interval occupies timeline cells 6, 7, 8.
+  \def\HidLo{5}
+  \def\HidHi{9}
+  \def\YT{4.0}
+
+  % ---------------------------------------------------------------------------
+  % Top target timeline
+  % ---------------------------------------------------------------------------
+  \foreach \i in {1,2,3,4,5,9,10,11,12,13}{
+    \fill[obs] (\i,\YT) rectangle (\i+0.8,\YT+0.62);
+  }
+
+  \foreach \i in {6,7,8}{
+    \fill[hid] (\i,\YT) rectangle (\i+0.8,\YT+0.62);
+  }
+
+  \draw[decorate,decoration={brace,amplitude=3pt},line width=0.4pt,vgHidden]
+    (6,\YT+0.78) -- (8.8,\YT+0.78)
+    node[midway,above=2pt,font=\scriptsize,text=vgHidden]
+    {hidden target interval};
+
+  % ---------------------------------------------------------------------------
+  % Equal-length sliding window macro
+  % ---------------------------------------------------------------------------
+  \newcommand{\drawwin}[3]{%
+    \foreach \k in {0,1,2,3,4}{%
+      \fill[#3, fill opacity=0.22, draw=#3, line width=0.45pt]
+        (#1+\k,#2) rectangle (#1+\k+0.8,#2+0.62);%
+      \pgfmathtruncatemacro{\cell}{#1+\k}%
+      \ifnum\cell>\HidLo
+        \ifnum\cell<\HidHi
+          \fill[#3, fill opacity=0.40]
+            (#1+\k,#2) rectangle (#1+\k+0.8,#2+0.62);
+          \draw[vgHidden, line width=0.35pt]
+            (#1+\k,#2) -- (#1+\k+0.8,#2+0.62);
+          \draw[vgHidden, line width=0.35pt]
+            (#1+\k+0.4,#2) -- (#1+\k+0.8,#2+0.31);
+          \draw[vgHidden, line width=0.35pt]
+            (#1+\k,#2+0.31) -- (#1+\k+0.4,#2+0.62);
+        \fi
+      \fi
+    }%
+  }
+
+  % ---------------------------------------------------------------------------
+  % Four same-length target-derived windows
+  % ---------------------------------------------------------------------------
+  \drawwin{1}{2.90}{vgKept}   % clear of hidden interval -> kept
+  \drawwin{4}{1.95}{vgExcl}   % overlaps hidden interval -> excluded
+  \drawwin{6}{1.00}{vgExcl}   % overlaps hidden interval -> excluded
+  \drawwin{9}{0.05}{vgKept}   % clear of hidden interval -> kept
+
+  % ---------------------------------------------------------------------------
+  % Verdict labels
+  % ---------------------------------------------------------------------------
+  \node[anchor=west, font=\scriptsize\bfseries, text=vgKept]
+    at (13.9,3.20) {kept};
+  \node[anchor=west, font=\scriptsize\bfseries, text=vgExcl]
+    at (13.9,2.25) {excluded};
+  \node[anchor=west, font=\scriptsize\bfseries, text=vgExcl]
+    at (13.9,1.30) {excluded};
+  \node[anchor=west, font=\scriptsize\bfseries, text=vgKept]
+    at (13.9,0.35) {kept};
+
+\end{tikzpicture}

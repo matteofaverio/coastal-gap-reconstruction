@@ -29,8 +29,9 @@ conditions of each original data provider, summarized below.
 
 ### 2.1 CEAZAMet / CEAZA (in-situ station data)
 
-`data_public/chlorophyll/chlorophyll_daily_target.csv` is a processed
-daily summary derived from hourly in-situ chlorophyll-a sensor data
+`data_public/chlorophyll/chlorophyll_daily_target.csv` and
+`data_public/oxygen/oxygen_daily_target.csv` (sensor BTGOXD2) are both
+processed daily summaries derived from hourly in-situ sensor data
 collected by CEAZAMet, the monitoring network operated by the Centro de
 Estudios Avanzados en Zonas Áridas (CEAZA), Chile. Meteorological
 predictor features sourced from the nearby Punta Lengua de Vaca (PLV)

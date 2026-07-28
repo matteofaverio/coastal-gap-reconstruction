@@ -1,0 +1,6 @@
+comparator_id,comparator_label,n_gaps,delta_tsicl_minus_comparator_mae,ci_lo,ci_hi,ci_excludes_zero,n_boot,seed
+linear_interp,Linear interpolation,406,-0.0588758620689655,-0.0862519027093596,-0.0320179248768472,True,2000,42
+tabular_external_physical_plus_currents__extratrees_high_capacity,External tabular (ExtraTrees),406,-0.1723029556650246,-0.2286873645320196,-0.121047210591133,True,2000,42
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,Gaussian process,406,-0.0636490147783251,-0.0915283559113301,-0.0364421921182265,True,2000,42
+gapedge_oxygen_gap_edge_residual_interp_hindcast__extratrees_high_capacity_mean_imputer,Gap-edge residual (ExtraTrees),406,-0.0844827586206897,-0.1139362931034482,-0.056405357142857,True,2000,42
+tsicl_target_only__full_series,TS-ICL target-only,406,-0.0323246305418719,-0.0506239839901475,-0.0143542056650248,True,2000,42

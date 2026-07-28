@@ -3,13 +3,14 @@
 ## 1. CEAZAMet / CEAZA attribution
 
 The daily chlorophyll target table
-(`data_public/chlorophyll/chlorophyll_daily_target.csv`) is a processed
-daily summary table derived from hourly in-situ sensor data provided by
-CEAZAMet, the coastal/meteorological monitoring network operated by the
-Centro de Estudios Avanzados en Zonas Áridas (CEAZA), Chile. The hourly raw
-data themselves are not redistributed in this repository -- only the
-derived daily aggregate table described in
-`docs/methodology/target_and_gap_construction.md`.
+(`data_public/chlorophyll/chlorophyll_daily_target.csv`) and the daily
+oxygen target table (`data_public/oxygen/oxygen_daily_target.csv`, sensor
+BTGOXD2) are both processed daily summary tables derived from hourly
+in-situ sensor data provided by CEAZAMet, the coastal/meteorological
+monitoring network operated by the Centro de Estudios Avanzados en Zonas
+Áridas (CEAZA), Chile. The hourly raw data themselves are not
+redistributed in this repository -- only the derived daily aggregate
+tables described in `docs/methodology/target_and_gap_construction.md`.
 
 Required attribution:
 

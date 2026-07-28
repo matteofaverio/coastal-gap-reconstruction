@@ -5,8 +5,9 @@ results with the following hierarchy in mind.
 
 ## 1. Validation-grade evidence: artificial-gap results
 
-Results computed against the canonical 681-gap artificial-gap pool
-(`data_public/chlorophyll/chlorophyll_validation_gaps.csv`) are the only
+Results computed against the canonical artificial-gap pool (hundreds of
+gaps spanning lengths from 1 to 60 days and multiple seasons;
+`data_public/chlorophyll/chlorophyll_validation_gaps.csv`) are the only
 results in this repository with a known, withheld ground-truth value to
 score against. These are the only numbers that should be used to rank
 methods, claim statistical significance, or argue that one method
@@ -27,9 +28,9 @@ beyond this length are extrapolation, not validated performance.
 the underlying per-day reconstruction tables
 (`chlorophyll_reconstruction_tsicl_satellite_proxy.csv`,
 `chlorophyll_reconstruction_engineered_hybrid.csv`) are candidate outputs
-for the 128 real gaps in the observed record. There is no withheld ground
-truth for any of these gaps -- the sensor was genuinely offline, so there
-is nothing to score against.
+for the real (naturally occurring) gaps in the observed record. There is
+no withheld ground truth for any of these gaps -- the sensor was genuinely
+offline, so there is nothing to score against.
 
 These outputs are useful as plausible filled-in values for downstream
 use (e.g. plotting a continuous series, rough magnitude checks), and as a

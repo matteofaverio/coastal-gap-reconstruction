@@ -1,0 +1,94 @@
+% ── Section 7: Limitations and future work ─────────────────────────────
+\section{Limitations and Future Work}
+\label{sec:limitations_future}
+
+The previous section identified the main transferable pattern: interpolation is a strong floor,
+external predictors alone are not sufficient, TS-ICL adds skill, and the hardest regimes are
+the distributional extremes. This final section states where those conclusions stop and what should be tested next.
+The main deliverable that this reported framework gives CEAZA
+is a reproducible way to decide when a reconstruction is credible, when it is only useful as a candidate
+trajectory, and where new physical features or models are needed.
+
+\subsection{Validation support and gap-length limits}
+\label{sec:limits_validation}
+
+The benchmark validates reconstruction skill only where artificial gaps can be created from
+observed eligible data. This is a strong design choice, because every scored reconstruction is
+compared with withheld truth, but it also limitats the validation support useful for the imputation of real gaps.
+
+Real gaps sit in fact outside this validation logic. The real-gap reconstructions, shown for example in
+Figure~\ref{fig:chl_real_gap_multigap}, are useful practical outputs for future research activities that benefit from continuous records, but they are not evidence of
+method skill because the target was not observed inside those intervals. This distinction is
+especially important for long outages: the shared 256-day station-wide gap during the 2020 pandemic, and other very long
+real gaps, are longer than the artificial gaps used for model ranking. Any reconstruction of
+such intervals is extrapolation from the validated regime, not a validated result.
+
+\subsection{Extremes remain the main unresolved regime}
+\label{sec:limits_extremes}
+
+The most important limitation is not the ranking on a limited artificial-gap support, but the behaviour of the methods in the regimes that matter most scientifically. For chlorophyll, this means high-\chl{} event gaps, where Figure~\ref{fig:chl_event_limitation} shows that every method has higher error: even the best method still smooths sharp blooms and underestimates event peaks.
+For oxygen, the corresponding limitation is again on the empirical tails of the distribution. TS-ICL improves in the benchmark because it performs better in the middle of
+the oxygen distribution, but Figure~\ref{fig:oxygen_tail_diagnostics} shows weaker behaviour in the low and high tails, especially when tail conditions persist. The oxygen result therefore gives a
+clear example of why a pooled MAE improvement is not enough for full operational trust: the average can
+improve while the scientifically sensitive strata remain unreliable. Future work should therefore make event and tail performance part of the objective, not only a
+post-hoc diagnostic. For chlorophyll, this could mean event-aware validation and modelling, with
+losses or selection criteria that explicitly penalize missed bloom peaks. For oxygen, it means
+separating isolated tail excursions from sustained tail episodes and testing whether models can
+avoid regression toward the centre of the distribution. 
+
+\subsection{Physical interpretation and covariate limits}
+\label{sec:limits_physical}
+
+The covariate analyses are a useful product to identify reconstructive signal from physical forcing predictors. For chlorophyll, it's wind/upwelling forcing that establishes useful signal, while for oxygen it's current information that proves being more informative, although it appears redundant once combined with
+the broader physical covariate bundle. These findings do not
+prove that the corresponding physical processes are causal, but are anyway useful because they
+show which information channels improve reconstruction and indicates this approach as a future pipeline/research tool.
+
+This distinction between causality and reconstruction improvement matters in Tongoy Bay because the relevant processes occur across scales. The
+available gridded products describe regional surface chlorophyll, SST, winds and currents, but the
+in-situ sensors measure conditions at a nearshore buoy inside a bay. Short-lived blooms, retention,
+local circulation and aquaculture-scale variability may be only indirectly represented in the external products. A
+negative reconstruction result for a predictor family therefore cannot be read as ruling out the
+underlying process.
+
+A natural extension is to design physical features more directly around the unresolved regimes. For
+chlorophyll, this means testing whether wind history, local retention, recent cooling or
+spatial patchiness can better anticipate bloom formation and decay. For oxygen, it means building
+features that distinguish sustained low- or high-oxygen episodes from isolated excursions, and
+testing whether current variables contribute unique information once the broader physical
+state is controlled.
+
+\subsection{Model and uncertainty limits}
+\label{sec:limits_models_uncertainty}
+
+TS-ICL is promising here because it improves in the benchmark for both targets without station-specific fitting or fine-tuning, and because it can use target history and covariates as
+time-indexed channels rather than relying on a large hand-built tabular feature matrix. But this
+does not make it a universal solution, as only one pretrained time-series imputation foundation model was tested,
+and the results do not establish that TS-ICL is the best architecture available for coastal
+imputation, tabular foundation models being a first natural extension. Anyway, in this scenarios where datasets have a limited size and covariates on coarse grids may not explain well nearshore measurements, the results establish that this class of zero-shot models deserves comparison against classical baselines.
+
+The uncertainty evidence is also incomplete. For chlorophyll for instance, TS-ICL satellite-proxy quantile
+intervals are close to nominal overall, but event-day calibration is weaker. Future work should treat interval calibration as a first-class benchmark output.
+
+A further model-level limitation is boundary behaviour. Boundary-anchored methods such as linear
+interpolation and gap-edge residual models are constrained by observations at the edges of an
+internal gap. TS-ICL uses a broader context window and covariate channels, and is not explicitly
+forced to match the nearest observations at the gap boundary. This can be an advantage when local
+endpoints are misleading, but it can also create edge discontinuities. A practical next step is to
+test hybrid methods that preserve TS-ICL's interior reconstruction while blending more conservatively near the gap edges.
+
+\subsection{Extensions of the benchmark workflow}
+\label{sec:future_extensions}
+
+The main reusable output of this report is the benchmark workflow. A new sensor or station can be
+processed through the same sequence: define the daily target and eligibility rule, audit missingness,
+construct artificial gaps, apply leakage-controlled comparators, stratify errors by scientifically
+relevant regimes, and only then produce real-gap reconstructions if the evidence supports them.
+
+Several extensions follow directly from this structure. The first is spatial transfer: applying the
+same benchmark to other CEAZA stations would test whether the model hierarchy found at Tongoy is
+specific to this site or network-wide. The second is target transfer: additional variables such as
+temperature, salinity, turbidity, pH or other biogeochemical sensors could be evaluated with the
+same design. The third is long-gap validation: longer artificial gaps are rare because they require
+long uninterrupted observed runs, so pooling multiple stations or alternative validation designs
+may be needed to evaluate outages beyond the current support.

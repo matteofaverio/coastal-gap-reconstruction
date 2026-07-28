@@ -1,0 +1,43 @@
+method_id,gap_length,n_gaps,mae_gapweighted,method_label
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,1,100,0.345192,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,3,100,0.64244,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,7,78,0.8609948717948717,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,10,55,0.9695981818181818,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,14,36,1.0863333333333332,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,21,22,0.9633681818181816,Gaussian process
+gapedge_oxygen_gap_edge_residual_interp_hindcast__gp_matern_time_only_exploratory,30,15,1.3457533333333334,Gaussian process
+gapedge_residual_extratrees,1,100,0.3802,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,3,100,0.674,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,7,78,0.876,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,10,55,0.9705,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,14,36,1.0935,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,21,22,1.0054,Gap-edge residual (ExtraTrees)
+gapedge_residual_extratrees,30,15,1.3061,Gap-edge residual (ExtraTrees)
+linear_interp,1,100,0.339383,Linear interpolation
+linear_interp,3,100,0.635099,Linear interpolation
+linear_interp,7,78,0.8625602564102567,Linear interpolation
+linear_interp,10,55,0.9698381818181816,Linear interpolation
+linear_interp,14,36,1.0778166666666666,Linear interpolation
+linear_interp,21,22,0.9659727272727272,Linear interpolation
+linear_interp,30,15,1.311826666666667,Linear interpolation
+tabular_external_physical_plus_currents__extratrees_high_capacity,1,100,0.6059549999999999,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,3,100,0.8050039999999998,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,7,78,0.94944358974359,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,10,55,0.962438181818182,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,14,36,0.9975694444444444,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,21,22,1.1022590909090908,External tabular (ExtraTrees)
+tabular_external_physical_plus_currents__extratrees_high_capacity,30,15,1.04012,External tabular (ExtraTrees)
+tsicl_external_physical_plus_currents__full_series,1,100,0.300247,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,3,100,0.561586,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,7,78,0.8243051282051284,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,10,55,0.9300509090909092,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,14,36,0.9493666666666668,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,21,22,0.9447818181818182,TS-ICL physical covariates
+tsicl_external_physical_plus_currents__full_series,30,15,1.15342,TS-ICL physical covariates
+tsicl_target_only__full_series,1,100,0.306787,TS-ICL target-only
+tsicl_target_only__full_series,3,100,0.61777,TS-ICL target-only
+tsicl_target_only__full_series,7,78,0.846075641025641,TS-ICL target-only
+tsicl_target_only__full_series,10,55,0.9493363636363636,TS-ICL target-only
+tsicl_target_only__full_series,14,36,1.0266750000000002,TS-ICL target-only
+tsicl_target_only__full_series,21,22,0.9920318181818182,TS-ICL target-only
+tsicl_target_only__full_series,30,15,1.17142,TS-ICL target-only

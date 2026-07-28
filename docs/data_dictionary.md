@@ -1,7 +1,60 @@
 # Data dictionary
 
 Column definitions for every public CSV under `data_public/` and
-`results_public/`.
+`results_public/`. For the small standalone CSVs used by the live demo
+(`demo/data/`), see the "What the notebook does" section of
+`demo/README.md` -- they are subsets/derivatives of the tables documented
+below, not a separate schema.
+
+## data_public/oxygen/oxygen_daily_target.csv
+
+One row per calendar day, 2015-07-01 to 2026-05-31 (BTGOXD2 sensor, mg/L).
+Same construction logic as the chlorophyll daily target, applied to a
+second sensor.
+
+| Column | Description |
+|---|---|
+| date | Calendar date (daily resolution) |
+| n_expected_hours, n_rows, valid_hours, coverage_fraction, quality_class | Same meaning as the chlorophyll target table |
+| eligible_ge_12, eligible_ge_17, eligible_ge_18, eligible_ge_22 | Eligibility at alternative valid-hour thresholds; the oxygen benchmark uses `eligible_ge_18`, mirroring the chlorophyll >=18h rule |
+| oxygen_mean_mgL | Daily mean dissolved oxygen, mg/L (the reconstruction target) |
+| oxygen_median_mgL, oxygen_std_mgL, oxygen_min_mgL, oxygen_max_mgL | Other within-day summary statistics |
+| oxygen_q10_mgL, oxygen_q25_mgL, oxygen_q75_mgL, oxygen_q90_mgL | Within-day quantiles |
+| raw_prom_non_na_count, raw_prom_na_count | Count of non-missing / missing raw hourly readings |
+| negative_oxygen_count, zero_oxygen_count, invalid_oxygen_count | QA counters for out-of-range or invalid hourly readings |
+| first_valid_hour, last_valid_hour, longest_invalid_run_hours | Same meaning as the chlorophyll target table |
+| source_variable | Sensor code (`BTGOXD2`); see `docs/data_sources_and_attribution.md` for why this sensor was selected over `BTGOXD`/`BTGOXSATPC` |
+| unit | Physical unit (mg/L) |
+| timezone_status | Timezone handling/conversion note |
+
+## data_public/oxygen/oxygen_validation_gaps.csv
+
+The artificial-gap validation pool for oxygen (L=1-30 days). Same schema
+pattern as `chlorophyll_validation_gaps.csv` (one row per artificial gap).
+
+## data_public/oxygen/oxygen_real_gap_inventory_by_class.csv
+
+Naturally-occurring missing-data periods, grouped by length class
+(short/medium/long), with gap counts and median/max length per class.
+
+## results_public/oxygen/oxygen_benchmark_by_length.csv
+
+One row per (method, gap length): gap-weighted MAE (mg/L) and gap count,
+across the oxygen artificial-gap pool. Pivot on `method_label` to compare
+methods.
+
+## results_public/oxygen/oxygen_paired_deltas_vs_tsicl_physical_covariates.csv
+
+One row per comparator method: paired MAE delta (TS-ICL physical
+covariates minus comparator), 95% bootstrap CI, and whether the CI
+excludes zero (statistically resolved).
+
+## results_public/oxygen/oxygen_tail_quantile_band_metrics.csv, oxygen_tail_persistence_metrics.csv
+
+Relative improvement of the strongest TS-ICL arm over interpolation,
+broken out by empirical oxygen quantile band and by tail-run persistence
+(isolated / short / sustained). Backs Figure 7 of the report
+(`figures/oxygen/figure_oxygen_tail_diagnostics.pdf`).
 
 ## data_public/chlorophyll/chlorophyll_daily_target.csv
 
@@ -58,7 +111,8 @@ reanalysis product attributions.
 
 ## data_public/chlorophyll/chlorophyll_validation_gaps.csv
 
-One row per artificial gap in the canonical 681-gap validation pool.
+One row per artificial gap in the canonical chlorophyll validation pool
+(hundreds of gaps spanning multiple lengths and seasons).
 
 | Column | Description |
 |---|---|
@@ -80,7 +134,7 @@ One row per artificial gap in the canonical 681-gap validation pool.
 
 ## data_public/chlorophyll/chlorophyll_real_gap_inventory.csv
 
-One row per real (naturally occurring) gap in the observed record, 128 gaps total.
+One row per real (naturally occurring) gap in the observed record.
 
 | Column | Description |
 |---|---|

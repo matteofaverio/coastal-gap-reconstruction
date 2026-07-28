@@ -1,0 +1,231 @@
+% ── Section 3: Benchmark methodology ──────────────────────
+\section{Benchmark Methodology}
+\label{sec:methodology}
+
+This section defines the benchmark used to compare reconstruction methods for the two sensor
+targets. The benchmark asks how well different information sources can recover missing values in
+a historical daily record: local target continuity, external physical covariates, gap-edge
+context, and pretrained sequence modelling. Internal gaps are treated as historical imputation
+problems, so observations on both sides of the missing interval may be used when available.
+
+\subsection{Model ladder}
+\label{sec:model_ladder}
+
+Let $y_t$ denote the daily target on its modelling scale, and let
+$\mathbf{x}_t$ denote the external covariate information available at day $t$. For an artificial
+gap
+\[
+    G=\{t_0,\ldots,t_0+L-1\},
+\]
+the values $\mathbf y_G=\{y_t:t\in G\}$ are hidden and reconstructed as
+$\hat{\mathbf y}_G=\{\hat y_t:t\in G\}$. All methods solve this same reconstruction problem, but
+they differ in the information representation they use: simple temporal rules, target-only
+continuity, external covariate features, explicit gap-edge context, or a pretrained sequence
+model.
+
+\begin{figure}[htbp]
+  \centering
+  \makebox[\textwidth][c]{%
+    \hspace*{-1.5cm}%
+    \resizebox{1.01\textwidth}{!}{\input{figures/fig_model_ladder_tikz.tex}}%
+  }
+  \caption{Comparator groups in the reconstruction benchmark.
+  The five groups solve the same artificial-gap task but use different information structures:
+  fixed temporal rules, target-only Gaussian-process smoothing, day-wise tabular prediction from
+  external features, residual correction over interpolation using gap-edge context, and zero-shot sequence imputation.}
+  \label{fig:model_ladder}
+\end{figure}
+
+\textbf{Simple baselines.}
+The first group contains climatology, persistence, and linear interpolation. These methods have
+no station-specific fitted model. Persistence fills the gap with the last available observation,
+\[
+    \hat y_t = y_{t^-},
+\]
+where $t^-$ is the closest observed time before the gap. Climatology predicts a typical seasonal
+value, denoted here by $\mu_{\mathrm{season}}$. For an internal gap with observed endpoints
+$t^-<t<t^+$, linear interpolation is
+\[
+    \tilde y_t^{\mathrm{lin}}
+    =
+    (1-\alpha_t)y_{t^-}+\alpha_t y_{t^+},
+    \qquad
+    \alpha_t=\frac{t-t^-}{t^+-t^-}.
+\]
+These baselines are deliberately simple. They define the level that more structured methods must
+exceed, and linear interpolation is especially important because many observed gaps are short.
+\vspace{0.25cm}
+
+\textbf{Target-only smoother.}
+The target-only smoother is a Gaussian-process model using visible target values around the gap
+and no external covariates. In local notation, the target is treated as a realization of a latent
+function
+\[
+    y(t) = f(t)+\varepsilon_t,
+    \qquad
+    f\sim\mathcal{GP}(m,k),
+\]
+with mean function $m(t)$ and Mat\'ern covariance kernel $k(t,t')$. If $\mathcal O_G$ denotes the
+visible local context used by the smoother, the posterior mean over the hidden timestamps can be
+written as
+\[
+    \hat{\mathbf y}_G
+    =
+    \mathbf m_G
+    +
+    K_{G,\mathcal O}
+    \left(K_{\mathcal O,\mathcal O}+\sigma^2 I\right)^{-1}
+    \left(\mathbf y_{\mathcal O}-\mathbf m_{\mathcal O}\right).
+\]
+This comparator tests how much of the gap can be recovered from local target continuity alone,
+without satellite, meteorological, SST, or current predictors \citep{rasmussen2006gaussian}.
+\vspace{0.25cm}
+
+\textbf{External tabular models.}
+The external tabular arm represents each hidden day by an engineered feature vector
+\[
+    \phi_t=\phi(t,\mathbf{x}),
+\]
+built from calendar, satellite, meteorological, SST, and current-related predictors. The notation
+$\phi(t,\mathbf{x})$ includes the temporal and spatial summaries described in
+Section~\ref{sec:predictors}; for example, lags, rolling summaries, regional statistics, and
+nearby-grid-cell values. A supervised tabular regressor then predicts each hidden day separately:
+\[
+    \hat y_t = f(\phi_t).
+\]
+The benchmark uses two tree-ensemble learners for this arm, ExtraTrees and histogram gradient
+boosting \citep{geurts2006extremely,friedman2001greedy,hastie2009elements}. This group tests
+whether external covariates alone contain enough information to reconstruct the target.
+\vspace{0.25cm}
+
+\textbf{Gap-edge residual models.}
+The gap-edge residual arm uses the same tabular learner family, but changes both the input and
+the target of the supervised problem. It augments the external feature vector $\phi_t$ with
+target-derived gap-edge summaries
+\[
+    \psi_G=\psi\!\left(\mathbf y_{\mathrm{edge}(G)}\right),
+\]
+computed from visible observations before and after the artificial gap, such as boundary values,
+pre-/post-gap rolling means, and edge-to-edge slope. Rather than predicting $y_t$ directly, the
+model predicts the residual over linear interpolation:
+\[
+    r_t = y_t-\tilde y_t^{\mathrm{lin}},
+    \qquad
+    \hat r_t = g(\phi_t,\psi_G),
+    \qquad
+    \hat y_t=\tilde y_t^{\mathrm{lin}}+\hat r_t .
+\]
+This formulation asks a narrower question than the external tabular arm. It does not try to
+replace interpolation from scratch; it tests whether external features and gap-edge context can
+detect systematic interpolation error.
+\vspace{0.25cm}
+
+\textbf{TS-ICL.}
+TS-ICL is a pretrained time-series foundation model used here in zero-shot mode, with no
+station-specific fitting or fine-tuning \citep{lenaour2026tsicl,tsicl_software}. For an
+imputation gap, let $\mathcal T_{\mathrm{ctxt}}$ denote the visible target timestamps and
+$\mathcal T_{\mathrm{tgt}}=G$ the hidden timestamps. The TS-ICL problem can be written as
+conditional inference
+\[
+    p\!\left(\mathbf y_G
+    \mid
+    \mathbf y_{\mathrm{ctxt}},\mathbf X_{\mathrm{covar}}\right),
+\]
+where $\mathbf X_{\mathrm{covar}}$ denotes optional aligned or partially available covariate
+channels. Architecturally, TS-ICL first encodes timestamp--value observations and covariates into
+latent temporal representations, aggregates information across channels, builds
+timestamp-specific context representations, and finally applies an in-context regressor based on
+causal self-attention. In the notation of Figure~\ref{fig:model_ladder}, the point
+reconstruction used for scoring is summarized as
+\[
+    \hat{\mathbf y}_G = F(\mathbf y_{\mathrm{ctxt}},\mathbf X_{\mathrm{covar}}).
+\]
+Unlike the tabular models, TS-ICL does not receive one fixed feature vector per hidden day. It
+receives a masked target sequence and optional time-indexed covariate channels, and reconstructs
+the hidden interval from sequence context. The covariate channels supplied to TS-ICL may still be
+engineered physical summaries, but they enter as time-indexed channels rather than as a single
+per-row tabular design matrix.
+
+\subsection{Artificial gaps, real gaps, and validation scope}
+\label{sec:artificial_gaps}
+
+Methods are ranked only on artificial gaps: observed eligible target values are hidden,
+reconstructed, and compared with the withheld truth. Real gaps have no recorded truth, so their
+reconstructions can support later analyses that require continuous series, but they cannot
+validate or rank methods.
+
+For chlorophyll, the artificial-gap pool contains 681 gaps with lengths up to 60 days,
+stratified by season and year. The 256-day chlorophyll scenario is kept outside the scored pool
+and is used only to illustrate the station's longest real outage. For dissolved oxygen, the pool
+contains 412 gaps: 406 primary gaps with lengths up to 30 days and six longer exploratory gaps.
+Oxygen claims are therefore restricted to the primary $L \leq 30$ range. Longer gaps are harder
+to validate because they require uninterrupted eligible observed runs; as $L$ increases, feasible
+artificial gaps become fewer and long-gap estimates are less stable.
+
+\begin{figure}[!htbp]
+  \centering
+  \resizebox{0.95\textwidth}{!}{\input{figures/fig3_validation_schematic_tikz.tex}}
+  \caption{Artificial-gap validation versus real-gap reconstruction.}
+  \label{fig:validation_schematic}
+\end{figure}
+
+\subsection{Leakage control for target-derived features}
+\label{sec:loco}
+
+For tabular models, removing only the hidden target days is not always enough. Some input columns
+are computed from the target series itself, such as lagged target values, rolling target means,
+pre-/post-gap boundary statistics, and interpolation-residual features. A row outside the hidden
+interval can therefore still leak information if its target-derived feature window reaches into
+the artificial gap. Rows whose target-derived windows overlap the hidden interval are excluded from training; rows whose windows stay fully outside it are kept (Figure~\ref{fig:loco_dependency_window}).
+
+\begin{figure}[!htbp]
+  \centering
+  \resizebox{0.6\textwidth}{!}{\input{figures/fig_loco_dependency_window_tikz.tex}}
+  \caption{Dependency-window leakage control for tabular models.
+Each tabular training row depends on a fixed target-derived window of nearby target values or summaries.
+Rows whose window overlaps the hidden target interval are excluded; rows whose window stays fully outside it are kept.}
+  \label{fig:loco_dependency_window}
+\end{figure}
+
+This filter applies to target-derived features, not to external predictors. Wind, SST, satellite,
+and current covariates may remain available during the artificial gap because they are not the
+withheld in-situ target. TS-ICL also differs from the tabular models: it is not trained on
+per-gap rows, but receives the visible target sequence and time-indexed covariate channels with
+the target values inside the artificial gap masked.
+
+\subsection{Evaluation metrics, stratification, and uncertainty}
+\label{sec:metrics}
+
+The primary metric is mean absolute error (MAE), computed on the modelling scale of each target.
+Chlorophyll is evaluated in $\log_{10}(\texttt{chl\_mean})$ space; back-transformed
+mg~m\textsuperscript{$-3$} values are used only for physical interpretation. Dissolved oxygen is
+evaluated directly in mg/L, with no log transform.
+
+Pooled averages are not sufficient to evaluate a reconstruction method. A method may perform well
+on short background gaps but fail during high-\chl{} episodes or in the tails of the oxygen
+distribution. Results are therefore stratified after reconstruction. Chlorophyll errors are
+examined by gap length, season, event/background status, and predictor availability. Oxygen
+errors are examined by gap length, season, empirical oxygen quantile band, and tail-persistence
+class. 
+
+Uncertainty is estimated with a gap-cluster bootstrap. The resampling unit is the artificial gap,
+not the individual day, and each bootstrap replicate recomputes the relevant error summary after
+resampling gaps. This keeps multiple days errors from the same hidden interval grouped together and
+avoids treating within-gap daily errors as independent observations.
+
+\subsection{Covariate-signal checks}
+\label{sec:covariate_signal}
+
+The benchmark also examines whether external covariates carry useful reconstruction information.
+For tabular tree ensembles, feature-importance summaries are used as descriptive diagnostics of
+which engineered variables the fitted model relies on. These summaries are not interpreted as
+causal attribution: correlated predictors, shared seasonality, and overlapping physical
+mechanisms can all make importance scores unstable or non-unique.
+
+For TS-ICL, covariate evidence is checked with negative-control placebo sequences. The correctly
+aligned covariate sequence is compared with four disrupted versions: a wrong-lag shift, a
+season-shuffled sequence, a year-shifted sequence, and a randomly permuted sequence. A covariate
+family is treated as carrying useful time-aligned signal only if the correctly aligned version
+beats all four placebo versions, with the gap-cluster bootstrap confidence interval for the
+improvement excluding zero. These tests separate physically timed covariate information from the
+generic effect of adding another input channel to the sequence model.

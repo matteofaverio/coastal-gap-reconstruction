@@ -1,0 +1,13 @@
+n_gaps,n_hidden_days,mae_model,mae_interp_matched,bias_model,bias_interp,abs_improvement_vs_interp,rel_improvement_vs_interp,small_n_flag,comparator,quantile_bin,run_category,evidence_tier
+32,38,1.2382,1.1057,-1.2382,-1.0864,-0.1326,-0.1199,False,external_physical_plus_currents__full_series,above_p90,isolated_tail_day,audited_original_tsicl
+45,152,1.3412,1.1782,-1.3356,-1.1502,-0.163,-0.1383,False,external_physical_plus_currents__full_series,above_p90,short_tail_run,audited_original_tsicl
+12,60,0.4161,0.1862,-0.4118,-0.1657,-0.2299,-1.2343,False,external_physical_plus_currents__full_series,above_p90,sustained_tail_run,audited_original_tsicl
+25,30,1.392,1.8025,1.3786,1.6591,0.4105,0.2278,False,external_physical_plus_currents__full_series,below_p10,isolated_tail_day,audited_original_tsicl
+76,229,1.2078,1.1469,1.086,0.8801,-0.061,-0.0532,False,external_physical_plus_currents__full_series,below_p10,short_tail_run,audited_original_tsicl
+50,198,1.4562,1.1905,1.3951,0.9286,-0.2657,-0.2232,False,external_physical_plus_currents__full_series,below_p10,sustained_tail_run,audited_original_tsicl
+32,38,1.1057,1.1057,-1.0864,-1.0864,0.0,0.0,False,model0_linear_interp,above_p90,isolated_tail_day,model0_baseline
+45,152,1.1782,1.1782,-1.1502,-1.1502,0.0,0.0,False,model0_linear_interp,above_p90,short_tail_run,model0_baseline
+12,60,0.1862,0.1862,-0.1657,-0.1657,0.0,0.0,False,model0_linear_interp,above_p90,sustained_tail_run,model0_baseline
+25,30,1.8025,1.8025,1.6591,1.6591,0.0,0.0,False,model0_linear_interp,below_p10,isolated_tail_day,model0_baseline
+76,229,1.1469,1.1469,0.8801,0.8801,0.0,0.0,False,model0_linear_interp,below_p10,short_tail_run,model0_baseline
+50,198,1.1905,1.1905,0.9286,0.9286,0.0,0.0,False,model0_linear_interp,below_p10,sustained_tail_run,model0_baseline

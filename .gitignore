@@ -8,6 +8,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv_tsicl_demo/
 venv/
 env/
 
@@ -15,6 +16,9 @@ env/
 build/
 dist/
 *.egg-info/
+
+# Test artifacts
+.pytest_cache/
 
 # Local data scratch folders (not the tracked data_public/ or results_public/ trees)
 data_local/

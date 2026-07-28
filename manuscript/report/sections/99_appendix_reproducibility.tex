@@ -1,0 +1,485 @@
+% ── Appendix: Technical reproducibility and extended diagnostics ─────────────
+\section{Technical Reproducibility and Extended Diagnostics}
+\label{sec:appendix_repro}
+
+This appendix records the technical details needed to interpret and reproduce the report's main
+results. The accompanying GitHub repository \citep{faverio2026coastal_gap_repository} contains the
+complete scripts, feature matrices, per-gap prediction tables, model outputs, and extended diagnostic
+files. The appendix instead reports the target definitions, validation supports, product provenance,
+benchmark backing tables, and selected robustness diagnostics needed to make the main text auditable.
+
+\subsection{Target definitions and daily quality control}
+\label{app:targets_qc}
+
+Both targets are daily means computed from hourly Tongoy buoy (BTG) observations from the CEAZAMET
+BTG station \citep{ceazamet_btg_station}. A day is eligible only if at least 18 hourly observations
+are valid. Chlorophyll is modelled and scored on $\log_{10}(\texttt{chl\_mean})$, while dissolved
+oxygen is modelled and scored directly in mg/L.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Daily target definitions and quality-control summaries. The date span for both targets
+  is 2015-07-01 to 2026-05-31, for a total of 3988 possible daily records.}
+  \label{tab:appendix_target_qc}
+  \begin{tabularx}{\textwidth}{@{}l l l r r r r@{}}
+    \toprule
+    Target & Channel & Unit & Eligible days & Missing days & Missing share & Real gaps \\
+    \midrule
+    Chlorophyll-a
+    & BTGCLF
+    & mg~m$^{-3}$
+    & 3012
+    & 976
+    & 24.5\%
+    & 128 \\
+
+    Dissolved oxygen
+    & BTGOXD2
+    & mg/L
+    & 2880
+    & 1108
+    & 27.8\%
+    & 125 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Distribution summaries for eligible daily target values.}
+  \label{tab:appendix_target_distributions}
+  \begin{tabular}{l r r r r}
+    \toprule
+    Target & Median & IQR & p05 & p95 \\
+    \midrule
+    Chlorophyll-a (mg~m$^{-3}$)
+    & 3.48 & 5.04 & 0.79 & 15.93 \\
+
+    Dissolved oxygen (mg/L)
+    & 6.43 & 2.34 & 2.82 & 8.80 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{External products and provenance}
+\label{app:data_products}
+
+External products are used as predictor channels. Table~\ref{tab:appendix_products}
+extends the compact product summary in the main text.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{External products used to construct report predictor channels.}
+  \label{tab:appendix_products}
+  \begin{tabularx}{\textwidth}{@{}l X l l X@{}}
+    \toprule
+    Product / source & Role in report & Native scale & Coverage & Notes \\
+    \midrule
+    CEAZAMET BTG / PLV
+    & In-situ sensor targets and local atmospheric forcing.
+    & point, hourly
+    & --
+    & BTG provides the chlorophyll and oxygen targets; PLV provides local meteorological forcing. \\
+
+    GlobColour L4 \chl{}
+    & Satellite biological proxy for surface chlorophyll.
+    & $\sim$4~km, daily
+    & $\sim$90\%
+    & \\
+
+    MUR SST
+    & Sea-surface temperature and thermal-state predictors.
+    & $\sim$1~km, daily
+    & $\sim$98\%
+    & Used for SST and thermal forcing summaries. \\
+
+    CMEMS winds
+    & Regional wind and upwelling forcing predictors.
+    & $\sim$25~km, hourly
+    & $\sim$90\%
+    & Used for wind speed, stress and upwelling-related summaries. \\
+
+    GLORYS12 currents
+    & Regional current and transport predictors.
+    & $\sim$8~km, daily
+    & $>99\%$
+    & Used for current speed, components and transport summaries. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Artificial-gap pools and validation supports}
+\label{app:gap_pools}
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Artificial-gap pools and report validation supports.}
+  \label{tab:appendix_gap_supports}
+  \begin{tabularx}{\textwidth}{@{}l l l r X@{}}
+    \toprule
+    Target & Support & Gap lengths & Gaps & Role in report \\
+    \midrule
+    Chlorophyll
+    & Full TS-ICL pool
+    & $1,3,7,10,14,21,30,45,60$
+    & 681
+    & TS-ICL calibration and covariate-signal diagnostics. \\
+
+    Chlorophyll
+    & Shared ladder support
+    & $1,3,7,14,30$
+    & 449
+    & Main chlorophyll method ranking; all headline comparators evaluated on the same hidden intervals. \\
+
+    Oxygen
+    & Primary support
+    & $1,3,7,10,14,21,30$
+    & 406
+    & Main oxygen method ranking and distribution-tail diagnostics. \\
+
+    Oxygen
+    & Exploratory longer support
+    & $>30$
+    & 6
+    & Not used for headline oxygen claims. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\vspace{-0.5cm}
+\subsection{Feature construction}
+\label{app:feature_model_details}
+
+The main text groups predictors into scientific information channels: calendar/seasonality, target
+history, satellite biological proxy, wind/upwelling forcing, SST, and
+current/transport information. Tabular models require these channels to be converted into explicit
+per-day feature vectors. TS-ICL accepts time-indexed covariate channels, which may still be engineered summaries, but they enter as channels over time rather than as one fixed row of
+tabular features per hidden day.
+
+\begin{small}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+
+\begin{longtable}{P{2.4cm}P{3.2cm}P{4.9cm}P{4.4cm}P{1cm}}  \caption{Feature-construction inventory.}
+  \label{tab:appendix_feature_construction} \\
+  \toprule
+  Feature family & Raw source & Constructed features & Physical meaning & Target \\
+  \midrule
+  \endfirsthead
+
+  \toprule
+  Feature family & Raw source & Constructed features & Physical meaning & Target \\
+  \midrule
+  \endhead
+
+  \bottomrule
+  \endfoot
+
+  Calendar / seasonality
+  & Timestamp
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item month
+    \item year
+    \item sine/cosine doy
+  \end{tabitemize}
+  & Position within the annual upwelling and productivity cycle.
+  & Both \\
+
+  Target history
+& Target record before the gap.
+& \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item 3-, 7-, and 14-day pre-gap statistics;
+    \item short pre-gap slopes;
+  \end{tabitemize}
+& Trend of the observed target approaching the missing interval.
+& Both \\
+
+  Gap-edge context
+  & Target record on both gap sides
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item first pre/post-gap values;
+    \item gap-position geometry;
+    \item edge-to-edge mean, slope;
+  \end{tabitemize}
+  & Behaviour bracketing an internal gap, used to correct interpolation.
+  & Both \\
+
+  Satellite biological proxy
+  & GlobColour L4 \chl{} \citep{garnesson2019globcolour}.
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item nearest-cell log-\chl{};
+    \item $3\times3$ / $5\times5$ box summaries;
+    \item patchiness, gradients;
+    \item doy/moy anomalies;
+  \end{tabitemize}
+  & Regional surface chlorophyll as an external proxy for the in-situ biological signal.
+  & CLF \\
+
+  Wind / upwelling forcing
+  & PLV station winds and CMEMS winds \citep{copernicus_wind_l4}
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item wind components/speed;
+    \item upwelling indices;
+    \item wind-direction persistence;
+    \end{tabitemize}
+  & Mechanical forcing of coastal upwelling.
+  & Both \\
+
+  Solar / atmospheric forcing
+  & PLV meteorology.
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item radiation lags and rolling means;
+    \item pressure/humidity summaries;
+  \end{tabitemize}
+  & Local radiative and atmospheric state over the bay.
+  & Both \\
+
+  SST / thermal state
+  & MUR SST \citep{jpl_mur_sst}
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item nearest-cell SST;
+    \item cooling indices;
+    \item coastal gradients;
+  \end{tabitemize}
+  & Thermal tracer of recently upwelled water and surface stratification.
+  & Both \\
+
+  Current / transport
+  & GLORYS12 currents \citep{lellouche2021glorys12,copernicus_glorys12}
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item current speed/components;
+    \item alongshore and cross-shore;
+    \item divergence, vorticity, Okubo Weiss;
+  \end{tabitemize}
+  & Advection, exchange, and retention conditions over the shelf.
+  & Both \\
+
+  Local BTG diagnostics
+  & BTG water temperature and pressure.
+  & \begin{tabitemize}[leftmargin=*, nosep, topsep=0pt]
+    \item daily mean;
+    \item valid hour count;
+  \end{tabitemize}
+  & Co-located physical state at the buoy, distinct from the oxygen sensor.
+  & OXY \\
+\end{longtable}
+\end{small}
+
+\subsection{Chlorophyll benchmark backing tables}
+\label{app:chl_benchmark_tables}
+
+This subsection gives the numerical backing for the matched chlorophyll benchmark in
+Section~\ref{sec:chl_benchmark}. All values are computed on $\log_{10}(\texttt{chl\_mean})$.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Chlorophyll benchmark summary.}
+  \label{tab:appendix_chl_matched_metrics}
+  \begin{tabular}{l r}
+    \toprule
+    Method & MAE \\
+    \midrule
+    TS-ICL satellite-proxy & 0.221 \\
+    TS-ICL target-only & 0.225 \\
+    Gap-edge residual & 0.229 \\
+    Gaussian process & 0.234 \\
+    Linear interpolation & 0.239 \\
+    External tabular (ExtraTrees) & 0.277 \\
+    External tabular (HGB) & 0.287 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Chlorophyll MAE by gap length.}
+  \label{tab:appendix_chl_by_length}
+  \begin{tabular}{r r r r r r r}
+    \toprule
+    $L$ & Linear interp. & Gaussian process & External tabular & Gap-edge & TS target & TS satellite \\
+    \midrule
+    1  & 0.108 & 0.104 & 0.248 & 0.127 & 0.106 & 0.106 \\
+    3  & 0.133 & 0.129 & 0.257 & 0.143 & 0.123 & 0.122 \\
+    7  & 0.190 & 0.199 & 0.274 & 0.185 & 0.186 & 0.180 \\
+    14 & 0.254 & 0.248 & 0.267 & 0.239 & 0.239 & 0.235 \\
+    30 & 0.278 & 0.266 & 0.295 & 0.265 & 0.259 & 0.254 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \small
+  \caption{Paired chlorophyll MAE differences against TS-ICL satellite-proxy.}
+  \label{tab:appendix_chl_paired_deltas}
+  \begin{tabular}{l r r}
+    \toprule
+    Comparator & $\Delta$MAE & 95\% CI \\
+    \midrule
+    Linear interpolation & -0.018 & [-0.028,\,-0.008] \\
+    External tabular (ExtraTrees) & -0.057 & [-0.072,\,-0.043] \\
+    Gaussian process & -0.013 & [-0.020,\,-0.006] \\
+    Gap-edge residual & -0.009 & [-0.016,\,-0.001] \\
+    TS-ICL target-only & -0.005 & [-0.007,\,-0.002] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Chlorophyll event diagnostics}
+\label{app:chl_extended_diagnostics}
+
+High-\chl{} events remain difficult for all methods. Table~\ref{tab:appendix_chl_event_mae}
+reports the event/non-event split used to support Figure~\ref{fig:chl_event_limitation}.
+
+\begin{table}[H]
+  \centering
+  \small
+  \caption{Chlorophyll event and non-event MAE.}
+  \label{tab:appendix_chl_event_mae}
+  \begin{tabular}{l r r}
+    \toprule
+    Method & Non-event MAE & High-\chl{} event MAE \\
+    \midrule
+    Linear interpolation & 0.223 & 0.272 \\
+    Gaussian process & 0.204 & 0.295 \\
+    External tabular (ExtraTrees) & 0.235 & 0.366 \\
+    Gap-edge residual & 0.205 & 0.281 \\
+    TS-ICL target-only & 0.202 & 0.274 \\
+    TS-ICL satellite-proxy & 0.199 & 0.266 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Oxygen benchmark backing tables}
+\label{app:oxygen_benchmark_tables}
+
+This subsection gives the numerical backing for the primary oxygen benchmark in
+Section~\ref{sec:oxygen_benchmark}. All oxygen MAE values are gap-weighted and reported in mg/L.
+
+\begin{table}[H]
+  \centering
+  \small
+  \caption{Oxygen benchmark by gap length.}
+  \label{tab:appendix_oxygen_by_length}
+  \begin{tabular}{r r r r r r r r}
+    \toprule
+    $L$ & $n$ & Interp. & Ext. tabular & GP & Gap-edge & TS target & TS physical \\
+    \midrule
+    1  & 100 & 0.339 & 0.606 & 0.345 & 0.380 & 0.307 & 0.300 \\
+    3  & 100 & 0.635 & 0.805 & 0.642 & 0.674 & 0.618 & 0.562 \\
+    7  & 78  & 0.863 & 0.949 & 0.861 & 0.876 & 0.846 & 0.824 \\
+    10 & 55  & 0.970 & 0.962 & 0.970 & 0.971 & 0.949 & 0.930 \\
+    14 & 36  & 1.078 & 0.998 & 1.086 & 1.094 & 1.027 & 0.949 \\
+    21 & 22  & 0.966 & 1.102 & 0.963 & 1.005 & 0.992 & 0.945 \\
+    30 & 15  & 1.312 & 1.040 & 1.346 & 1.306 & 1.171 & 1.153 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Paired oxygen MAE differences against TS-ICL physical covariates.}
+  \label{tab:appendix_oxygen_paired_deltas}
+  \begin{tabular}{l r r}
+    \toprule
+    Comparator & $\Delta$MAE (mg/L) & 95\% CI \\
+    \midrule
+    Linear interpolation & -0.059 & [-0.086,\,-0.032] \\
+    External tabular (ExtraTrees) & -0.172 & [-0.229,\,-0.121] \\
+    Gaussian process & -0.064 & [-0.091,\,-0.036] \\
+    Gap-edge residual (ExtraTrees) & -0.084 & [-0.114,\,-0.056] \\
+    TS-ICL target-only & -0.032 & [-0.051,\,-0.014] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The external-tabular curve appears favourable at $L=30$ in the by-length plot, but this stratum has
+only 15 gaps. A focused robustness audit was therefore used to decide whether this local reversal
+should be treated as a headline result. Table~\ref{tab:appendix_oxygen_l30_audit} shows why it is
+kept as a diagnostic caveat only.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Oxygen $L=30$ external-tabular robustness audit.}
+  \label{tab:appendix_oxygen_l30_audit}
+  \begin{tabularx}{\textwidth}{@{}l X@{}}
+    \toprule
+    Diagnostic & Result \\
+    \midrule
+    Number of $L=30$ gaps
+    & 15 \\
+
+    Bootstrap 95\% CI for mean paired difference
+    & [-0.644,\,+0.092] mg/L; includes zero. \\
+
+    Most influential gap
+    & \texttt{OX\_L030\_20241115}, where interpolation has very high error. \\
+
+    Sensitivity interpretation
+    & The apparent mean reversal is influenced by a small number of high-error interpolation
+      cases. \\
+
+    Median / trimmed comparison
+    & Alternative summaries still show some external-tabular advantage, but the mean advantage is
+      not confidence-interval resolved. \\
+
+    Report interpretation
+    & Small-stratum diagnostic, not a headline reversal of the pooled conclusion. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Oxygen tail diagnostics}
+\label{app:oxygen_extended_diagnostics}
+
+The oxygen distribution-tail diagnostics use empirical quantile bands, not ecological thresholds.
+Relative improvement is computed against interpolation.
+The high-tail loss in Table~\ref{tab:appendix_oxygen_quantile_bands} is confidence-interval
+resolved, while the low-tail loss is a point-estimate loss whose confidence interval includes zero.
+The tail-persistence split sharpens the diagnostic pattern but uses smaller strata, especially for
+sustained high oxygen, and is therefore not treated as a separate headline comparison.
+
+\begin{table}[h]
+  \centering
+  \small
+  \caption{Oxygen TS-ICL performance by empirical oxygen quantile band.}
+  \label{tab:appendix_oxygen_quantile_bands}
+  \begin{tabular}{l r r r}
+    \toprule
+    Band & $n$ & Relative improvement & 95\% CI \\
+    \midrule
+    $<p10$ ($<3.78$ mg/L) & 123 & -9.8\% & [-25.7,\,+2.2]\% \\
+    $p10$--$p25$ (3.78--5.10 mg/L) & 170 & +25.5\% & [+19.0,\,+32.2]\% \\
+    $p25$--$p50$ (5.10--6.43 mg/L) & 223 & +21.6\% & [+15.3,\,+27.6]\% \\
+    $p50$--$p75$ (6.43--7.44 mg/L) & 211 & +6.7\% & [-0.8,\,+13.9]\% \\
+    $p75$--$p90$ (7.44--8.30 mg/L) & 121 & -5.9\% & [-20.3,\,+6.7]\% \\
+    $>p90$ ($>8.30$ mg/L) & 79 & -18.8\% & [-35.8,\,-5.6]\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \small
+  \caption{Oxygen tail-persistence diagnostics.}
+  \label{tab:appendix_oxygen_tail_persistence}
+  \begin{tabular}{l r r}
+    \toprule
+    Tail-persistence stratum & $n$ & Relative improvement vs interpolation \\
+    \midrule
+    Low tail, isolated & 25 & 23.1\% \\
+    Low tail, short run (2--6 d) & 76 & -5.2\% \\
+    Low tail, sustained run ($\geq$7 d) & 50 & -22.3\% \\
+    High tail, isolated & 32 & -12.3\% \\
+    High tail, short run (2--6 d) & 45 & -13.8\% \\
+    High tail, sustained run ($\geq$7 d) & 12 & -123.4\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
