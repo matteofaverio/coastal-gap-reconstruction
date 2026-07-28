@@ -29,8 +29,22 @@ second sensor.
 
 ## data_public/oxygen/oxygen_validation_gaps.csv
 
-The artificial-gap validation pool for oxygen (L=1-30 days). Same schema
-pattern as `chlorophyll_validation_gaps.csv` (one row per artificial gap).
+The artificial-gap validation pool for oxygen. Same schema pattern as
+`chlorophyll_validation_gaps.csv` (one row per artificial gap), plus a
+`support_role` column distinguishing two tiers:
+
+- **`primary`** (406 gaps, L in {1, 3, 7, 10, 14, 21, 30}) -- the support
+  behind every oxygen benchmark result and headline finding in this
+  repository (`results_public/oxygen/oxygen_benchmark_by_length.csv` and
+  every other oxygen results table are computed only on this tier).
+- **`exploratory_extended`** (6 gaps, L in {45, 60, 90, 120}) -- longer
+  gaps included in the pool but **not** used in any published benchmark
+  number. Too few gaps at each length for a statistically meaningful
+  comparison; included for future extension of the validated range, not as
+  current evidence. Do not cite performance at these lengths as validated.
+
+Any claim about oxygen reconstruction accuracy in this repository refers to
+the `primary` tier (L=1-30 days) unless explicitly stated otherwise.
 
 ## data_public/oxygen/oxygen_real_gap_inventory_by_class.csv
 
@@ -156,17 +170,35 @@ One row per real (naturally occurring) gap in the observed record.
 Day-level TS-ICL reconstruction output (satellite chlorophyll proxy
 covariate configuration), covering both real and artificial gap positions.
 
+Every quantity is provided on **both** scales, with the scale explicit in
+the column name: `_log10_chl` columns are on the log10(mg/m³) scale TS-ICL
+was run on; `_chl_mg_m3` columns are back-transformed to physical
+chlorophyll units (`10 ** value_log10`). Do not mix a `_log10_chl` column
+with a `_chl_mg_m3` column in the same computation.
+
 | Column | Description |
 |---|---|
 | gap_id | Gap identifier (links to a real or artificial gap) |
 | date | Reconstructed day |
 | pred_log10_chl | Point prediction, log10 chlorophyll scale |
-| pred_chl | Point prediction, back-transformed to chlorophyll units |
-| q05, q10, q25, q50, q75, q90, q95 | Quantile predictions (log10 scale), forming an uncertainty band |
+| q05_log10_chl, q10_log10_chl, q25_log10_chl, q50_log10_chl, q75_log10_chl, q90_log10_chl, q95_log10_chl | Quantile predictions, log10 scale, forming an uncertainty band |
+| pred_chl_mg_m3 | Point prediction, back-transformed to chlorophyll units (mg/m³) |
+| q05_chl_mg_m3, q10_chl_mg_m3, q25_chl_mg_m3, q50_chl_mg_m3, q75_chl_mg_m3, q90_chl_mg_m3, q95_chl_mg_m3 | Same quantiles, back-transformed to mg/m³ (`10 ** q*_log10_chl`) |
 | artificial_validation_supported | True if this gap length/configuration has validation-grade support from the artificial-gap pool |
 | event_caveat | Free-text note on event-day handling; no event-specific bias correction is applied in this output |
 | quantile_calibrated | Whether the quantile outputs have been calibration-checked |
 | scenario_only_256day | True if this row belongs to the 256-day scenario-only gap |
+
+**Correction note (2026-07-28):** earlier versions of this file had a
+`pred_chl` column already in physical units (mg/m³) sitting next to
+`q05...q95` columns that were still on the log10 scale, with no unit in
+the column name to disambiguate. That was a genuine schema bug -- using
+those `q05...q95` values directly as physical-unit uncertainty bounds
+produced nonsensical results (including negative chlorophyll). The schema
+above replaces it; no underlying model output was changed, only the
+column names and the addition of correctly back-transformed physical-scale
+quantile columns. See `tests/test_quantile_schema.py` for the regression
+check.
 
 ## results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv
 
