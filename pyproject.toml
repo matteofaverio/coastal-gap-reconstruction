@@ -20,9 +20,23 @@ dependencies = [
 [project.optional-dependencies]
 plotting = ["matplotlib>=3.6"]
 stats = ["scipy>=1.9"]
-tsicl = ["torch>=2.0"]
+
+# NOTE: TS-ICL itself is intentionally NOT installed via this project's
+# extras -- it lives only in the isolated demo environment created by
+# demo/run_demo.sh (see demo/README.md). This extra installs just the
+# torch dependency needed to *develop against* src/coastal_gap_reconstruction/tsicl_helpers.py
+# (tensor-shape utilities) without pulling in tsicl or its checkpoint.
+tsicl-dev = ["torch>=2.0"]
 notebooks = ["jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
 test = ["pytest>=7", "nbconvert>=7", "ipykernel", "jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501", "E712", "E714"]  # pandas boolean-Series comparisons read clearer this way

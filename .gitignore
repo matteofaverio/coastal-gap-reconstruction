@@ -33,3 +33,20 @@ checkpoints/
 
 # OS cruft
 .DS_Store
+
+# LaTeX auxiliaries / Tectonic build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+tectonic.log
+
+# ruff cache
+.ruff_cache/
