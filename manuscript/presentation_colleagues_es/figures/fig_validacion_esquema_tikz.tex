@@ -1,0 +1,82 @@
+% Copia traducida (ES) de manuscript/presentation/figures/fig3_validation_schematic_tikz.tex.
+% El original en ingles no se modifica. Misma logica de dibujo, solo cambian las etiquetas.
+\definecolor{vgObserved}{HTML}{2A7F8E}
+\definecolor{vgHidden}{HTML}{C0504D}
+\definecolor{vgRecon}{HTML}{1B9E77}
+\definecolor{vgMiss}{HTML}{9AA6B2}
+\definecolor{vgInk}{HTML}{2B2B2B}
+
+\begin{tikzpicture}[x=0.5cm, y=0.5cm, font=\small,
+    obs/.style={fill=vgObserved, draw=vgInk, line width=0.2pt},
+    mask/.style={fill=vgHidden, draw=vgInk, line width=0.2pt},
+    flow/.style={-{Latex[length=2.1mm]}, vgInk, line width=0.7pt},
+    recon/.style={vgRecon, line width=1.3pt, dash pattern=on 3pt off 2pt},
+    rdot/.style={circle, fill=vgRecon, draw=none, inner sep=1.0pt}]
+
+  \def\XA{0}   \def\XB{13}  \def\XC{25.4}
+  \def\YA{3.4} \def\YB{0.0}
+
+  \node[font=\bfseries, text=vgInk] at (4.9,5.75)  {Serie registrada};
+  \node[font=\bfseries, text=vgInk] at (17.9,5.75) {Operación de reconstrucción};
+  \node[font=\bfseries, text=vgInk, anchor=west] at (24.6,5.75) {Significado};
+
+  \node[font=\bfseries, text=vgInk, align=center] at (-2.1,3.75) {Gap\\artificial};
+  \node[font=\bfseries, text=vgInk, align=center] at (-2.1,0.35) {Gap\\real};
+
+  \draw[vgMiss, line width=0.3pt] (-3.4,1.95) -- (33.6,1.95);
+
+  % ROW 1 -- GAP ARTIFICIAL
+  \foreach \i in {0,...,9}{ \fill[obs] (\XA+\i,\YA) rectangle (\XA+\i+0.8,\YA+0.7); }
+  \draw[vgHidden, line width=0.7pt, dash pattern=on 2pt off 1.5pt]
+      (\XA+3.9,\YA-0.12) rectangle (\XA+6.9,\YA+0.82);
+  \draw[decorate,decoration={brace,amplitude=3pt},line width=0.4pt,vgInk]
+      (\XA+3.9,\YA+0.95) -- (\XA+6.9,\YA+0.95)
+      node[midway,above=1pt,font=\footnotesize,text=vgInk] {valores conocidos};
+  \node[font=\small, text=vgInk] at (4.9,\YA-0.75) {valores observados};
+
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs]  (\XB+\i,\YA) rectangle (\XB+\i+0.8,\YA+0.7); }
+  \foreach \i in {4,5,6}{        \fill[mask] (\XB+\i,\YA) rectangle (\XB+\i+0.8,\YA+0.7); }
+  \draw[recon] plot[smooth] coordinates
+      {(\XB+3.9,\YA+0.35) (\XB+4.4,\YA+0.58) (\XB+5.4,\YA+0.18)
+       (\XB+6.4,\YA+0.55) (\XB+6.9,\YA+0.33)};
+  \foreach \x/\y in {4.4/0.58, 5.4/0.18, 6.4/0.55}{ \node[rdot] at (\XB+\x,\YA+\y) {}; }
+  \node[font=\footnotesize, text=vgHidden] at (\XB+5.0,\YA+1.15) {ocultar tramo conocido};
+  \node[font=\footnotesize, text=vgRecon]  at (\XB+5.0,\YA-0.55) {reconstruir};
+
+  \node[anchor=west, align=left, text=vgInk] at (\XC-0.25,\YA+0.35)
+      {comparar reconstrucción con\\ el valor observado oculto\\
+       $\Rightarrow$ calcular error};
+
+  % ROW 2 -- GAP REAL
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs] (\XA+\i,\YB) rectangle (\XA+\i+0.8,\YB+0.7); }
+  \foreach \i in {4,5,6}{
+      \draw[draw=vgMiss,line width=0.4pt] (\XA+\i,\YB) rectangle (\XA+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i,\YB)      -- (\XA+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i+0.4,\YB)  -- (\XA+\i+0.8,\YB+0.35);
+      \draw[vgMiss,line width=0.4pt] (\XA+\i,\YB+0.35) -- (\XA+\i+0.4,\YB+0.7);
+  }
+  \node[font=\small, text=vgInk] at (4.9,\YB-0.75) {tramo realmente faltante};
+
+  \foreach \i in {0,1,2,3,7,8,9}{ \fill[obs] (\XB+\i,\YB) rectangle (\XB+\i+0.8,\YB+0.7); }
+  \foreach \i in {4,5,6}{
+      \draw[draw=vgMiss,line width=0.4pt] (\XB+\i,\YB) rectangle (\XB+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i,\YB)      -- (\XB+\i+0.8,\YB+0.7);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i+0.4,\YB)  -- (\XB+\i+0.8,\YB+0.35);
+      \draw[vgMiss,line width=0.4pt] (\XB+\i,\YB+0.35) -- (\XB+\i+0.4,\YB+0.7);
+  }
+  \draw[recon] plot[smooth] coordinates
+      {(\XB+3.9,\YB+0.35) (\XB+4.4,\YB+0.58) (\XB+5.4,\YB+0.18)
+       (\XB+6.4,\YB+0.55) (\XB+6.9,\YB+0.33)};
+  \foreach \x/\y in {4.4/0.58, 5.4/0.18, 6.4/0.55}{ \node[rdot] at (\XB+\x,\YB+\y) {}; }
+  \node[font=\footnotesize, text=vgRecon] at (\XB+5.0,\YB-0.55) {reconstruir};
+
+  \node[anchor=west, align=left, text=vgInk] at (\XC-0.25,\YB+0.35)
+      {no hay nada contra que comparar\\
+       $\Rightarrow$ no es evidencia de validación};
+
+  \draw[flow] (10.2,\YA+0.35) -- (12.7,\YA+0.35);
+  \draw[flow] (10.2,\YB+0.35) -- (12.7,\YB+0.35);
+  \draw[flow] (23.1,\YA+0.35) -- (24.7,\YA+0.35);
+  \draw[flow] (23.1,\YB+0.35) -- (24.7,\YB+0.35);
+
+\end{tikzpicture}
