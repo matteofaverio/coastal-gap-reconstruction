@@ -54,5 +54,15 @@ trustworthy estimate of true conditions during that period.
 | Evidence type | Ground truth available | Use for method ranking? | Use for plausible values? |
 |---|---|---|---|
 | Artificial-gap validation (L <= 60 days) | Yes (withheld) | Yes | Yes |
-| Real-gap candidate outputs (L < 200 days, roughly) | No | No | Yes, with caution |
-| 256-day scenario gap | No | No | No -- illustrative only |
+| Real-gap candidate outputs, `extrapolation_beyond_validation` = `no` or `interpolation_within_range` | No | No | Yes, with caution |
+| Real-gap candidate outputs, `extrapolation_beyond_validation` = `yes` or `open_ended` | No | No | Yes, with more caution -- outside the discretely validated gap-length set |
+| 256-day scenario gap (`scenario_only_256day` = `True`) | No | No | No -- illustrative only |
+
+The `extrapolation_beyond_validation` and `scenario_only_256day` columns in
+`chlorophyll_real_gap_candidate_outputs.csv` state each real gap's exact status
+per-row; do not summarize this as a single day-length cutoff -- artificial-gap
+validation was run at discrete lengths (1, 3, 7, 10, 14, 21, 30, 45, 60 days;
+see `data_public/chlorophyll/chlorophyll_validation_gaps.csv` and
+`docs/methodology/validation_protocol.md`), not as a continuous envelope up to
+some maximum, so a real gap's length alone does not determine its validation
+status.
