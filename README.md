@@ -367,6 +367,16 @@ must be re-made deliberately for a new variable, not inherited by default
 (L=1-30 days vs. chlorophyll's L=1-60) were set independently based on its
 own missingness structure.
 
+The pipeline code itself (`src/coastal_gap_reconstruction/`) does not
+hardcode chlorophyll's column names: `generate_gap_candidates`,
+`apply_artificial_gap`, `run_all_baselines`, and `compute_gap_metrics` all
+accept `target_col`/`eligible_col` arguments, and notebook 09's Steps 1-4
+now execute for real against the oxygen data shipped in `data_public/oxygen/`
+(not just describe what you would do) as proof this transfers -- see
+`config/contracts/oxygen_target_contract.yaml`. To point the pipeline at a
+sensor not already in this repository, start from
+`config/contracts/target_contract_template.yaml`.
+
 ## 14. Limitations
 
 - **Event/high-chlorophyll performance is unresolved.** Every method

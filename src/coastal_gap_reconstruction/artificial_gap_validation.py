@@ -19,6 +19,11 @@ Design rules enforced here:
 - Hidden target values must never leak into the feature engineering for a
   candidate gap (e.g. lag/rolling-window features must be computed only
   from masked data).
+
+`generate_gap_candidates` and `apply_artificial_gap` accept `target_col` /
+`eligible_col` overrides so this framework runs unchanged against a target
+table for any sensor/variable -- see `data_loading.TARGET_COL` /
+`data_loading.ELIGIBLE_COL` for the chlorophyll defaults.
 """
 
 from __future__ import annotations
@@ -88,18 +93,23 @@ def generate_gap_candidates(
     gap_lengths: list[int] = GAP_LENGTHS,
     seed: int = RANDOM_SEED,
     max_per_length: int = MAX_GAPS_PER_LENGTH,
+    target_col: str = TARGET_COL,
+    eligible_col: str = ELIGIBLE_COL,
 ) -> pd.DataFrame:
     """Generate a pool of artificial gap candidates.
 
     Every hidden day in a candidate gap is required to be eligible. Event
     status (is_high_chl_event) flags gaps whose true values exceed the 90th
     percentile of all eligible target values, useful for stratified scoring.
+
+    `target_col`/`eligible_col` let this run against any sensor's daily
+    target table, not just the default chlorophyll columns.
     """
-    eligible_mask = target_df[ELIGIBLE_COL].fillna(False).astype(bool)
-    eligible_target = target_df.loc[eligible_mask, TARGET_COL].dropna()
+    eligible_mask = target_df[eligible_col].fillna(False).astype(bool)
+    eligible_target = target_df.loc[eligible_mask, target_col].dropna()
     high_threshold = eligible_target.quantile(0.90)
 
-    runs = find_eligible_runs(target_df)
+    runs = find_eligible_runs(target_df, eligible_col=eligible_col)
 
     rows: list[dict] = []
     for gap_length in gap_lengths:
@@ -113,7 +123,7 @@ def generate_gap_candidates(
         for start in selected:
             end = start + pd.Timedelta(days=gap_length - 1)
             hidden_dates = pd.date_range(start, end, freq="D")
-            hidden_vals = target_df.loc[target_df.index.isin(hidden_dates), TARGET_COL]
+            hidden_vals = target_df.loc[target_df.index.isin(hidden_dates), target_col]
 
             gap_id = f"L{gap_length:02d}_{start.strftime('%Y%m%d')}"
             season = SEASON_MAP[start.month]
@@ -142,6 +152,7 @@ def apply_artificial_gap(
     target_df: pd.DataFrame,
     start_date: pd.Timestamp,
     gap_length: int,
+    target_col: str = TARGET_COL,
 ) -> pd.DataFrame:
     """Return a copy of target_df with the target column masked over the gap.
 
@@ -152,5 +163,5 @@ def apply_artificial_gap(
     hidden_dates = pd.date_range(start_date, periods=gap_length, freq="D")
     for d in hidden_dates:
         if d in masked.index:
-            masked.loc[d, TARGET_COL] = np.nan
+            masked.loc[d, target_col] = np.nan
     return masked

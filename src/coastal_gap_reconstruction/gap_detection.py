@@ -9,6 +9,10 @@ Two related but distinct ideas are used throughout this benchmark:
 - "real gaps": stretches of consecutive non-eligible (missing/insufficient)
   days in the observed record. These are naturally occurring missingness,
   not constructed for validation.
+
+All functions accept an `eligible_col` override so the same logic can run
+against a target table for any sensor/variable, not just the default
+chlorophyll column name -- see `data_loading.ELIGIBLE_COL` for the default.
 """
 
 from __future__ import annotations
@@ -18,13 +22,15 @@ import pandas as pd
 from .data_loading import ELIGIBLE_COL
 
 
-def find_eligible_runs(target_df: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.Timestamp, int]]:
+def find_eligible_runs(
+    target_df: pd.DataFrame, eligible_col: str = ELIGIBLE_COL
+) -> list[tuple[pd.Timestamp, pd.Timestamp, int]]:
     """Find maximal consecutive runs of eligible calendar days.
 
     Returns a list of (start, end, length) tuples. "Consecutive" means
     sequential calendar days with no non-eligible day in between.
     """
-    eligible_mask = target_df[ELIGIBLE_COL].fillna(False).astype(bool)
+    eligible_mask = target_df[eligible_col].fillna(False).astype(bool)
     eligible_dates = sorted(target_df.index[eligible_mask])
 
     if not eligible_dates:
@@ -46,13 +52,15 @@ def find_eligible_runs(target_df: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.T
     return runs
 
 
-def find_real_gaps(target_df: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.Timestamp, int]]:
+def find_real_gaps(
+    target_df: pd.DataFrame, eligible_col: str = ELIGIBLE_COL
+) -> list[tuple[pd.Timestamp, pd.Timestamp, int]]:
     """Find maximal consecutive runs of non-eligible (missing) calendar days.
 
     Returns a list of (start, end, length) tuples for naturally occurring
     gaps in the observed record (not artificial/constructed gaps).
     """
-    eligible_mask = target_df[ELIGIBLE_COL].fillna(False).astype(bool)
+    eligible_mask = target_df[eligible_col].fillna(False).astype(bool)
     missing_dates = sorted(target_df.index[~eligible_mask])
 
     if not missing_dates:
@@ -74,14 +82,14 @@ def find_real_gaps(target_df: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.Times
     return runs
 
 
-def coverage_summary(target_df: pd.DataFrame) -> dict:
+def coverage_summary(target_df: pd.DataFrame, eligible_col: str = ELIGIBLE_COL) -> dict:
     """Compute basic coverage/missingness summary statistics.
 
     Returns a dict with total days, eligible days, eligible fraction,
     number of real gaps, and the longest real gap length.
     """
-    eligible_mask = target_df[ELIGIBLE_COL].fillna(False).astype(bool)
-    real_gaps = find_real_gaps(target_df)
+    eligible_mask = target_df[eligible_col].fillna(False).astype(bool)
+    real_gaps = find_real_gaps(target_df, eligible_col=eligible_col)
     return {
         "n_days_total": len(target_df),
         "n_days_eligible": int(eligible_mask.sum()),

@@ -1,0 +1,41 @@
+# Canonical oxygen target contract.
+#
+# Companion to target_contract.yaml (chlorophyll), demonstrating that the same contract
+# structure -- and the same code in src/coastal_gap_reconstruction/, called with target_col=
+# oxygen_mean_mgL / eligible_col=eligible_ge_18 -- transfers to a second sensor/variable at
+# the same station. See notebooks/09_adapting_the_workflow_to_a_new_sensor.ipynb for the
+# walkthrough this contract backs, and target_contract_template.yaml for a blank starting point
+# for a sensor not already in this repository.
+
+canonical_target:
+  name: daily_in_situ_dissolved_oxygen
+  source_file: data_public/oxygen/oxygen_daily_target.csv
+  column: oxygen_mean_mgL
+  observed_mask_column: eligible_ge_18
+  eligibility_rule: "valid_hours >= 18"
+
+  date_range:
+    start: "2015-07-01"
+    end: "2026-05-31"
+
+  counts:
+    total_rows: 3988
+    eligible_observed_days: 2880
+    missing_or_ineligible_days: 1108
+
+notes: >
+  Oxygen shares the station, date range, and eligibility-rule convention (valid_hours >= 18)
+  with the chlorophyll case study, but has its own column names (oxygen_mean_mgL,
+  eligible_ge_18 rather than chl_mean, target_eligible_default) and its own gap pool
+  (oxygen_validation_gaps.csv, see below). No code change was required to support it --
+  only this contract plus target_col/eligible_col arguments passed into the shared
+  src/coastal_gap_reconstruction functions.
+
+canonical_gap_pool:
+  path: data_public/oxygen/oxygen_validation_gaps.csv
+  row_count: 412
+  allowed_gap_lengths: [1, 3, 7, 10, 14, 21, 30, 45, 60, 90, 120]
+  target_variable_column: target_variable
+  eligibility_column_column: eligibility_column
+  gap_id_uniqueness:
+    rule: "All gap_id values in the canonical pool must be unique."

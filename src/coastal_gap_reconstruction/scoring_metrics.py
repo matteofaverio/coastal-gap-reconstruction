@@ -25,6 +25,7 @@ def compute_gap_metrics(
     gap_length: int,
     gap_id: str,
     gap_info: dict,
+    target_col: str = TARGET_COL,
 ) -> list[dict]:
     """Compute per-gap metrics for each method in `predictions`.
 
@@ -32,6 +33,9 @@ def compute_gap_metrics(
     = overestimate), Pearson r (NaN for gap_length == 1 or constant
     predictions), n_valid (days with both true and predicted values), and
     coverage (fraction of hidden days with a non-NaN prediction).
+
+    `target_col` lets this score against any sensor's daily target table,
+    not just the default chlorophyll column.
     """
     hidden_dates = pd.date_range(start_date, periods=gap_length, freq="D")
 
@@ -42,7 +46,7 @@ def compute_gap_metrics(
         n_predicted = 0
 
         for d in hidden_dates:
-            true_val = target_df.loc[d, TARGET_COL] if d in target_df.index else np.nan
+            true_val = target_df.loc[d, target_col] if d in target_df.index else np.nan
             pred_val = preds.get(d, np.nan)
             if not np.isnan(pred_val):
                 n_predicted += 1
