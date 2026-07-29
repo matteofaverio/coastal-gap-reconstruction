@@ -46,8 +46,8 @@ EXPECTED_OUTPUT_FILES = [
 ALLOWED_OUTPUT_FILENAMES = {
     "demo_reconstruction_results.csv",
     # One-off diagnostic audit from demo/search_demo_gap.py (not produced by a
-    # normal demo run, but committed alongside it -- see the selection writeup
-    # in reports/VISUAL_DEMO_AND_PUBLIC_PUSH_READINESS_HANDOFF.md).
+    # normal demo run, but committed alongside it -- see that script's
+    # docstring for the selection methodology).
     "demo_gap_selection_audit.csv",
 }
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .demo_helpers import ArtificialGap, QUANTILE_LEVELS, SATELLITE_PROXY_COLUMN, SST_COLUMN, WIND_COLUMN
+from .demo_helpers import QUANTILE_LEVELS, SATELLITE_PROXY_COLUMN, SST_COLUMN, WIND_COLUMN, ArtificialGap
 
 
 @dataclass
