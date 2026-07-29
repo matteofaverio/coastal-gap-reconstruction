@@ -1,0 +1,149 @@
+%% Recorte vectorial de una familia de metodos, generado a partir de
+%% manuscript/presentation/figures/fig_model_ladder_tikz.tex (NO modificado).
+%% Fuente compartida (colores, geometria, macros) copiada tal cual; solo se aisla
+%% un panel y se traducen las tres etiquetas de fila.
+\definecolor{vgTarget}{HTML}{2A7F8E}  % observed target (teal)
+\definecolor{vgRecon}{HTML}{1B9E77}   % reconstruction / smoother output (green)
+\definecolor{vgExt}{HTML}{3B6FA0}     % external predictors / features (blue)
+\definecolor{vgEdge}{HTML}{D98A2B}    % gap-edge / residual correction (amber)
+\definecolor{vgPrior}{HTML}{7E6CA8}   % TS-ICL / pretrained sequence model (violet)
+\definecolor{vgHidden}{HTML}{C0504D}  % hidden gap (red)
+\definecolor{vgInk}{HTML}{2B2B2B}     % text
+\definecolor{vgFaint}{HTML}{9AA6B2}   % row tags / faint rules
+\definecolor{vgGrid}{HTML}{D9DEE2}    % daily time grid
+\definecolor{vgArrow}{HTML}{8A9299}   % flow arrows
+\definecolor{vgPanel}{HTML}{F7F8F9}   % panel background
+\definecolor{vgChip}{HTML}{ECEFF2}    % model chip fill
+
+\definecolor{mBase}{HTML}{5F7F8A}     % simple baselines
+\definecolor{mGP}{HTML}{1B9E77}       % Gaussian process
+\definecolor{mExt}{HTML}{3B6FA0}      % external tabular
+\definecolor{mGap}{HTML}{D98A2B}      % gap-edge residual
+\definecolor{mTS}{HTML}{7E6CA8}       % TS-ICL
+\definecolor{tsgreen}{HTML}{08A69B}
+\definecolor{tsblue}{HTML}{004CF8}
+
+
+\begin{tikzpicture}[x=0.38cm, y=0.38cm, font=\small,
+    flow/.style={-{Latex[length=2mm]}, vgArrow, line width=0.9pt}]
+
+  % ---------------------------------------------------------------------------
+  % Global geometry
+  % ---------------------------------------------------------------------------
+  \def\PW{9.7}        % panel width
+  \def\PH{24.9}       % panel height
+  \def\DX{10.55}      % horizontal shift between panels
+
+  \def\Ytitle{23.95}
+  \def\YmodelA{20.60}
+  \def\YmodelB{22.70}
+  \def\YhowA{10.45}
+  \def\YhowB{19.75}
+  \def\YoutA{1.55}
+  \def\YoutB{9.20}
+
+  \def\Yeq{7.65}      % equation height inside output box
+  \def\ob{2.95}       % baseline of output mini-plots
+
+  % ---------------------------------------------------------------------------
+  % Helpers
+  % ---------------------------------------------------------------------------
+
+  \newcommand{\panelbg}[2]{%
+    \fill[vgPanel, rounded corners=3pt] (-0.25,0.75) rectangle (\PW,\PH);
+    \draw[#2, opacity=0.45, line width=0.65pt, rounded corners=3pt]
+      (-0.25,0.75) rectangle (\PW,\PH);
+    \node[font=\small\bfseries, text=vgInk, align=center] at (4.72,\Ytitle) {#1};
+  }
+
+  \newcommand{\modelchip}[1]{%
+    \fill[vgChip, rounded corners=3pt] (1.05,\YmodelA) rectangle (8.40,\YmodelB);
+    \draw[#1, opacity=0.40, line width=0.55pt, rounded corners=3pt]
+      (1.05,\YmodelA) rectangle (8.40,\YmodelB);
+  }
+
+  \newcommand{\howbox}[1]{%
+    \fill[#1, opacity=0.040, rounded corners=3pt] (0.55,\YhowA) rectangle (8.95,\YhowB);
+    \draw[#1, opacity=0.75, line width=0.7pt, rounded corners=3pt]
+      (0.55,\YhowA) rectangle (8.95,\YhowB);
+  }
+
+  \newcommand{\outbox}[1]{%
+    \fill[#1, opacity=0.040, rounded corners=3pt] (0.55,\YoutA) rectangle (8.95,\YoutB);
+    \draw[#1, opacity=0.75, line width=0.7pt, rounded corners=3pt]
+      (0.55,\YoutA) rectangle (8.95,\YoutB);
+  }
+
+  \newcommand{\imageorfallback}[3]{%
+    \IfFileExists{#1}{%
+      \includegraphics[width=#2]{#1}%
+    }{%
+      \fbox{\parbox[c][2.8cm][c]{#2}{\centering\scriptsize #3}}%
+    }%
+  }
+
+  % output grid with observed context and hidden interval
+  \newcommand{\miniout}[1]{%
+    \foreach \s in {1,...,9}{
+      \draw[vgGrid,line width=0.28pt](0.2+\s*0.9,#1)--(0.2+\s*0.9,#1+3.3);
+    }
+    \fill[vgHidden,opacity=0.12](0.2+3.5*0.9,#1)rectangle(0.2+6.5*0.9,#1+3.3);
+    \draw[vgTarget,line width=1.0pt](1.1,#1+1.35)--(2.0,#1+1.00)--(2.9,#1+1.20);
+    \draw[vgTarget,line width=1.0pt](6.5,#1+2.50)--(7.4,#1+2.85)--(8.3,#1+2.50);
+    \foreach \s/\y in {1/1.35,2/1.00,3/1.20,7/2.50,8/2.85,9/2.50}{
+      \fill[vgTarget](0.2+\s*0.9,#1+\y)circle(0.10);
+    }
+  }
+
+  % compact target-gap sketch used in "how" boxes
+  \newcommand{\howgap}[1]{%
+    \foreach \s in {1,...,9}{
+      \draw[vgGrid,line width=0.25pt](0.2+\s*0.9,#1)--(0.2+\s*0.9,#1+3.3);
+    }
+    \fill[vgHidden,opacity=0.12](0.2+3.5*0.9,#1)rectangle(0.2+6.5*0.9,#1+3.3);
+    \draw[vgTarget,line width=0.95pt](1.1,#1+1.35)--(2.0,#1+1.00)--(2.9,#1+1.20);
+    \draw[vgTarget,line width=0.95pt](6.5,#1+2.50)--(7.4,#1+2.85)--(8.3,#1+2.50);
+    \foreach \s/\y in {1/1.35,2/1.00,3/1.20,7/2.50,8/2.85,9/2.50}{
+      \fill[vgTarget](0.2+\s*0.9,#1+\y)circle(0.09);
+    }
+  }
+
+
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,22.10) {MÉTODO};
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,15.10) {MECANISMO};
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,5.35) {SALIDA};
+
+  % ---------------------------------------------------------------------------
+  \begin{scope}[shift={(0,0)}]
+    \panelbg{Residuo de borde}{mGap}
+    \modelchip{mGap}
+    \node[font=\scriptsize, text=vgInk, align=center, text width=3.0cm] at (4.72,21.65)
+      {HGB, ExtraTrees};
+
+    \howbox{mGap}
+    % mecanismo: interpolacion + bordes + covariables -> residuo aprendido
+    \node[font=\tiny,text=vgInk,align=center,text width=3.2cm] at (4.75,18.55)
+      {interpolación lineal + bordes pre/post + covariables $\phi_t$};
+    \draw[flow,line width=0.7pt] (4.75,17.15)--(4.75,16.55);
+    \node[font=\scriptsize,text=mGap,align=center,text width=2.8cm] at (4.75,15.55)
+      {residuo aprendido $\psi_G$};
+    \draw[flow,line width=0.7pt] (4.75,14.15)--(4.75,13.55);
+    \node[font=\tiny,text=vgInk,align=center,text width=3.0cm] at (4.75,12.55)
+      {reconstrucción corregida};
+
+    \draw[flow] (4.75,20.35)--(4.75,19.95);
+    \draw[flow] (4.75,10.25)--(4.75,9.55);
+
+    \outbox{mGap}
+    \node[font=\scriptsize,text=vgInk,align=center] at (4.75,\Yeq)
+      {$\hat y_t=\tilde y_t^{\mathrm{lin}} + g(\phi_t,\psi_G)$};
+    \miniout{\ob}
+    % interpolation baseline
+    \draw[vgArrow,line width=1.1pt,dash pattern=on 1.7pt off 1.4pt](2.9,\ob+1.2)--(6.5,\ob+2.5);
+    % residual bars only; no connecting curve
+    \foreach \s/\by/\cy in {4/1.525/0.95,5/1.85/2.42,6/2.175/1.92}{
+      \draw[mGap,line width=1.35pt](0.2+\s*0.9,\ob+\by)--(0.2+\s*0.9,\ob+\cy);
+      \fill[mGap](0.2+\s*0.9,\ob+\cy)circle(0.11);
+    }
+  \end{scope}
+\end{tikzpicture}

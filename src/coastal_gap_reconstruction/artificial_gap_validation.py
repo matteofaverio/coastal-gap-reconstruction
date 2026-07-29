@@ -34,7 +34,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from .data_loading import TARGET_COL, ELIGIBLE_COL
+from .data_loading import ELIGIBLE_COL, TARGET_COL
 from .gap_detection import find_eligible_runs
 
 GAP_LENGTHS = [1, 3, 7, 14, 30, 45, 60]

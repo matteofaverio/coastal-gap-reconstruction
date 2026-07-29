@@ -8,13 +8,36 @@ plot. No function here plots anything or writes to disk.
 from __future__ import annotations
 
 import time
-import warnings
 from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
 
-from .demo_helpers import ArtificialGap, QUANTILE_LEVELS, SATELLITE_PROXY_COLUMN, SST_COLUMN, WIND_COLUMN
+from coastal_gap_reconstruction.tsicl_helpers import (
+    TSICLStatus,
+    impute_masked_series,
+    load_tsicl,
+    log10_to_physical,
+)
+
+from .demo_helpers import QUANTILE_LEVELS, SATELLITE_PROXY_COLUMN, SST_COLUMN, WIND_COLUMN, ArtificialGap
+
+__all__ = [
+    "MethodResult",
+    "TSICLStatus",
+    "load_tsicl",
+    "run_baselines",
+    "run_climatology",
+    "run_external_tabular",
+    "run_gap_edge_residual",
+    "run_gaussian_process",
+    "run_linear_interpolation",
+    "run_persistence",
+    "run_tsicl",
+    "run_tsicl_real_gap",
+    "load_cached_tsicl_predictions",
+    "load_cached_tsicl_real_gap_predictions",
+]
 
 
 @dataclass
@@ -282,55 +305,21 @@ def run_gap_edge_residual(gap: ArtificialGap, full_record: pd.DataFrame) -> Meth
 
 # ---------------------------------------------------------------------------
 # TS-ICL
+#
+# The actual model-loading and model-calling layer (`load_tsicl`,
+# `impute_masked_series`) lives in
+# `src/coastal_gap_reconstruction/tsicl_helpers.py` -- it is reusable,
+# demo-agnostic TS-ICL runtime code, so its authoritative location is the
+# package, not this demo module. This file only wires that shared layer to
+# demo-specific concerns: `ArtificialGap`/real-gap objects, date handling,
+# and the `MethodResult` provenance record.
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class TSICLStatus:
-    live: bool
-    device: str
-    load_time_s: float
-    error: str | None = None
-
-
-def load_tsicl() -> tuple[object | None, TSICLStatus]:
-    """Attempt to load TS-ICL live. Returns (model_or_None, status).
-
-    Never raises: if TS-ICL cannot be loaded (package missing, checkpoint
-    unavailable, incompatible environment), returns `(None, status)` with
-    `status.live = False` and `status.error` set, so the caller can fall back
-    to cached predictions explicitly rather than crashing.
-    """
-    t0 = time.time()
-    try:
-        import torch
-        from tsicl import TSICL
-
-        model = TSICL()
-        load_time = time.time() - t0
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        return model, TSICLStatus(live=True, device=device, load_time_s=load_time)
-    except Exception as e:  # noqa: BLE001 -- deliberately broad: any failure means "fall back"
-        return None, TSICLStatus(live=False, device="unknown", load_time_s=time.time() - t0, error=f"{type(e).__name__}: {e}")
-
-
 def _tsicl_impute(model, target_log10_masked: np.ndarray, covar_array: np.ndarray | None):
-    import torch
-
-    inputs_t = torch.from_numpy(target_log10_masked.astype(np.float32))
-    covars_t = None
-    if covar_array is not None:
-        covars_t = torch.from_numpy(np.ascontiguousarray(covar_array[None, :, :], dtype=np.float32).copy())
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        mean, quantiles = model.impute(
-            inputs=inputs_t,
-            covars=covars_t,
-            quantile_levels=QUANTILE_LEVELS,
-            denormalize=True,
-            replace_by_gt=False,
-        )
-    return mean.numpy(), quantiles.numpy()
+    """Thin demo-local alias kept for notebook/test call-site stability;
+    delegates to `coastal_gap_reconstruction.tsicl_helpers.impute_masked_series`."""
+    return impute_masked_series(model, target_log10_masked, covar_array, quantile_levels=QUANTILE_LEVELS)
 
 
 def run_tsicl(
@@ -356,9 +345,9 @@ def run_tsicl(
     prediction = pd.DataFrame(
         {
             "date": gap.full_series["date"].iloc[gap_lo:gap_hi].to_numpy(),
-            "value": 10 ** mean[gap_lo:gap_hi],
-            "q05": 10 ** quantiles[gap_lo:gap_hi, 0],
-            "q95": 10 ** quantiles[gap_lo:gap_hi, 6],
+            "value": log10_to_physical(mean[gap_lo:gap_hi]),
+            "q05": log10_to_physical(quantiles[gap_lo:gap_hi, 0]),
+            "q95": log10_to_physical(quantiles[gap_lo:gap_hi, 6]),
         }
     )
     return MethodResult(method_name, prediction, time.time() - t0, covariates_used=covariates_used)
@@ -382,9 +371,9 @@ def run_tsicl_real_gap(model, real_gap: pd.DataFrame, target_column: str = "chl_
     prediction = pd.DataFrame(
         {
             "date": real_gap["date"].iloc[gap_lo:gap_hi].to_numpy(),
-            "value": 10 ** mean[gap_lo:gap_hi],
-            "q05": 10 ** quantiles[gap_lo:gap_hi, 0],
-            "q95": 10 ** quantiles[gap_lo:gap_hi, 6],
+            "value": log10_to_physical(mean[gap_lo:gap_hi]),
+            "q05": log10_to_physical(quantiles[gap_lo:gap_hi, 0]),
+            "q95": log10_to_physical(quantiles[gap_lo:gap_hi, 6]),
         }
     )
     return MethodResult(

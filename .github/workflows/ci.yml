@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Sync locked environment (core + notebooks + test extras)
+        run: uv sync --extra notebooks --extra test --locked
+      - name: ruff check
+        run: uv run ruff check .
+      - name: Unit tests
+        run: uv run pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py -q
+      - name: Notebook smoke tests (no TS-ICL checkpoint download)
+        run: uv run pytest tests/test_notebooks_smoke.py -q
+      - name: Demo smoke tests (falls back to cached predictions; does not require live TS-ICL)
+        run: uv run pytest tests/test_demo_smoke.py -q
+
+  build-documents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tectonic
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsSL https://drop-sh.fullyjustified.net | sh
+          sudo mv tectonic /usr/local/bin/
+      - name: Compile report
+        run: cd manuscript/report && tectonic main.tex
+      - name: Compile English presentation
+        run: cd manuscript/presentation && tectonic main.tex
+      - name: Compile poster
+        run: cd manuscript/poster && tectonic main.tex
+      - name: Compile Spanish colleague presentation
+        run: cd manuscript/presentation_colleagues_es && tectonic main.tex

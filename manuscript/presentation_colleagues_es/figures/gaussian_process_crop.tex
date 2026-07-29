@@ -1,0 +1,189 @@
+%% Recorte vectorial de una familia de metodos, generado a partir de
+%% manuscript/presentation/figures/fig_model_ladder_tikz.tex (NO modificado).
+%% Fuente compartida (colores, geometria, macros) copiada tal cual; solo se aisla
+%% un panel y se traducen las tres etiquetas de fila.
+\definecolor{vgTarget}{HTML}{2A7F8E}  % observed target (teal)
+\definecolor{vgRecon}{HTML}{1B9E77}   % reconstruction / smoother output (green)
+\definecolor{vgExt}{HTML}{3B6FA0}     % external predictors / features (blue)
+\definecolor{vgEdge}{HTML}{D98A2B}    % gap-edge / residual correction (amber)
+\definecolor{vgPrior}{HTML}{7E6CA8}   % TS-ICL / pretrained sequence model (violet)
+\definecolor{vgHidden}{HTML}{C0504D}  % hidden gap (red)
+\definecolor{vgInk}{HTML}{2B2B2B}     % text
+\definecolor{vgFaint}{HTML}{9AA6B2}   % row tags / faint rules
+\definecolor{vgGrid}{HTML}{D9DEE2}    % daily time grid
+\definecolor{vgArrow}{HTML}{8A9299}   % flow arrows
+\definecolor{vgPanel}{HTML}{F7F8F9}   % panel background
+\definecolor{vgChip}{HTML}{ECEFF2}    % model chip fill
+
+\definecolor{mBase}{HTML}{5F7F8A}     % simple baselines
+\definecolor{mGP}{HTML}{1B9E77}       % Gaussian process
+\definecolor{mExt}{HTML}{3B6FA0}      % external tabular
+\definecolor{mGap}{HTML}{D98A2B}      % gap-edge residual
+\definecolor{mTS}{HTML}{7E6CA8}       % TS-ICL
+\definecolor{tsgreen}{HTML}{08A69B}
+\definecolor{tsblue}{HTML}{004CF8}
+
+
+\begin{tikzpicture}[x=0.38cm, y=0.38cm, font=\small,
+    flow/.style={-{Latex[length=2mm]}, vgArrow, line width=0.9pt}]
+
+  % ---------------------------------------------------------------------------
+  % Global geometry
+  % ---------------------------------------------------------------------------
+  \def\PW{9.7}        % panel width
+  \def\PH{24.9}       % panel height
+  \def\DX{10.55}      % horizontal shift between panels
+
+  \def\Ytitle{23.95}
+  \def\YmodelA{20.60}
+  \def\YmodelB{22.70}
+  \def\YhowA{10.45}
+  \def\YhowB{19.75}
+  \def\YoutA{1.55}
+  \def\YoutB{9.20}
+
+  \def\Yeq{7.65}      % equation height inside output box
+  \def\ob{2.95}       % baseline of output mini-plots
+
+  % ---------------------------------------------------------------------------
+  % Helpers
+  % ---------------------------------------------------------------------------
+
+  \newcommand{\panelbg}[2]{%
+    \fill[vgPanel, rounded corners=3pt] (-0.25,0.75) rectangle (\PW,\PH);
+    \draw[#2, opacity=0.45, line width=0.65pt, rounded corners=3pt]
+      (-0.25,0.75) rectangle (\PW,\PH);
+    \node[font=\small\bfseries, text=vgInk, align=center] at (4.72,\Ytitle) {#1};
+  }
+
+  \newcommand{\modelchip}[1]{%
+    \fill[vgChip, rounded corners=3pt] (1.05,\YmodelA) rectangle (8.40,\YmodelB);
+    \draw[#1, opacity=0.40, line width=0.55pt, rounded corners=3pt]
+      (1.05,\YmodelA) rectangle (8.40,\YmodelB);
+  }
+
+  \newcommand{\howbox}[1]{%
+    \fill[#1, opacity=0.040, rounded corners=3pt] (0.55,\YhowA) rectangle (8.95,\YhowB);
+    \draw[#1, opacity=0.75, line width=0.7pt, rounded corners=3pt]
+      (0.55,\YhowA) rectangle (8.95,\YhowB);
+  }
+
+  \newcommand{\outbox}[1]{%
+    \fill[#1, opacity=0.040, rounded corners=3pt] (0.55,\YoutA) rectangle (8.95,\YoutB);
+    \draw[#1, opacity=0.75, line width=0.7pt, rounded corners=3pt]
+      (0.55,\YoutA) rectangle (8.95,\YoutB);
+  }
+
+  \newcommand{\imageorfallback}[3]{%
+    \IfFileExists{#1}{%
+      \includegraphics[width=#2]{#1}%
+    }{%
+      \fbox{\parbox[c][2.8cm][c]{#2}{\centering\scriptsize #3}}%
+    }%
+  }
+
+  % output grid with observed context and hidden interval
+  \newcommand{\miniout}[1]{%
+    \foreach \s in {1,...,9}{
+      \draw[vgGrid,line width=0.28pt](0.2+\s*0.9,#1)--(0.2+\s*0.9,#1+3.3);
+    }
+    \fill[vgHidden,opacity=0.12](0.2+3.5*0.9,#1)rectangle(0.2+6.5*0.9,#1+3.3);
+    \draw[vgTarget,line width=1.0pt](1.1,#1+1.35)--(2.0,#1+1.00)--(2.9,#1+1.20);
+    \draw[vgTarget,line width=1.0pt](6.5,#1+2.50)--(7.4,#1+2.85)--(8.3,#1+2.50);
+    \foreach \s/\y in {1/1.35,2/1.00,3/1.20,7/2.50,8/2.85,9/2.50}{
+      \fill[vgTarget](0.2+\s*0.9,#1+\y)circle(0.10);
+    }
+  }
+
+  % compact target-gap sketch used in "how" boxes
+  \newcommand{\howgap}[1]{%
+    \foreach \s in {1,...,9}{
+      \draw[vgGrid,line width=0.25pt](0.2+\s*0.9,#1)--(0.2+\s*0.9,#1+3.3);
+    }
+    \fill[vgHidden,opacity=0.12](0.2+3.5*0.9,#1)rectangle(0.2+6.5*0.9,#1+3.3);
+    \draw[vgTarget,line width=0.95pt](1.1,#1+1.35)--(2.0,#1+1.00)--(2.9,#1+1.20);
+    \draw[vgTarget,line width=0.95pt](6.5,#1+2.50)--(7.4,#1+2.85)--(8.3,#1+2.50);
+    \foreach \s/\y in {1/1.35,2/1.00,3/1.20,7/2.50,8/2.85,9/2.50}{
+      \fill[vgTarget](0.2+\s*0.9,#1+\y)circle(0.09);
+    }
+  }
+
+
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,22.10) {MÉTODO};
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,15.10) {MECANISMO};
+  \node[rotate=90,font=\footnotesize\bfseries,text=vgFaint] at (-2.25,5.35) {SALIDA};
+
+  % ---------------------------------------------------------------------------
+  \begin{scope}[shift={(\DX,0)}]
+    \panelbg{\scalebox{0.85}{Suavizado solo-objetivo}}{mGP}
+    \modelchip{mGP}
+    \node[font=\scriptsize, text=vgInk, align=center, text width=3.0cm] at (4.72,21.65)
+      {Proceso gaussiano};
+
+    \howbox{mGP}
+
+\begin{scope}[yshift=-0.35cm]
+\howgap{13.85}
+
+% Prior mean m(t): faint dashed reference trend
+\draw[vgFaint,line width=0.75pt,dash pattern=on 2pt off 1.5pt]
+  plot[smooth] coordinates{
+    (1.1,15.20)
+    (2.9,15.10)
+    (4.7,15.70)
+    (6.5,16.35)
+    (8.3,16.25)
+  };
+\node[font=\scriptsize,text=vgFaint,anchor=west] at (6.75,14.75) {$m(t)$};
+
+% Posterior uncertainty induced by the covariance kernel inside/near the gap
+\fill[mGP,opacity=0.13]
+  plot[smooth] coordinates{
+    (2.9,15.32)
+    (3.6,15.55)
+    (4.7,16.25)
+    (5.8,16.55)
+    (6.5,16.58)
+  }
+  -- plot[smooth] coordinates{
+    (6.5,16.12)
+    (5.8,15.55)
+    (4.7,15.05)
+    (3.6,14.92)
+    (2.9,14.92)
+  }
+  -- cycle;
+
+% Posterior mean reconstruction
+\draw[mGP,line width=1.65pt]
+  plot[smooth] coordinates{
+    (2.9,15.05)
+    (3.6,15.18)
+    (4.7,15.75)
+    (5.8,16.12)
+    (6.5,16.35)
+  };
+
+% Small covariance cue
+\draw[mGP,line width=0.55pt,opacity=0.85]
+  (4.15,16.15) to[bend left=30] (5.25,16.15);
+\draw[mGP,line width=0.55pt,opacity=0.65]
+  (3.80,16.42) to[bend left=35] (5.60,16.42);
+\node[font=\scriptsize,text=mGP] at (4.70,17.80) {$k(t,t')$};
+\end{scope}
+
+\draw[flow] (4.75,20.35)--(4.75,19.95);
+\draw[flow] (4.75,10.25)--(4.75,9.55);
+
+    \outbox{mGP}
+    \node[font=\scriptsize,text=vgInk,align=center] at (4.75,\Yeq)
+      {$\hat y(t)\sim\mathcal{GP}(m,k)$};
+    \miniout{\ob}
+    \fill[mGP,opacity=0.14]
+      plot[smooth]coordinates{(2.9,\ob+1.25)(3.8,\ob+1.20)(4.7,\ob+2.75)(5.6,\ob+2.25)(6.5,\ob+2.55)}
+      --plot[smooth]coordinates{(6.5,\ob+2.45)(5.6,\ob+1.55)(4.7,\ob+2.00)(3.8,\ob+0.60)(2.9,\ob+1.15)}
+      --cycle;
+    \draw[mGP,line width=1.6pt]
+      plot[smooth]coordinates{(2.9,\ob+1.20)(3.8,\ob+0.90)(4.7,\ob+2.40)(5.6,\ob+1.90)(6.5,\ob+2.50)};
+  \end{scope}
+\end{tikzpicture}

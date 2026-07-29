@@ -20,6 +20,9 @@ if [ ! -d "$VENV" ]; then
     "$VENV/bin/pip" install --upgrade pip -q
     echo "Installing tsicl (pulls in torch, scikit-learn, pandas, numpy, matplotlib) ..."
     "$VENV/bin/pip" install -q tsicl jupyter nbconvert ipykernel
+    echo "Installing this repository's core package (editable) so demo/src/methods.py can import"
+    echo "the shared TS-ICL runtime layer from coastal_gap_reconstruction.tsicl_helpers ..."
+    "$VENV/bin/pip" install -q -e .
 fi
 
 # Register this venv as a named Jupyter kernel so the notebook (which pins kernel

@@ -25,7 +25,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .data_loading import TARGET_COL, ELIGIBLE_COL
+from .data_loading import ELIGIBLE_COL, TARGET_COL
 
 
 def _visible_eligible(

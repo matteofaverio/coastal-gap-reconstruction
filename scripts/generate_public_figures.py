@@ -18,12 +18,13 @@ Requirements:
 
 import os
 import warnings
+
+import matplotlib
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import matplotlib.ticker as mticker
 from matplotlib.lines import Line2D
 
 warnings.filterwarnings("ignore", category=FutureWarning)

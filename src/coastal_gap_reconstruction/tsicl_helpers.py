@@ -20,9 +20,109 @@ license. Review it before using TS-ICL in your own work.
 
 from __future__ import annotations
 
+import time
+import warnings
+from dataclasses import dataclass
+
 import numpy as np
 
 DEFAULT_QUANTILE_LEVELS = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
+
+
+@dataclass
+class TSICLStatus:
+    """Provenance for one `load_tsicl()` attempt.
+
+    `live=False` means the caller should fall back to cached/pre-saved
+    predictions (if any) rather than crash -- see `load_tsicl`.
+    """
+
+    live: bool
+    device: str
+    load_time_s: float
+    error: str | None = None
+
+
+def load_tsicl() -> tuple[object | None, TSICLStatus]:
+    """Attempt to load TS-ICL live. Returns (model_or_None, status).
+
+    Never raises: if TS-ICL cannot be loaded (package missing, checkpoint
+    unavailable, incompatible environment), returns `(None, status)` with
+    `status.live = False` and `status.error` set, so the caller can fall back
+    to cached predictions explicitly rather than crashing. This keeps the
+    optional `tsicl`/`torch` dependency lazy -- importing this module never
+    requires them, only calling `load_tsicl()` does.
+    """
+    t0 = time.time()
+    try:
+        import torch
+        from tsicl import TSICL
+
+        model = TSICL()
+        load_time = time.time() - t0
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        return model, TSICLStatus(live=True, device=device, load_time_s=load_time)
+    except Exception as e:  # noqa: BLE001 -- deliberately broad: any failure means "fall back"
+        return None, TSICLStatus(
+            live=False, device="unknown", load_time_s=time.time() - t0, error=f"{type(e).__name__}: {e}"
+        )
+
+
+def impute_masked_series(
+    model,
+    target_log10_masked: np.ndarray,
+    covariate_array: np.ndarray | None = None,
+    quantile_levels: list[float] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Run one TS-ICL `impute()` call on an already-masked, already-log10 series.
+
+    This is the shared low-level call used by both the demo notebook and
+    `notebooks/06_tsicl_zero_shot_imputation.ipynb`: it does not know about
+    gap objects, dates, or units beyond "caller has already put this series
+    in log10 space and masked the region to reconstruct with NaN".
+
+    Parameters
+    ----------
+    model:
+        A loaded TS-ICL model instance (see `load_tsicl`).
+    target_log10_masked:
+        1D array of length T, log10-scale, NaN at positions to reconstruct.
+    covariate_array:
+        Optional (T, C) covariate array aligned to target_log10_masked.
+    quantile_levels:
+        Quantile levels to request. Defaults to `DEFAULT_QUANTILE_LEVELS`.
+
+    Returns
+    -------
+    (mean, quantiles) as numpy arrays: mean has shape (T,), quantiles has
+    shape (T, len(quantile_levels)), both still in log10 space (unconverted).
+    """
+    import torch  # local import: torch is only needed if you actually run TS-ICL
+
+    if quantile_levels is None:
+        quantile_levels = DEFAULT_QUANTILE_LEVELS
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        inputs_t = torch.from_numpy(np.asarray(target_log10_masked, dtype=np.float32))
+        covars_t = None
+        if covariate_array is not None:
+            covars_t = torch.from_numpy(build_covariate_block(np.asarray(covariate_array)))
+        mean, quantiles = model.impute(
+            inputs=inputs_t,
+            covars=covars_t,
+            quantile_levels=quantile_levels,
+            denormalize=True,
+            replace_by_gt=False,
+        )
+    return mean.numpy(), quantiles.numpy()
+
+
+def log10_to_physical(values_log10: np.ndarray) -> np.ndarray:
+    """Convert a log10-space array (mean, quantiles, or any TS-ICL output) back
+    to physical units. Kept as a named function, not an inline `10 **`, so
+    call sites are explicit about which scale they are working in."""
+    return 10**np.asarray(values_log10)
 
 
 def build_covariate_block(covariate_array: np.ndarray) -> np.ndarray:
@@ -42,7 +142,12 @@ def build_covariate_block(covariate_array: np.ndarray) -> np.ndarray:
     """
     if covariate_array.ndim != 2:
         raise ValueError("covariate_array must be 2D: (T, C)")
-    return np.ascontiguousarray(covariate_array[None, :, :], dtype=np.float32)
+    # .copy() (not just np.ascontiguousarray, which is a no-op and can return a
+    # read-only view if the input is already contiguous float32) guarantees a
+    # writable array, which avoids a PyTorch UserWarning -- that warning's
+    # default text embeds this file's local absolute filesystem path, which we
+    # do not want leaking into any executed-notebook output.
+    return np.ascontiguousarray(covariate_array[None, :, :], dtype=np.float32).copy()
 
 
 def run_tsicl_imputation(

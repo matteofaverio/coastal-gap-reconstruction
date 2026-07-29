@@ -98,7 +98,7 @@ def test_climatology_does_not_use_gap_truth(gap, full_record: pd.DataFrame) -> N
 def test_external_tabular_training_excludes_gap_dates(gap, full_record: pd.DataFrame) -> None:
     result = mth.run_external_tabular(gap, full_record)
     feature_table = result.extra["feature_table"]
-    assert not feature_table["date"].between(gap.gap_start, gap.gap_end).any() is False
+    assert feature_table["date"].between(gap.gap_start, gap.gap_end).any() is not False
     # The model itself must not have been trained on any row inside the gap.
     # We can't inspect sklearn internals directly, but we can check the
     # training-row count excludes exactly the gap window.

@@ -130,17 +130,6 @@
 % discreet source line (bottom of frame)
 \newcommand{\srcline}[1]{\vfill\hbox to\linewidth{{\tiny\color{faint}#1}\hfil}}
 
-% dashed placeholder frame for an asset not yet supplied by the user
-% #1 width, #2 height, #3 label line, #4 sub-label line
-\newcommand{\assetplaceholder}[4]{%
-  \begin{tikzpicture}
-    \node[rounded corners=3pt,draw=faint,line width=1pt,dash pattern=on 4pt off 3pt,
-          fill=panel,minimum width=#1,minimum height=#2,align=center,inner sep=10pt]
-      {\parbox{\dimexpr#1-24pt\relax}{\centering\color{faint}%
-        {\small\bfseries #3}\\[4pt]{\scriptsize #4}}};
-  \end{tikzpicture}%
-}
-
 \newcommand{\yes}{\textcolor{cgreen}{\textbf{\checkmark}}}
 \newcommand{\weak}{\textcolor{camber}{\textbf{\raisebox{0.1ex}{$\sim$}}}}
 \newcommand{\no}{\textcolor{cred}{\textbf{$\times$}}}

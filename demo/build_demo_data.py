@@ -18,8 +18,7 @@ CONTEXT_DAYS = 75
 # candidate 14-day observed intervals, scored on how each of the demo's own
 # method implementations actually performs on that interval (not by manual
 # inspection). See demo/outputs/demo_gap_selection_audit.csv for the top-10
-# ranked candidates and reports/VISUAL_DEMO_AND_PUBLIC_PUSH_READINESS_HANDOFF.md
-# for the full selection writeup.
+# ranked candidates.
 
 REAL_GAP_START = pd.Timestamp("2015-07-01")
 REAL_GAP_END = pd.Timestamp("2015-07-14")

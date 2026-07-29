@@ -55,33 +55,6 @@
 \setlength{\@fptop}{0pt}
 \makeatother
 
-% ── Draft-status / metadata placeholder commands ────────────
-\newcommand{\TODO}[1]{\textcolor{gray!70!black}{\textit{[pending: #1]}}}
-\newcommand{\DRAFTMETA}[1]{\textcolor{gray!70!black}{\textit{#1}}}
-\newcommand{\NOTE}[1]{\textcolor{gray}{\small\textit{Note: #1}}}
-
-% ── Figure-slot placeholder (for figures not yet built at manuscript quality) ──
-% Compact placeholder for a figure not yet built at manuscript quality: renders
-% only a slim bordered box with the caption, so the compiled report reads as a
-% manuscript with figures pending rather than an internal planning document. The
-% full intended-message/panel/evidence-tier brief for each slot lives in a LaTeX
-% comment immediately above the \FIGSLOT call in the source, and is consolidated
-% in docs/project_state/FINAL_REPORT_FIGURE_STORYBOARD_D9.md for whoever builds
-% the final figure. First argument is the figure label; second is the caption.
-\newcommand{\FIGSLOT}[2]{%
-  \begin{figure}[htbp]
-    \centering
-    \fbox{\begin{minipage}{0.75\textwidth}
-      \centering
-      \vspace{0.15cm}
-      \small\textit{Figure pending --- see accompanying repository for the figure storyboard.}
-      \vspace{0.15cm}
-    \end{minipage}}
-    \caption{#2}
-    \label{fig:#1}
-  \end{figure}
-}
-
 % ── Scientific shorthand ────────────────────────────────────
 \newcommand{\chl}{Chl\,\textit{a}}
 \DeclareSIUnit{\ug}{\micro\gram}

@@ -1,0 +1,491 @@
+\documentclass[10pt]{article}
+\usepackage[paperwidth=70cm,paperheight=100cm,margin=0.68cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx,xcolor,tikz,booktabs,tabularx,array,ragged2e,enumitem,helvet,microtype,colortbl}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,decorations.pathreplacing}
+\usepackage[most]{tcolorbox}
+\renewcommand{\familydefault}{\sfdefault}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{nosep,leftmargin=1.05em,itemsep=0.10em,topsep=0.06em}
+\renewcommand{\arraystretch}{1.05}
+
+% ---------- paths ----------
+\newcommand{\UniLogo}{assets/uni_logo.png}
+\newcommand{\CeazaLogo}{assets/ceaza_logo.png}
+\newcommand{\CeazaBanner}{assets/banner.png}
+\newcommand{\FigSite}{figures/fig1_site_map.png}
+\newcommand{\FigTarget}{figures/fig_target_missingness_clean.pdf}
+\newcommand{\FigMainBench}{figures/fig_benchmark_main_alt1.pdf}
+\newcommand{\FigLength}{figures/fig_gaplength_simplified.pdf}
+\newcommand{\FigCovariate}{figures/fig_covariate_mechanism_clean.pdf}
+\newcommand{\FigEvent}{figures/fig_event_limitation_alt1.pdf}
+\newcommand{\FigRealGap}{figures/m4_real_gap_representative_comparison.pdf}
+\newcommand{\FigCaseEvent}{figures/fig_casegap_event_tight.pdf}
+\newcommand{\FigCaseLong}{figures/fig_casegap_long.pdf}
+
+% ---------- palette ----------
+\definecolor{navy}{HTML}{0B2B3D}
+\definecolor{navy2}{HTML}{17445A}
+\definecolor{ocean}{HTML}{0E8A9A}
+\definecolor{teal}{HTML}{219B8F}
+\definecolor{green}{HTML}{2F8A4B}
+\definecolor{eventred}{HTML}{C53D2F}
+\definecolor{orange}{HTML}{D97924}
+\definecolor{gold}{HTML}{EAB73C}
+\definecolor{dark}{HTML}{17252B}
+\definecolor{mid}{HTML}{53666E}
+\definecolor{lightline}{HTML}{BED0D8}
+\definecolor{softblue}{HTML}{E7F3F7}
+\definecolor{softgreen}{HTML}{EAF7ED}
+\definecolor{softsand}{HTML}{FBF0D7}
+\definecolor{softred}{HTML}{FFF0EC}
+\definecolor{softgray}{HTML}{F3F6F7}
+\definecolor{panelbg}{HTML}{FCFEFE}
+\definecolor{cream}{HTML}{FFF8E8}
+\definecolor{bannertan}{HTML}{A8A670}
+\definecolor{rescol}{HTML}{6B3F8C}
+\definecolor{softres}{HTML}{F1EAF6}
+
+% ---------- dimensions ----------
+\newlength{\gapw}
+\newlength{\colw}
+\setlength{\gapw}{0.58cm}
+\setlength{\colw}{\dimexpr(\textwidth - 2\gapw)/3\relax}
+
+% ---------- helpers ----------
+\newcommand{\Logo}[2]{\IfFileExists{#1}{\includegraphics[height=#2,keepaspectratio]{#1}}{\fbox{\parbox[c][#2][c]{4.2cm}{\centering logo}}}}
+\newcommand{\WideBanner}{%
+\noindent\begin{minipage}[c]{1.0\linewidth}\centering
+\IfFileExists{\CeazaBanner}{\includegraphics[width=1.0\linewidth]{\CeazaBanner}}{\parbox[c][3.4cm][c]{0.98\linewidth}{\centering CEAZA banner}}
+\end{minipage}}
+\newcommand{\FigFit}[3]{\IfFileExists{#1}{\includegraphics[width=#2,height=#3,keepaspectratio]{#1}}{\fbox{\parbox[c][#3][c]{#2}{\centering Missing figure\\\ttfamily\detokenize{#1}}}}}
+\newcommand{\body}[1]{{\RaggedRight\fontsize{17.8}{20.0}\selectfont\color{dark}#1\par}}
+\newcommand{\smallbody}[1]{{\RaggedRight\fontsize{16.3}{18.3}\selectfont\color{dark}#1\par}}
+\newcommand{\captiontext}[1]{\vspace{0.10cm}{\RaggedRight\fontsize{14.0}{15.6}\selectfont\color{mid}#1\par}}
+\newcommand{\micro}[1]{{\RaggedRight\fontsize{13.2}{14.6}\selectfont\color{mid}#1\par}}
+\newcommand{\sectiontitle}[3][navy]{\begin{tcolorbox}[enhanced,colback=#1,colframe=#1,boxrule=0pt,arc=2.0pt,left=0.70em,right=0.70em,top=0.32em,bottom=0.33em]\fontsize{27.0}{29.0}\selectfont\bfseries\color{white}#2\hfill{\fontsize{15.5}{16.8}\selectfont\color{white}#3}\end{tcolorbox}\vspace{0.20cm}}
+\newtcolorbox{panel}[2][]{enhanced,colback=panelbg,colframe=navy,boxrule=0.82pt,arc=2.4pt,left=0.74em,right=0.74em,top=1.08em,bottom=0.50em,before skip=0pt,after skip=0pt,title={#2},colbacktitle=navy,coltitle=white,fonttitle=\bfseries\fontsize{21.0}{22.6}\selectfont,attach boxed title to top left={xshift=0.62em,yshift=-0.11em},boxed title style={colframe=navy,colback=navy,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em},#1}
+\newtcolorbox{heropanel}[2][]{enhanced,colback=white,colframe=ocean,boxrule=1.25pt,arc=2.5pt,left=0.84em,right=0.84em,top=1.14em,bottom=0.58em,before skip=0pt,after skip=0pt,title={#2},colbacktitle=ocean,coltitle=white,fonttitle=\bfseries\fontsize{21.0}{22.6}\selectfont,attach boxed title to top left={xshift=0.62em,yshift=-0.11em},boxed title style={colframe=ocean,colback=ocean,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em},#1}
+\newcommand{\Badge}[3]{\tcbox[on line,arc=1.6pt,boxrule=0.55pt,colback=#1,colframe=#2,left=0.42em,right=0.42em,top=0.12em,bottom=0.12em]{\fontsize{13.0}{14.0}\selectfont\bfseries\color{#2}#3}}
+\newcommand{\BigBadge}[3]{\tcbox[on line,arc=2.0pt,boxrule=0.7pt,colback=#1,colframe=#2,left=0.58em,right=0.58em,top=0.18em,bottom=0.18em]{\fontsize{13.5}{14.6}\selectfont\bfseries\color{#2}#3}}
+\newcommand{\metric}[4]{\begin{tcolorbox}[enhanced,colback=#1,colframe=#2,boxrule=0.65pt,arc=2.0pt,left=0.38em,right=0.38em,top=0.24em,bottom=0.24em,height=2.45cm,valign=center]\centering{\fontsize{27}{28}\selectfont\bfseries\color{#2}#3}\par{\fontsize{10.8}{11.6}\selectfont\color{dark}#4}\end{tcolorbox}}
+\newcommand{\chip}[3]{\tcbox[on line,arc=1.8pt,boxrule=0.6pt,colback=#1,colframe=#2,left=0.48em,right=0.48em,top=0.16em,bottom=0.16em]{\fontsize{13.5}{14.6}\selectfont\bfseries\color{#2}#3}}
+\newcommand{\tblhead}[1]{\bfseries\color{white}#1}
+
+\begin{document}
+
+% ================= Header =================
+% Header row height: sized to make the central title/authors block readable
+% given the fixed logo widths on either side.
+\vspace*{0.5cm}
+\newlength{\HeaderRowH}
+\setlength{\HeaderRowH}{4.85cm}
+
+\noindent
+\begin{minipage}[c][\HeaderRowH][c]{0.205\textwidth}
+  \raggedright
+  \includegraphics[
+    width=0.90\linewidth,
+    trim={0.00cm 0.00cm 0.00cm 0.00cm},
+    clip
+  ]{\UniLogo}
+\end{minipage}%
+\begin{minipage}[c][\HeaderRowH][c]{0.590\textwidth}
+  \centering
+
+  {\fontsize{42.5}{44.5}\selectfont\bfseries\color{navy}
+  Zero-shot imputation of coastal in-situ chlorophyll-\textit{a} gaps}\par
+  \vspace{0.22cm}
+
+  {\fontsize{22.5}{24.0}\selectfont\bfseries\color{navy2}
+  Tongoy Balsa, Region de Coquimbo, Chile}\par
+  \vspace{0.26cm}
+
+  {\fontsize{22.0}{23.5}\selectfont\bfseries
+  Matteo Faverio$^{1}$ \quad Orlando Astudillo$^{2}$}\par
+  \vspace{0.18cm}
+
+  {\fontsize{14.2}{15.2}\selectfont
+  $^{1}$Institut Polytechnique de Paris \quad $\cdot$ \quad
+  $^{2}$Centro de Estudios Avanzados en Zonas Áridas (CEAZA)}
+
+\end{minipage}%
+\begin{minipage}[c][\HeaderRowH][c]{0.205\textwidth}
+  \raggedleft
+  \includegraphics[
+    width=0.90\linewidth,
+    trim={0.00cm 0.00cm 0.00cm 0.00cm},
+    clip
+  ]{\CeazaLogo}
+\end{minipage}
+
+\vspace{0.18cm}
+
+\begin{tcolorbox}[
+  enhanced,
+  colback=teal,
+  colframe=teal,
+  boxrule=0pt,
+  arc=2.0pt,
+  left=1.0em,
+  right=1.0em,
+  top=0.40em,
+  bottom=0.40em
+]
+\centering
+{\fontsize{25.0}{22.8}\selectfont\bfseries\color{white}
+A leakage-controlled benchmark for reconstructing a patchy coastal biological record}
+\end{tcolorbox}
+
+\vspace{0.5cm}
+
+
+% ================= Three full-height columns =================
+\noindent\begin{minipage}[t]{\colw}
+\sectiontitle[navy]{BACKGROUND}{coastal signal and target}
+
+\begin{panel}[height=24cm]{One point buoy inside a patchy coastal field}
+\body{Tongoy Balsa is one point sensor inside a patchy coastal upwelling field: it observes daily in-situ Chl-\textit{a} in a system where blooms can be short-lived and spatially heterogeneous. Regional predictors (satellite products, meteorology from a nearby station, reanalysis) can be useful context to explain the upwelling mechanism and thus help predict the Chl-\textit{a} value. The challenge is local biological reconstruction, performing a time series imputation with the help of covariates explaining the physical mechanism.}
+\vspace{0.16cm}
+\includegraphics[
+  width=\linewidth,
+  height=14.6cm,
+  keepaspectratio,
+  trim={2cm 1.2cm 0.5cm 0.1cm},
+  clip
+]{\FigSite}
+\vspace{0.32cm}
+
+\centering\captiontext{Site, PLV meteorological forcing station, extraction domain, and real satellite Chl-\textit{a} context.}
+
+\vspace{0.54cm}
+\smallbody{The Punta Lengua de Vaca meteorological station lies inside an active upwelling cell of the Humboldt system: wind-driven offshore transport brings cold, nutrient-rich water to the surface and can trigger short and intense blooms. Coarse-resolution satellite and reanalysis products average over scales of kilometres to tens of kilometres, so they can miss the bay-scale timing of a bloom that the buoy resolves at daily, point-source resolution. That mismatch in spatial scale is exactly why external products are admitted as covariates but carefully analysed in the model deployment to understand whether they improve or not the performance.}
+\end{panel}
+\vspace{0.20cm}
+
+\begin{panel}[height=21.6cm]{Target record and validation envelope}
+\begin{center}
+\begin{tabular}{@{}p{0.235\linewidth}p{0.235\linewidth}p{0.235\linewidth}p{0.235\linewidth}@{}}
+\metric{softblue}{navy}{3988}{daily records\\2015--2026} & \metric{softgreen}{green}{3012}{eligible days\\$\ge$18 valid h} & \metric{softred}{eventred}{976}{missing / ineligible\\days} & \metric{softsand}{orange}{128}{real gaps\\max 256 d}
+\end{tabular}
+\end{center}
+\vspace{0.14cm}
+{\fontsize{13.0}{14.6}\selectfont
+\renewcommand{\arraystretch}{1.30}
+\begin{tabular}{@{}p{0.34\linewidth}p{0.62\linewidth}@{}}
+\rowcolor{navy}\tblhead{Item} & \tblhead{Definition}\\
+\rowcolor{softgray}target & daily mean in-situ Chl-\textit{a}\\
+\rowcolor{white}eligibility & $\geq$18 valid hourly observations\\
+\rowcolor{softgray}transform & $\log_{10}$ Chl-\textit{a}\\
+\rowcolor{white}score & log-space MAE\\
+\rowcolor{softgray}validation & artificial gaps, $L$=1--60 d\\
+\rowcolor{softred}outside support & 256-d real gap, scenario-only\\
+\end{tabular}}
+\vspace{1.14cm}
+
+\centering\FigFit{\FigTarget}{0.99\linewidth}{10.2cm}
+
+\end{panel}
+\vspace{0.20cm}
+
+\begin{panel}[height=20.5cm]{Information channels and evidence status}
+\smallbody{The considered models required different kind of inputs, thus the feature engineering process is specific to a model choice. Linear models and tabular trees require explicit lags, rolling summaries, anomalies and availability flags in order to capture at best the possible non linearities behind the upwelling mechanism; TS-ICL is already designed for time series and thus consumes raw aligned sequences. It was indeed proven that redundant physical stacks can dilute TS-ICL conditioning rather than help it.}
+\vspace{0.7cm}
+{\fontsize{12.6}{14.0}\selectfont
+\renewcommand{\arraystretch}{1.38}
+\begin{tabular}{@{}p{0.27\linewidth}p{0.34\linewidth}p{0.32\linewidth}@{}}
+\rowcolor{navy}\tblhead{Channel} & \tblhead{Role} & \tblhead{Evidence status}\\
+\rowcolor{softgreen}target history & local biological anchor & strongest local context\\
+\rowcolor{softgreen}satellite Chl-\textit{a} & biological proxy & strongest auxiliary (TS-ICL)\\
+\rowcolor{softgreen}wind / upwelling & forcing pathway & genuine isolated signal\\
+\rowcolor{softgray}SST / cloud / PLV & thermal / meteo context & no placebo-surviving effect\\
+\rowcolor{softred}currents / transport & retention/flushing hypothesis & negative, tested products\\
+\rowcolor{softgray}calendar & seasonal baseline & baseline context only\\
+\end{tabular}}
+\vspace{1cm}
+
+\smallbody{Each channel above was tested by a placebo dissection to understand whether the covariate was truly helpful or not: the same predictor family is supplied either correctly aligned in time or deliberately scrambled (wrong lag, season-shuffled, year-shifted, permuted), and a family only counts as a genuine signal if it beats every one of those four placebo controls. This is what separates ``satellite proxy helps'' from a coincidental correlation that a less careful test would have accepted.}
+\vspace{0.5cm}
+\smallbody{Stacking covariates is not free: with TS-ICL, the best imputing model in our study, a curated low-redundancy physical set (7 columns) scores a mean MAE of 0.1988, essentially tied with the target-only baseline (0.2014), while the full redundant physical union (79 columns) scores 0.2237 -- clearly worse.}
+\vspace{0.5cm}
+\smallbody{This means that more covariates channels without a redundancy check not only affect TS-ICL's inference time, as one could expect, but make conditioning noisier too.}
+\end{panel}
+\vspace{0.20cm}
+
+\begin{panel}[height=10cm]{Claim boundary: real-gap discipline}
+\smallbody{The same four-way distinction recurs across every result on this poster and is restated here as a single reference table.}
+\vspace{0.5cm}
+{\fontsize{13.2}{14.8}\selectfont
+\renewcommand{\arraystretch}{1.34}
+\begin{tabular}{@{}p{0.30\linewidth}p{0.63\linewidth}@{}}
+\rowcolor{softgreen}artificial gaps & hidden truth, validation-grade\\
+\rowcolor{softsand}real gaps & no truth, plausibility/output only\\
+\rowcolor{softred}256-day gap & outside validation, scenario-only\\
+\rowcolor{softgray}event labels & evaluation-only, cannot route real-gap methods\\
+\end{tabular}}
+\vspace{0.14cm}
+\smallbody{Whenever a figure on this poster shows a real-gap reconstruction, treat it as an illustration of model behaviour, not as evidence for or against any method.}
+\vspace{0.34cm}
+\smallbody{It would be easy to point at a plausible-looking real-gap curve and call it evidence. The validation protocol on this research exists specifically to prevent that move. Moreover, validation on long gaps is harder: having many short gaps in the original time series, the longer the desired artificial gap, the harder to find candidate windows that don't include missing days.}
+\end{panel}
+
+\end{minipage}\hspace{\gapw}%
+\begin{minipage}[t]{\colw}
+\sectiontitle[ocean]{METHODS}{validation and model ladder}
+
+\begin{panel}[height=12.2cm,colframe=ocean,colbacktitle=ocean,boxed title style={colframe=ocean,colback=ocean,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Hide, reconstruct, score}
+\body{All method claims come from artificial gaps: observed Chl-\textit{a} values are hidden, reconstructed with admissible context, then scored against withheld truth. Thus artificial gaps rank methods, while real gaps, the actual target and objective of this project, only show plausible behaviour.}
+\vspace{0.5cm}
+\centering
+\begin{tikzpicture}[x=1.08cm,y=1.08cm]
+\tikzstyle{flowbox}=[rounded corners=3pt,draw=navy,fill=softblue,line width=0.85pt,minimum height=1.42cm,text width=4.35cm,align=center,font=\fontsize{11.2}{12.2}\selectfont\bfseries]
+\node[flowbox] (a) at (0,0) {observed\\daily series};
+\node[flowbox,fill=softred,draw=eventred] (b) at (5.15,0) {hide\\artificial gap};
+\node[flowbox,fill=softgreen,draw=green] (c) at (10.30,0) {reconstruct\\allowed context};
+\node[flowbox] (d) at (15.45,0) {score\\withheld truth};
+\foreach \x/\y in {a/b,b/c,c/d}{\draw[-{Latex[length=3.4mm]},line width=1.05pt,draw=ocean] (\x.east)--(\y.west);}
+\end{tikzpicture}
+\vspace{0.12cm}
+\captiontext{LOCO (Leave-One-Cluster-Out) cross-validation removes any training row whose target-history window overlaps the hidden gap; this is the safeguard against target leakage.}
+\vspace{0.25cm}
+\smallbody{Uncertainty is computed by a gap-cluster bootstrap rather than by resampling individual days: whole gaps are resampled together, so days drawn from the same withheld interval cannot be treated as independent evidence.}
+\vspace{0.25cm}
+\smallbody{The 681-gap canonical pool spans nine validated lengths ($L$=1, 3, 7, 10, 14, 21, 30, 45, 60 days), stratified by season and by event/non-event status, so a single method cannot look strong purely by being tested on an easy mix of gap lengths or calm-water periods.}
+\end{panel}
+\vspace{0.20cm}
+
+\begin{panel}[height=27.3cm,colframe=ocean,colbacktitle=ocean,
+boxed title style={colframe=ocean,colback=ocean,boxrule=0pt,arc=1.8pt,
+left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]
+{Model ladder: how each model reconstructs a gap}
+
+{\fontsize{11.6}{13.2}\selectfont
+\renewcommand{\arraystretch}{1.40}
+\begin{tabular}{@{}p{0.19\linewidth}p{0.265\linewidth}p{0.265\linewidth}p{0.21\linewidth}@{}}
+\rowcolor{ocean}
+\tblhead{Family} & \tblhead{What it sees} & \tblhead{Mechanism} & \tblhead{Limitation}\\
+
+\rowcolor{softgray}
+Linear interpolation &
+two gap-edge observations &
+straight line in $\log_{10}$ space &
+misses peaks inside the gap\\
+
+\rowcolor{white}
+GP / Kalman &
+local target neighbourhood &
+temporal / state-space smoothing &
+GP short-gap only; Kalman near interpolation\\
+
+\rowcolor{softgray}
+External tabular &
+engineered satellite/SST/wind/calendar rows &
+tree ensemble predicts each hidden day &
+did not beat interpolation\\
+
+\rowcolor{white}
+Gap-edge residual &
+interpolation + pre/post summaries &
+learned correction over interpolation &
+retrospective; event-weak\\
+
+\rowcolor{red!12}
+\textcolor{red!75!black}{\textbf{TS-ICL satellite-proxy}} &
+\textcolor{red!75!black}{\textbf{target sequence + satellite proxy}} &
+\textcolor{red!75!black}{\textbf{zero-shot probabilistic imputation}} &
+\textcolor{red!75!black}{\textbf{leading candidate but flattens peaks}}\\
+\end{tabular}}
+
+\vspace{0.28cm}
+
+\begin{tcolorbox}[
+  enhanced,
+  colframe=red!70!black,
+  colback=red!3,
+  boxrule=0.9pt,
+  arc=2pt,
+  left=0.35cm,
+  right=0.35cm,
+  top=0.24cm,
+  bottom=0.24cm
+]
+
+\begin{minipage}[t]{0.72\linewidth}
+\smallbody{\textcolor{red!75!black}{\textbf{Why TS-ICL is the key methodological step.}}
+The first four methods either connect the gap edges, smooth the local target series, or convert each hidden day into hand-engineered predictors. TS-ICL is different: it keeps reconstruction as a \textbf{masked sequence problem}. The visible buoy Chl-\textit{a}, the missing interval, calendar position and covariates are read together as one temporal context.}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.23\linewidth}
+\centering
+\vspace{-0.10cm}
+\IfFileExists{poster/assets/ts_icl_logo.png}{%
+  \includegraphics[width=\linewidth]{poster/assets/ts_icl_logo.png}%
+}{%
+  \IfFileExists{assets/ts_icl_logo.png}{%
+    \includegraphics[width=\linewidth]{assets/ts_icl_logo.png}%
+  }{%
+    \fcolorbox{red!75!black}{white}{%
+      \begin{minipage}{0.92\linewidth}
+      \centering\Large\textcolor{red!75!black}{\textbf{ts-icl}}
+      \end{minipage}}%
+  }%
+}
+\end{minipage}
+
+\vspace{0.25cm}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.16}
+\begin{tabular}{c@{\hspace{0.28cm}}c@{\hspace{0.28cm}}c@{\hspace{0.28cm}}c}
+\fcolorbox{red!65!black}{white}{%
+\begin{minipage}{0.17\linewidth}
+\centering \textbf{visible target}\\ buoy Chl-\textit{a}
+\end{minipage}}
+&
+\fcolorbox{red!65!black}{white}{%
+\begin{minipage}{0.15\linewidth}
+\centering \textbf{masked}\\ gap
+\end{minipage}}
+&
+\fcolorbox{red!65!black}{white}{%
+\begin{minipage}{0.24\linewidth}
+\centering \textbf{aligned covariates}\\ satellite / forcing
+\end{minipage}}
+&
+\fcolorbox{red!65!black}{white}{%
+\begin{minipage}{0.19\linewidth}
+\centering \textbf{calendar}\\ time position
+\end{minipage}}
+\\[0.08cm]
+\multicolumn{4}{c}{\textcolor{red!75!black}{$\Downarrow$ \textbf{pretrained probabilistic sequence model}}}
+\\[0.08cm]
+\multicolumn{4}{c}{%
+\fcolorbox{red!75!black}{white}{%
+\begin{minipage}{0.50\linewidth}
+\centering
+\textbf{median imputation} \quad + \quad \textbf{quantile bands / uncertainty}
+\end{minipage}}}
+\end{tabular}
+\end{center}
+
+\vspace{0.30cm}
+
+\begin{minipage}[t]{0.48\linewidth}
+\smallbody{\textbf{ICL = in-context learning.}
+The model is not retrained on Tongoy. It adapts at inference time by reading the visible part of the current sequence: boundary behaviour, local variability, seasonality, and aligned covariates around the gap.}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\smallbody{\textbf{Zero-shot use.}
+The pretrained model is applied directly to this buoy record, without fitting new local weights. The adaptation happens through the input context, not through a Tongoy-specific training stage.}
+\end{minipage}
+
+\vspace{0.50cm}
+
+\smallbody{\textbf{Probabilistic output.}
+TS-ICL does not only return one deterministic curve. It can provide a distribution of plausible trajectories, summarized by a median prediction and quantile bands. This is important for climate and coastal applications: a reconstruction should communicate both the expected Chl-\textit{a} value and the uncertainty around it, especially when a gap may contain an unobserved bloom.}
+
+\vspace{0.50cm}
+
+\smallbody{\textbf{Why it matters here.}
+TS-ICL is useful both as an imputer and as a covariate-audit tool. If real satellite Chl-\textit{a} improves masked-sequence reconstruction while wrong-lag, shuffled, or permuted versions do not, the gain is evidence for time-aligned biological information.}
+
+\end{tcolorbox}
+
+\end{panel}
+
+\begin{heropanel}[height=15.0cm]{Central benchmark result}
+
+\vspace{0.12cm}
+\centering\FigFit{\FigMainBench}{0.99\linewidth}{13.8cm}
+\vspace{0.120cm}
+\smallbody{Bars show comparator MAE $-$ TS-ICL MAE on the shared artificial-gap support: right / positive means TS-ICL satellite-proxy has the lower error.}
+\vspace{0.14cm}
+\end{heropanel}
+\vspace{0.20cm}
+
+\begin{panel}[height=21.9cm,colframe=ocean,colbacktitle=ocean,boxed title style={colframe=ocean,colback=ocean,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Negative results that matter}
+\smallbody{A benchmark is only as credible as the failures it is willing to report.}
+\vspace{0.10cm}
+{\fontsize{14.2}{16.0}\selectfont\color{dark}
+\begin{itemize}
+\item external tabular features did not beat interpolation as a direct imputer;
+\item gap-edge residual helps mainly longer / smoother gaps, and is non-monotonic: $L$=10 d actually performs worse than plain interpolation, recovering only at $L\geq$45 d;
+\item GP is useful at $L$=1--3 but offers no external covariates, so its failure mode is purely temporal;
+\item currents/transport, expected to help reconstruction, are negative under two architectures. The coastal scale of the problem is not helped by predictors on coarse grids;
+\item redundant physical stacks hurt TS-ICL;
+\item event gaps remain harder than non-event gaps across the entire ladder.
+\end{itemize}}
+\vspace{0.16cm}
+\centering\FigFit{\FigCaseLong}{0.97\linewidth}{14.0cm}
+\captiontext{Illustration of the ``helps mainly longer/smoother gaps'' result: a 30-day artificial gap under calm conditions (May--Jun 2016, true max 2.14 mg m$^{-3}$). Gap-edge residual and TS-ICL satellite-proxy both stay close to truth across the full 30 days, while linear interpolation drifts more visibly.}
+\end{panel}
+
+\end{minipage}\hspace{\gapw}%
+\begin{minipage}[t]{\colw}
+\sectiontitle[rescol]{RESULTS}{mechanisms, events, real gaps}
+
+\begin{panel}[height=12.0cm,colframe=rescol,colbacktitle=rescol,boxed title style={colframe=rescol,colback=rescol,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Gap-length behaviour by validation length}
+\smallbody{Comparator rankings vary with gap length: a pooled advantage is not universal superiority at every length. TS-ICL satellite-proxy has the lowest log-MAE from $L$=1 to 30 days, and its margin over interpolation, GP, and the gap-edge model widens as the gap lengthens.}
+\vspace{0.14cm}
+\centering\FigFit{\FigLength}{0.98\linewidth}{8.4cm}
+\end{panel}
+\vspace{0.20cm}
+
+\begin{panel}[height=15.7cm,colframe=rescol,colbacktitle=rescol,boxed title style={colframe=rescol,colback=rescol,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Covariate mechanism evidence}
+\smallbody{TS-ICL is also a covariate-audit tool: each candidate family is compared against placebos that keep broad statistics but break the true temporal alignment.}
+\vspace{0.12cm}
+\centering\FigFit{\FigCovariate}{0.98\linewidth}{10.4cm}
+\vspace{0.10cm}
+{\fontsize{12.4}{14.0}\selectfont
+\renewcommand{\arraystretch}{1.32}
+\begin{tabular}{@{}p{0.30\linewidth}p{0.38\linewidth}p{0.24\linewidth}@{}}
+\rowcolor{rescol}\tblhead{Family} & \tblhead{TS-ICL result} & \tblhead{Verdict}\\
+\rowcolor{softgreen}satellite proxy & best auxiliary & genuine signal\\
+\rowcolor{softgreen}wind/upwelling & smaller, survives placebos & genuine, isolated\\
+\rowcolor{softgray}currents/transport & worse, no placebo support & negative\\
+\end{tabular}}
+\end{panel}
+\vspace{0.20cm}
+
+\begin{heropanel}[height=12.4cm,colframe=rescol,colbacktitle=rescol,boxed title style={colframe=rescol,colback=rescol,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{All methods flatten high-Chl-\textit{a} event peaks}
+\centering\FigFit{\FigEvent}{0.985\linewidth}{9.6cm}
+\captiontext{Event gaps have higher MAE than non-event gaps; the highest-Chl decile is underestimated by every method. TS-ICL is best among tested families on event gaps but does not solve peak recovery -- high-Chl event reconstruction is the unresolved regime.}
+\vspace{0.10cm}
+\end{heropanel}
+\vspace{0.20cm}
+
+\begin{heropanel}[height=21.0cm,colframe=rescol,colbacktitle=rescol,boxed title style={colframe=rescol,colback=rescol,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Same hidden truth, different reconstruction assumptions}
+\vspace{0.12cm}
+\centering\FigFit{\FigCaseEvent}{0.99\linewidth}{13.6cm}
+\vspace{0.10cm}
+{\fontsize{10.8}{12.4}\selectfont
+\renewcommand{\arraystretch}{1.30}
+\begin{tabular}{@{}p{0.185\linewidth}p{0.265\linewidth}p{0.265\linewidth}p{0.205\linewidth}@{}}
+\rowcolor{rescol}\tblhead{\footnotesize Method} & \tblhead{\footnotesize Sees} & \tblhead{\footnotesize Mechanism} & \tblhead{\footnotesize Hidden-bloom behaviour}\\
+\rowcolor{softgray}Interpolation & boundary values only & straight line, $\log_{10}$ & misses internal peaks\\
+\rowcolor{white}Gap-edge residual & interp.\ + pre/post summaries & learned correction & boundary-conditioned, event-weak\\
+\rowcolor{softgray}GP smoother & local neighbours & smooths local structure & suppresses sharp peaks\\
+\rowcolor{softgreen}TS-ICL satellite-proxy & target hist.\ + satellite proxy & zero-shot sequence imputation & follows state, compresses amplitude\\
+\end{tabular}}
+\vspace{0.12cm}
+\smallbody{Event lesson: the hidden peak is underdetermined when it rises and decays entirely inside the masked interval -- boundary-conditioned and sequence-native methods alike compress it.}
+\end{heropanel}
+\vspace{0.20cm}
+
+\begin{panel}[height=13.9cm,colframe=rescol,colbacktitle=rescol,boxed title style={colframe=rescol,colback=rescol,boxrule=0pt,arc=1.8pt,left=0.65em,right=0.65em,top=0.12em,bottom=0.12em}]{Real-gap output: plausibility only}
+\vspace{0.10cm}
+\smallbody{Real gaps have no withheld truth; output is plausibility only and cannot rank methods. The longest, the 256-day gap of 2020, sits far outside the $L$=1--60 d validated envelope and is flagged scenario-only rather than scored.}
+\vspace{0.12cm}
+\centering\FigFit{\FigRealGap}{1\linewidth}{11cm}
+\end{panel}
+
+\end{minipage}
+
+\vspace{0.18cm}
+\noindent\WideBanner
+
+\end{document}

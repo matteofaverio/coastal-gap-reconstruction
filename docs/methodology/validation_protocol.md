@@ -14,17 +14,19 @@ This is the only validation-grade evidence in this repository. Anything
 computed on real gaps is a candidate output, not a score (see
 `docs/evidence_hierarchy.md`).
 
-## The canonical gap pool
+## The shared method-comparison gap pool
 
 `data_public/chlorophyll/chlorophyll_validation_gaps.csv` contains the
-canonical pool of artificial gaps (hundreds of gaps, spanning multiple
-lengths and seasons) used for all benchmark comparisons in this
-repository. Each row is one gap, with its length, season, start/end date,
-the true mean/max chlorophyll value over the hidden days (kept for
-scoring), and an event flag.
+shared method-comparison pool of artificial gaps (hundreds of gaps, spanning
+multiple lengths and seasons) used for all benchmark comparisons in this
+repository -- every method scored in `docs/evidence_hierarchy.md`'s
+validation-grade tier is evaluated against this same set of hidden gaps, so
+comparisons between methods are apples-to-apples. Each row is one gap, with
+its length, season, start/end date, the true mean/max chlorophyll value over
+the hidden days (kept for scoring), and an event flag.
 
-Gap lengths in the pool: 1, 3, 7, 14, 30, 45, and 60 days. Longer lengths
-were not included in the canonical pool because there are too few
+Gap lengths in the pool: 1, 3, 7, 10, 14, 21, 30, 45, and 60 days. Longer
+lengths were not included in this pool because there are too few
 non-overlapping eligible stretches of the record long enough to support
 them with adequate statistical power -- this is also why the 256-day real
 gap is explicitly out of scope for validated comparisons.
