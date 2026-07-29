@@ -5,17 +5,25 @@
 ```bash
 git clone https://github.com/matteofaverio/coastal-gap-reconstruction
 cd coastal-gap-reconstruction
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[notebooks,test]"
+uv sync --extra notebooks --extra test
 ```
 
+This resolves and installs the exact versions recorded in `uv.lock` (the same
+environment CI uses). Prefix commands with `uv run` (e.g. `uv run pytest`,
+`uv run jupyter lab ...`), or `source .venv/bin/activate` once and run them
+directly. If `uv` is unavailable, `python3 -m venv .venv && source
+.venv/bin/activate && pip install -e ".[notebooks,test]"` works but is not
+version-pinned and may resolve different dependency versions than CI.
+
 This does not install TS-ICL/torch. For the live TS-ICL demo environment,
-see `demo/README.md` (`bash demo/run_demo.sh`, isolated venv).
+see `demo/README.md` (`bash demo/run_demo.sh`, a separate, isolated,
+informally-pinned venv -- not covered by `uv.lock`, see `demo/README.md` for
+why).
 
 ## Tests
 
 ```bash
-pytest tests/
+uv run pytest tests/
 ```
 
 `tests/test_notebooks_smoke.py` executes every notebook end to end;

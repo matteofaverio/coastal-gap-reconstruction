@@ -10,19 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: "3.11"
-      - name: Install core + notebook + test extras
-        run: pip install -e ".[notebooks,test]" ruff
+          enable-cache: true
+      - name: Sync locked environment (core + notebooks + test extras)
+        run: uv sync --extra notebooks --extra test --locked
       - name: ruff check
-        run: ruff check .
+        run: uv run ruff check .
       - name: Unit tests
-        run: pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py -q
+        run: uv run pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py -q
       - name: Notebook smoke tests (no TS-ICL checkpoint download)
-        run: pytest tests/test_notebooks_smoke.py -q
+        run: uv run pytest tests/test_notebooks_smoke.py -q
       - name: Demo smoke tests (falls back to cached predictions; does not require live TS-ICL)
-        run: pytest tests/test_demo_smoke.py -q
+        run: uv run pytest tests/test_demo_smoke.py -q
 
   build-documents:
     runs-on: ubuntu-latest

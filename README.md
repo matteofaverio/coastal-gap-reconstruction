@@ -73,15 +73,22 @@ case from `config/contracts/target_contract_template.yaml`.
 ```bash
 git clone https://github.com/matteofaverio/coastal-gap-reconstruction
 cd coastal-gap-reconstruction
-pip install -e ".[notebooks]"
-jupyter lab notebooks/01_target_and_gap_audit.ipynb
-pytest tests/
+uv sync --extra notebooks --extra test   # installs the exact locked environment (uv.lock)
+uv run jupyter lab notebooks/01_target_and_gap_audit.ipynb
+uv run pytest tests/
 ```
 
 This installs the notebook-executable core (pandas/numpy/matplotlib/scipy/
-scikit-learn/jupyter); it does not install TS-ICL or torch. For the live
-zero-shot TS-ICL demo, see `demo/README.md` (`bash demo/run_demo.sh`), which
-builds its own isolated environment.
+scikit-learn/jupyter) at the exact versions recorded in `uv.lock`; it does not
+install TS-ICL or torch. CI runs against this same locked environment. For the
+live zero-shot TS-ICL demo, see `demo/README.md` (`bash demo/run_demo.sh`),
+which builds its own, separately (informally) pinned isolated environment,
+kept out of `uv.lock` because `tsicl` pins a narrow `torch` range that would
+otherwise force unrelated constraints onto the core lock.
+
+If you don't have [uv](https://docs.astral.sh/uv/) installed, a plain-`pip`
+equivalent works but is not version-pinned:
+`python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[notebooks,test]"`.
 
 ## Repository map
 

@@ -30,6 +30,9 @@ tsicl-dev = ["torch>=2.0"]
 notebooks = ["jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
 test = ["pytest>=7", "nbconvert>=7", "ipykernel", "jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
 
+[dependency-groups]
+dev = ["ruff>=0.6"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
