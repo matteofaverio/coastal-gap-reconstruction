@@ -10,7 +10,7 @@ version.
 
 All source code in this repository -- `src/coastal_gap_reconstruction/`,
 the code cells in `notebooks/`, and configuration/build files
-(`pyproject.toml`, `config/contracts/`) -- is licensed under the MIT
+(`pyproject.toml`) -- is licensed under the MIT
 License. See `LICENSE` for the full text. Copyright (c) 2026 Matteo
 Faverio.
 

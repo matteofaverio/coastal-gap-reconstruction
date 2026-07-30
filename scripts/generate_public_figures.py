@@ -11,10 +11,7 @@ Requirements:
     matplotlib >= 3.7
     pandas >= 1.5
     numpy >= 1.23
-    seaborn >= 0.12  (optional; used for color palette only)
 """
-
-# Requirements: matplotlib, pandas, numpy
 
 import os
 import warnings
