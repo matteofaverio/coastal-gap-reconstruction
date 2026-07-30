@@ -61,12 +61,18 @@ candidate outputs. See `docs/evidence_hierarchy.md` for the full framing.
 
 ## Adapting to a new sensor
 
-`notebooks/09_adapting_the_workflow_to_a_new_sensor.ipynb` is a checklist,
-and `notebooks/10_oxygen_case_study.ipynb` is its worked result. The pipeline
-functions (`generate_gap_candidates`, `apply_artificial_gap`,
-`run_all_baselines`, `compute_gap_metrics`) take `target_col`/`eligible_col`
-arguments rather than hardcoding chlorophyll's column names — start a new
-case from `config/contracts/target_contract_template.yaml`.
+`notebooks/09_adapting_the_workflow_to_a_new_sensor.ipynb` is a methodological
+checklist, and `notebooks/10_oxygen_case_study.ipynb` is its worked result
+(the actual released oxygen case study, not a reproduction produced by
+notebook 09). The masking/scoring layer (`generate_gap_candidates`,
+`apply_artificial_gap`, `run_all_baselines`, `compute_gap_metrics`) takes
+`target_col`/`eligible_col` arguments rather than hardcoding chlorophyll's
+column names, so it runs unchanged against a second target. That does not
+mean adapting to a new sensor is a two-parameter change: eligibility
+thresholds, event definitions, gap-length support, and predictor selection
+are target-specific scientific decisions that still require human judgment
+per target -- see the checklist notebook and
+`docs/methodology/target_and_gap_construction.md`.
 
 ## Quick start
 
@@ -93,7 +99,6 @@ equivalent works but is not version-pinned:
 ## Repository map
 
 ```
-config/contracts/        machine-checkable target/gap-pool definitions
 data_public/              daily targets, predictor features, gap inventories
 results_public/           benchmark scores, candidate reconstructions
 figures/                  key figures referenced in the docs

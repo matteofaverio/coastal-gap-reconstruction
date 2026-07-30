@@ -66,8 +66,9 @@ The pipeline functions in `src/coastal_gap_reconstruction/` take
 `target_col`/`eligible_col` arguments rather than hardcoding chlorophyll's
 column names — do not inherit chlorophyll-specific thresholds (event
 definition, gap-length range, eligibility rule) by default. Each new case
-should set these deliberately from its own missingness structure, starting
-from `config/contracts/target_contract_template.yaml`.
+should set these from its own missingness structure -- see
+`docs/methodology/target_and_gap_construction.md` for the questions to
+answer for chlorophyll and oxygen, as a template for a new target.
 
 ## Data licensing
 

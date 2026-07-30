@@ -20,8 +20,9 @@ computed on real gaps is a candidate output, not a score (see
 shared method-comparison pool of artificial gaps (hundreds of gaps, spanning
 multiple lengths and seasons) used for all benchmark comparisons in this
 repository -- every method scored in `docs/evidence_hierarchy.md`'s
-validation-grade tier is evaluated against this same set of hidden gaps, so
-comparisons between methods are apples-to-apples. Each row is one gap, with
+validation-grade tier is evaluated against this same fixed set of hidden
+gaps, so method comparisons share an identical evaluation set rather than
+each method being scored on a different sample. Each row is one gap, with
 its length, season, start/end date, the true mean/max chlorophyll value over
 the hidden days (kept for scoring), and an event flag.
 
@@ -37,9 +38,32 @@ gap is explicitly out of scope for validated comparisons.
   `docs/methodology/target_and_gap_construction.md`) -- otherwise we would
   be scoring against an untrustworthy "true" value.
 - Gaps of a given length are sampled to be non-overlapping with a fixed
-  random seed, so the same gap pool can be regenerated exactly.
+  random seed. `src/coastal_gap_reconstruction/artificial_gap_validation.py`
+  implements this masking/sampling logic and is a public illustration of the
+  rule, but it does not reproduce this exact released pool byte-for-byte:
+  the released CSV carries additional research-stage columns (sustained-event
+  flags, context-availability checks, a regime label, a checksum) that were
+  produced by logic that is not part of this public module. Treat
+  `chlorophyll_validation_gaps.csv` itself as the authoritative pool
+  definition.
 - A gap is flagged as a high-chlorophyll "event" gap if any hidden day's
   true value exceeds the 90th percentile of all eligible target values.
+
+## Oxygen gap-length support
+
+The oxygen benchmark (`data_public/oxygen/oxygen_validation_gaps.csv`) uses
+a different length set than chlorophyll, reflecting its shorter/differently
+structured eligible-run history:
+
+- primary support (used for the headline oxygen benchmark numbers):
+  1, 3, 7, 10, 14, 21, 30 days;
+- exploratory extended lengths (reported separately, smaller sample, wider
+  uncertainty, not part of the primary comparison):
+  45, 60, 90, 120 days.
+
+`results_public/oxygen/oxygen_benchmark_by_length.csv` reports the primary
+support only. See `notebooks/10_oxygen_case_study.ipynb` for how the two are
+distinguished in practice.
 
 ## Leakage prevention (plain-language explanation)
 
@@ -65,6 +89,23 @@ To prevent this:
 4. A method's hyperparameters or thresholds (e.g. a climatology baseline's
    monthly averages) are always fit excluding the hidden days of the gap
    currently being scored.
+
+## Forbidden scoring substitutes (chlorophyll)
+
+The chlorophyll daily target table also carries satellite-derived chlorophyll
+proxy columns (`chl_cons_*`, `chl_perm_*`, `chl_anom_*`, and
+patchiness/patch-distance statistics). These are legitimate *predictors* --
+they may be used as model features or TS-ICL covariates -- but must never be
+used as the scoring ground truth for evaluating in-situ chlorophyll
+reconstruction: they are satellite estimates, not the in-situ measurement
+this benchmark reconstructs. The only valid scoring target is `chl_mean`
+(physical) or `log10(chl_mean)` (log, the benchmark's actual scoring scale --
+see `docs/methodology/target_and_gap_construction.md`), both from
+`data_public/chlorophyll/chlorophyll_daily_target.csv`. (This rule
+previously lived in a `config/contracts/target_contract.yaml` file that had
+no code or CI actually reading it; it is stated here instead, as prose,
+since nothing in this repository enforced it as a machine-checkable
+constraint.)
 
 ## What gets reported
 

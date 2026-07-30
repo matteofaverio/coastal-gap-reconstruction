@@ -48,6 +48,21 @@ As of the snapshot included in this repository:
   the longest in the record and well outside the validated gap-length
   envelope -- see `docs/evidence_hierarchy.md`).
 
+## Scoring scale
+
+`chl_mean` is strongly right-skewed (a small number of high-chlorophyll
+event days dominate the physical-unit range). The report, the released
+benchmark tables (`results_public/chlorophyll/`), and every chlorophyll
+notebook that scores against them use `log10(chl_mean)` as the scoring
+scale, not physical `chl_mean` (mg m^-3) directly. Physical-unit means,
+medians, and quantiles are still carried in the daily target table for
+display and diagnostics, but MAE/RMSE/bias figures quoted anywhere in this
+repository are on the log10 scale unless a table or figure explicitly says
+"physical units" or "mg m^-3". Do not compare a physical-scale MAE against
+a log10-scale MAE — they are different metrics computed on different data,
+not two views of the same number. `notebooks/03_baselines.ipynb` derives a
+`chl_log10` column before scoring for exactly this reason.
+
 ## Gap definitions
 
 Two distinct notions of "gap" are used throughout this repository:
