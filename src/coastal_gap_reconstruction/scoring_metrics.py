@@ -82,6 +82,11 @@ def compute_gap_metrics(
             "gap_length": gap_length,
             "season": gap_info.get("season", np.nan),
             "year": gap_info.get("year", np.nan),
+            # `is_high_chl_event` is a chlorophyll-specific event flag defined
+            # in the released chlorophyll gap pool; the oxygen pool has no
+            # equivalent column and this is left NaN there by design (event
+            # definitions are target-specific, not part of the generic
+            # scoring layer -- see docs/methodology/validation_protocol.md).
             "is_high_chl_event": gap_info.get("is_high_chl_event", np.nan),
             "target_mean_true": gap_info.get("target_mean_true", np.nan),
             "n_valid": n_valid,
