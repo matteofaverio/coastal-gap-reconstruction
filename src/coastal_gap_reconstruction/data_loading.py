@@ -46,6 +46,47 @@ def load_feature_table(path: str | Path) -> pd.DataFrame:
     return df
 
 
+def load_full_feature_table(
+    base_path: str | Path,
+    incremental_path: str | Path,
+) -> pd.DataFrame:
+    """Reconstruct the full 265-column feature table exactly from the two
+    published pieces.
+
+    `chlorophyll_predictor_features_curated.csv` (126 columns) is the base table;
+    `chlorophyll_current_kinematic_features_incremental.csv` (162 columns: date +
+    22 override columns + 139 new columns) is published separately rather than as
+    a second full copy of the base table, to avoid duplicating the 104 unchanged
+    columns.
+
+    22 of the base table's columns (all MUR SST-derived: gradients, fronts,
+    anomalies, cooling rates, rolling means) have different values in the private
+    265-column snapshot the oxygen and chlorophyll-currents pipelines were
+    actually run against, compared to the values in the already-released
+    126-column base table. This is not a bug to silently paper over: the
+    incremental file's 22 override columns carry the exact values the private
+    265-column snapshot used, and this loader replaces the base table's versions
+    of those 22 columns with the incremental file's versions -- reproducing the
+    private snapshot exactly, not the base table's own (different) values for
+    those columns.
+
+    Returns a DataFrame with exactly the union of both files' columns: 126 + 139
+    = 265 value columns, indexed by date, with the 22 shared columns taking the
+    incremental file's values.
+    """
+    base = load_feature_table(base_path)
+    incremental = load_feature_table(incremental_path)
+
+    override_cols = [c for c in incremental.columns if c in base.columns]
+    new_cols = [c for c in incremental.columns if c not in base.columns]
+
+    result = base.copy()
+    result[override_cols] = incremental[override_cols]
+    result = result.join(incremental[new_cols], how="left")
+
+    return result
+
+
 def load_validation_gap_pool(path: str | Path) -> pd.DataFrame:
     """Load the canonical artificial-gap validation pool.
 
