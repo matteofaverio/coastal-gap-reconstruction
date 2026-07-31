@@ -41,7 +41,7 @@ uses report-specific multi-panel layouts. They are included here as static
 assets so the oxygen case study has figures without duplicating that
 paneling logic in the public script.
 
-| Figure filename | Source (private repo) | Purpose | Evidence tier |
+| Figure filename | Source path (within this repository) | Purpose | Evidence tier |
 |---|---|---|---|
 | `figure_oxygen_target_record_and_missingness.pdf/.png` | `manuscript/report/figures/fig_oxygen_target_and_gaps.pdf` | Daily dissolved-oxygen record and real-gap inventory | Descriptive — target/missingness |
 | `figure_oxygen_distribution.pdf/.png` | `manuscript/report/figures/fig_oxygen_distribution.pdf` | Empirical distribution of daily mean oxygen | Descriptive |
