@@ -23,17 +23,18 @@ for L>=45 -- a different split from `is_mandatory`, which is True through L=60).
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 import pandas as pd
 
+from coastal_gap_reconstruction.daily_target import load_daily_target as _load_daily_target
+from coastal_gap_reconstruction.daily_target import target_table_checksum
 from coastal_gap_reconstruction.gaps import (
     find_context_qualified_positions,
     sample_nonoverlapping,
 )
 
 from . import _config
+
+__all__ = ["load_daily_target", "target_table_checksum", "build_gap_pool", "add_support_role", "POOL_COLUMNS"]
 
 POOL_COLUMNS = [
     "gap_id",
@@ -53,15 +54,13 @@ POOL_COLUMNS = [
 ]
 
 
-def load_daily_target(path: str | Path) -> pd.DataFrame:
-    """Load the daily oxygen target table, indexed by date."""
-    df = pd.read_csv(path, parse_dates=[_config.DATE_COL])
-    return df.set_index(_config.DATE_COL).sort_index()
+def load_daily_target(path) -> pd.DataFrame:
+    """Load the daily oxygen target table, indexed by date.
 
-
-def target_table_checksum(path: str | Path) -> str:
-    """SHA-256 of the daily target CSV's raw bytes."""
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    Thin wrapper over `coastal_gap_reconstruction.daily_target.load_daily_target`
+    (the canonical implementation, shared with the chlorophyll builder).
+    """
+    return _load_daily_target(path, date_col=_config.DATE_COL)
 
 
 def find_eligible_runs(target_df: pd.DataFrame) -> list[tuple[pd.Timestamp, pd.Timestamp, int]]:

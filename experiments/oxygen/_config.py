@@ -6,6 +6,8 @@ otherwise hold, imported directly and asserted by tests instead.
 
 from __future__ import annotations
 
+from coastal_gap_reconstruction.target_spec import TargetSpec
+
 TARGET_COL = "oxygen_mean_mgL"
 ELIGIBLE_COL = "eligible_ge_18"
 DATE_COL = "date"
@@ -49,3 +51,15 @@ def support_role(gap_length: int) -> str:
     draws the primary/exploratory line at a different point, L<=30 vs L>=45).
     """
     return "primary" if gap_length <= 30 else "exploratory_extended"
+
+
+TARGET_SPEC = TargetSpec(
+    name="oxygen",
+    target_col=TARGET_COL,
+    eligible_col=ELIGIBLE_COL,
+    date_col=DATE_COL,
+    display_unit="mg/L",
+    benchmark_scoring_scale="identity",  # oxygen's released benchmark scores raw mg/L, not log10
+    positive_only=True,
+    event_label=None,  # no oxygen event/high-value label exists -- see module docstring
+)
