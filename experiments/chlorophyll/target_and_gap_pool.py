@@ -4,39 +4,61 @@ Builds the 18-column artificial-gap validation pool schema used throughout this
 project's chlorophyll benchmark, on top of the target-neutral mechanics in
 `coastal_gap_reconstruction.gaps`.
 
-Reproducibility boundary (state this precisely, do not overclaim):
+Reproducibility: full and exact, but via two different procedures.
 
 The released pool (`data_public/chlorophyll/chlorophyll_validation_gaps.csv`, 681
-rows) supports nine gap lengths: 1, 3, 7, 10, 14, 21, 30, 45, 60 days. Of these,
-five lengths -- 1, 3, 7, 14, 30 (450 gaps) -- are exactly regenerable from the
-public daily target table with the algorithm in this module: calling
-`build_gap_pool` with `gap_lengths=_config.EXACTLY_REGENERABLE_GAP_LENGTHS`
-reproduces those 450 rows byte-for-byte, verified against every one of the 18
-released columns (including the SHA-256 target-table checksum).
+rows) supports nine gap lengths: 1, 3, 7, 10, 14, 21, 30, 45, 60 days. These split
+into two subsets, built at different times in the private project's history by two
+different, non-interchangeable sampling procedures:
 
-The remaining four lengths -- 10, 21, 45, 60 (231 gaps) -- were assembled by a
-separate, later extension pass in the private project's history (using a
-different candidate pool / selection process not recovered by this port) and are
-NOT reproducible by calling this module with the full nine-length list: the
-column *formulas* below (event/sustained/background labels, context rule,
-checksum) are verified exact given the right gap windows, but the *window
-selection* itself for these four lengths does not match the released rows.
-Treat the released CSV as the authoritative pool definition for the full
-nine-length set; use this module to exactly regenerate the five-length core, or
-to build new candidate pools of your own on other data.
+- Core lengths (1, 3, 7, 14, 30 -- 450 rows): each length sampled independently
+  with `gaps.sample_nonoverlapping` (Python `random.Random(42)`, freshly seeded per
+  length), over the plain eligible-run candidate universe.
+- Extended lengths (10, 21, 45, 60 -- 231 rows), added in a later pass: sampled
+  with `gaps.sample_nonoverlapping_sequential` (one shared
+  `numpy.random.default_rng(42)`, its state advanced across all four lengths in
+  this exact order -- reproducing, say, the L=45 rows requires first replaying the
+  L=10 and L=21 draws against the same generator, not reseeding), over a stricter
+  candidate universe requiring the hidden target value to exceed 1e-4 (not merely
+  be eligible/non-null), with non-uniform per-length caps
+  (`_config.EXTENDED_MAX_CANDIDATES`).
+
+`build_gap_pool` runs both procedures internally and concatenates the result.
+Regenerating from the public daily target table reproduces all 681 released rows:
+450 exactly bit-for-bit on every column, and 231 exactly on every column except a
+single row (`L10_20160622`) where `target_mean_true` differs from the released
+value by 0.0001 -- a floating-point rounding artifact from summing the same 10
+values in a different order/precision path, not a different candidate selection
+or a different formula (verified: the selected start date, `target_max_true`, all
+context columns, and all boolean labels for that row match exactly). This is
+stated explicitly rather than silently rounded away; see
+`tests/test_gap_pool_regeneration.py` for the exact tolerance this is checked at.
+
+The extended-length procedure was recovered by reading
+`src/tongoy_chl/models/tier_c_7c_extended_eval.py`'s `find_nonoverlapping_gaps`/
+`generate_all_candidates` functions directly (a private-project gap-edge
+evaluation script that generates its own extended-length candidate pool inline
+rather than through the core `artificial_gaps.py` module) -- not guessed or
+reverse-engineered from the released CSV alone.
 """
 
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 
-from coastal_gap_reconstruction.gaps import count_context_days, generate_candidate_gaps
+from coastal_gap_reconstruction.daily_target import load_daily_target as _load_daily_target
+from coastal_gap_reconstruction.daily_target import target_table_checksum
+from coastal_gap_reconstruction.gaps import (
+    count_context_days,
+    find_positions_with_value_floor,
+    generate_candidate_gaps,
+    sample_nonoverlapping_sequential,
+)
 
 from . import _config
+
+__all__ = ["load_daily_target", "target_table_checksum", "build_gap_pool", "POOL_COLUMNS"]
 
 POOL_COLUMNS = [
     "gap_id",
@@ -60,15 +82,77 @@ POOL_COLUMNS = [
 ]
 
 
-def load_daily_target(path: str | Path) -> pd.DataFrame:
-    """Load the daily chlorophyll target table, indexed by date."""
-    df = pd.read_csv(path, parse_dates=[_config.DATE_COL])
-    return df.set_index(_config.DATE_COL).sort_index()
+def load_daily_target(path) -> pd.DataFrame:
+    """Load the daily chlorophyll target table, indexed by date.
+
+    Thin wrapper over `coastal_gap_reconstruction.daily_target.load_daily_target`
+    (the canonical implementation, shared with the oxygen builder) fixing the date
+    column to this target's convention.
+    """
+    return _load_daily_target(path, date_col=_config.DATE_COL)
 
 
-def target_table_checksum(path: str | Path) -> str:
-    """SHA-256 of the daily target CSV's raw bytes, as recorded in the released pool."""
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def _label_candidates(
+    target_df: pd.DataFrame,
+    starts_by_length: dict[int, list[pd.Timestamp]],
+    checksum: str,
+    chl_90th_threshold: float,
+    eligible_dates: set[pd.Timestamp],
+) -> list[dict]:
+    """Shared column-labeling step for both the core and extended candidate sets."""
+    from coastal_gap_reconstruction.gaps import majority_season_and_year
+
+    rows: list[dict] = []
+    for gap_length, starts in starts_by_length.items():
+        required_ctx = _config.required_context_days(gap_length)
+        for start in starts:
+            end = start + pd.Timedelta(days=gap_length - 1)
+            hidden_dates = pd.date_range(start, end, freq="D")
+            hidden_vals = target_df.loc[
+                target_df.index.isin(hidden_dates), _config.TARGET_COL
+            ]
+
+            mean_val = float(hidden_vals.mean()) if hidden_vals.notna().any() else np.nan
+            max_val = float(hidden_vals.max()) if hidden_vals.notna().any() else np.nan
+            is_event = _config.TARGET_SPEC.event_label(hidden_vals, chl_90th_threshold)
+            is_sustained = (
+                bool(mean_val >= _config.SUSTAINED_MEAN_THRESHOLD)
+                if not np.isnan(mean_val)
+                else False
+            )
+            is_background = not (is_event or is_sustained)
+
+            pre_ctx = count_context_days(
+                eligible_dates, start - pd.Timedelta(days=1), -1, required_ctx
+            )
+            post_ctx = count_context_days(
+                eligible_dates, end + pd.Timedelta(days=1), 1, required_ctx
+            )
+            context_constrained = pre_ctx < required_ctx or post_ctx < required_ctx
+
+            season, year = majority_season_and_year(start, end)
+
+            rows.append({
+                "gap_id": f"L{gap_length:02d}_{start.strftime('%Y%m%d')}",
+                "gap_length": gap_length,
+                "start_date": start,
+                "end_date": end,
+                "n_hidden_days": gap_length,
+                "season": season,
+                "year": year,
+                "target_mean_true": round(mean_val, 4) if not np.isnan(mean_val) else np.nan,
+                "target_max_true": round(max_val, 4) if not np.isnan(max_val) else np.nan,
+                "chl_90th_threshold": round(chl_90th_threshold, 4),
+                "is_high_chl_event": is_event,
+                "is_sustained_event": is_sustained,
+                "is_background": is_background,
+                "pre_context_available_days": pre_ctx,
+                "post_context_available_days": post_ctx,
+                "context_constrained": context_constrained,
+                "regime": _config.REGIME,
+                "target_table_checksum": checksum,
+            })
+    return rows
 
 
 def build_gap_pool(
@@ -76,75 +160,67 @@ def build_gap_pool(
     checksum: str,
     gap_lengths: list[int] = _config.GAP_LENGTHS,
     seed: int = _config.RANDOM_SEED,
-    max_per_length: int = _config.MAX_GAPS_PER_LENGTH,
 ) -> pd.DataFrame:
-    """Build the 18-column chlorophyll artificial-gap pool.
+    """Build the 18-column chlorophyll artificial-gap pool for any subset of
+    `_config.GAP_LENGTHS`.
 
     `checksum` must be `target_table_checksum(path_to_the_daily_target_csv)` --
     passed in explicitly (not recomputed here) so the same checksum is guaranteed
     to describe the exact file `target_df` was loaded from.
+
+    Core lengths (`_config.CORE_GAP_LENGTHS`) and extended lengths
+    (`_config.EXTENDED_GAP_LENGTHS`) are sampled by two different procedures (see
+    the module docstring); requesting a mix of both in `gap_lengths` runs both
+    procedures and concatenates the result.
     """
-    candidates = generate_candidate_gaps(
-        target_df,
-        gap_lengths=gap_lengths,
-        seed=seed,
-        max_per_length=max_per_length,
-        eligible_col=_config.ELIGIBLE_COL,
-    )
-    if candidates.empty:
-        return pd.DataFrame(columns=POOL_COLUMNS)
+    core_lengths = [length for length in gap_lengths if length in _config.CORE_GAP_LENGTHS]
+    extended_lengths = [length for length in gap_lengths if length in _config.EXTENDED_GAP_LENGTHS]
+    unknown = set(gap_lengths) - set(core_lengths) - set(extended_lengths)
+    if unknown:
+        raise ValueError(
+            f"gap_lengths {sorted(unknown)} are neither core nor extended lengths; "
+            f"the sampling procedure for a new length must be decided explicitly, "
+            f"not assumed."
+        )
 
     eligible_mask = target_df[_config.ELIGIBLE_COL].fillna(False).astype(bool)
     eligible_target = target_df.loc[eligible_mask, _config.TARGET_COL].dropna()
     chl_90th_threshold = float(eligible_target.quantile(0.90))
     eligible_dates = set(target_df.index[eligible_mask])
 
-    rows: list[dict] = []
-    for row in candidates.itertuples(index=False):
-        start, end, gap_length = row.start_date, row.end_date, row.gap_length
-        hidden_dates = pd.date_range(start, end, freq="D")
-        hidden_vals = target_df.loc[
-            target_df.index.isin(hidden_dates), _config.TARGET_COL
-        ]
+    starts_by_length: dict[int, list[pd.Timestamp]] = {}
 
-        mean_val = float(hidden_vals.mean()) if hidden_vals.notna().any() else np.nan
-        max_val = float(hidden_vals.max()) if hidden_vals.notna().any() else np.nan
-        is_event = bool(max_val > chl_90th_threshold) if not np.isnan(max_val) else False
-        is_sustained = (
-            bool(mean_val >= _config.SUSTAINED_MEAN_THRESHOLD)
-            if not np.isnan(mean_val)
-            else False
+    if core_lengths:
+        candidates = generate_candidate_gaps(
+            target_df,
+            gap_lengths=core_lengths,
+            seed=seed,
+            max_per_length=_config.MAX_GAPS_PER_LENGTH,
+            eligible_col=_config.ELIGIBLE_COL,
         )
-        is_background = not (is_event or is_sustained)
+        for gap_length in core_lengths:
+            sub = candidates[candidates["gap_length"] == gap_length]
+            starts_by_length[gap_length] = list(sub["start_date"])
 
-        required_ctx = _config.required_context_days(gap_length)
-        pre_ctx = count_context_days(
-            eligible_dates, start - pd.Timedelta(days=1), -1, required_ctx
-        )
-        post_ctx = count_context_days(
-            eligible_dates, end + pd.Timedelta(days=1), 1, required_ctx
-        )
-        context_constrained = pre_ctx < required_ctx or post_ctx < required_ctx
+    if extended_lengths:
+        rng = np.random.default_rng(seed)
+        # Order matters: the shared rng's state must advance through every
+        # extended length in this exact order, even if only a subset was
+        # requested by the caller, to match the released pool's own build order.
+        for gap_length in _config.EXTENDED_GAP_LENGTHS:
+            positions = find_positions_with_value_floor(
+                target_df,
+                gap_length,
+                eligible_col=_config.ELIGIBLE_COL,
+                value_col=_config.TARGET_COL,
+                value_floor=_config.EXTENDED_VALUE_FLOOR,
+            )
+            max_n = _config.EXTENDED_MAX_CANDIDATES[gap_length]
+            chosen = sample_nonoverlapping_sequential(positions, gap_length, max_n, rng)
+            if gap_length in extended_lengths:
+                starts_by_length[gap_length] = chosen
 
-        rows.append({
-            "gap_id": row.gap_id,
-            "gap_length": gap_length,
-            "start_date": start,
-            "end_date": end,
-            "n_hidden_days": row.n_hidden_days,
-            "season": row.season,
-            "year": row.year,
-            "target_mean_true": round(mean_val, 4) if not np.isnan(mean_val) else np.nan,
-            "target_max_true": round(max_val, 4) if not np.isnan(max_val) else np.nan,
-            "chl_90th_threshold": round(chl_90th_threshold, 4),
-            "is_high_chl_event": is_event,
-            "is_sustained_event": is_sustained,
-            "is_background": is_background,
-            "pre_context_available_days": pre_ctx,
-            "post_context_available_days": post_ctx,
-            "context_constrained": context_constrained,
-            "regime": _config.REGIME,
-            "target_table_checksum": checksum,
-        })
-
+    rows = _label_candidates(target_df, starts_by_length, checksum, chl_90th_threshold, eligible_dates)
+    if not rows:
+        return pd.DataFrame(columns=POOL_COLUMNS)
     return pd.DataFrame(rows, columns=POOL_COLUMNS)

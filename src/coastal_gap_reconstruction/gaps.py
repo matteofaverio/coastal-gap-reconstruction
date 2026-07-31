@@ -3,6 +3,13 @@
 This module contains only mechanics that do not depend on which sensor/variable is
 being reconstructed: eligible-run detection, candidate starting-position search,
 seeded non-overlapping sampling, target masking, and pre/post context-day counting.
+Two independent, non-interchangeable sampling strategies are provided
+(`sample_nonoverlapping`, seeded per call with `random.Random`; and
+`sample_nonoverlapping_sequential`, advancing a shared `numpy.random.Generator`
+across calls) because the private project's own gap pools were built with both,
+at different times, for different length subsets -- see
+`experiments/chlorophyll/target_and_gap_pool.py` for which one reproduces which
+released rows.
 
 It deliberately does NOT contain:
 
@@ -134,6 +141,76 @@ def sample_nonoverlapping(
             break
 
     return sorted(selected)
+
+
+def find_positions_with_value_floor(
+    target_df: pd.DataFrame,
+    gap_length: int,
+    eligible_col: str,
+    value_col: str,
+    value_floor: float,
+) -> list[pd.Timestamp]:
+    """Return starting dates where every hidden day is eligible AND has a value
+    strictly greater than `value_floor` (not merely non-null).
+
+    This is a different, stricter admissibility rule than `find_candidate_positions`
+    (which only requires membership in an eligible run): some target pools additionally
+    exclude candidate windows touching a floored/degenerate value. Genuinely
+    target-neutral (parametrized by column name and floor, not any specific target's
+    column), but a distinct rule from the plain eligible-run search -- which rule a
+    builder uses is a target-specific decision.
+    """
+    ok = (
+        target_df[eligible_col].fillna(False).astype(bool)
+        & target_df[value_col].notna()
+        & (target_df[value_col] > value_floor)
+    )
+    valid_dates = target_df.index[ok].sort_values()
+    valid_set = set(valid_dates)
+    positions = [
+        d for d in valid_dates
+        if all(s in valid_set for s in pd.date_range(d, periods=gap_length, freq="D"))
+    ]
+    return positions
+
+
+def sample_nonoverlapping_sequential(
+    positions: list[pd.Timestamp],
+    gap_length: int,
+    max_n: int,
+    rng: np.random.Generator,
+) -> list[pd.Timestamp]:
+    """Sample up to `max_n` non-overlapping positions using a shared NumPy
+    `Generator` instance (`numpy.random.default_rng(seed)`), advancing its state
+    rather than reseeding.
+
+    This is a genuinely different (and non-interchangeable) sampling strategy from
+    `sample_nonoverlapping`: it uses `numpy.random.Generator.permutation` instead of
+    `random.Random.shuffle`, and -- because the caller passes in one `rng` shared
+    across multiple calls (e.g. one per gap length, processed in a fixed order) --
+    reproducing a specific call's output requires replaying every earlier call
+    against the *same* `rng` object in the *same* order first. A fresh
+    `default_rng(seed)` only reproduces the *first* call in a sequence.
+    """
+    starts_arr = np.array(positions)
+    if len(starts_arr) == 0:
+        return []
+    shuffled = starts_arr[rng.permutation(len(starts_arr))]
+
+    chosen: list[pd.Timestamp] = []
+    blocked: set[pd.Timestamp] = set()
+    for d in shuffled:
+        dt = pd.Timestamp(d)
+        if dt in blocked:
+            continue
+        span = pd.date_range(dt, periods=gap_length, freq="D")
+        if any(s in blocked for s in span):
+            continue
+        chosen.append(dt)
+        blocked.update(span)
+        if len(chosen) >= max_n:
+            break
+    return chosen
 
 
 def apply_artificial_gap(
