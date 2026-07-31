@@ -30,7 +30,7 @@ generator, not a reproduction of the exact released validation pools. The
 released pools (`data_public/chlorophyll/chlorophyll_validation_gaps.csv`,
 `data_public/oxygen/oxygen_validation_gaps.csv`) carry extra columns
 (event/regime flags, support-role labels, context-availability checks,
-checksums) produced by additional research-stage logic that is not part of
+checksums) produced by additional private research code that is not part of
 this public module. Treat the released CSVs as the authoritative pool
 definitions, and this function as a way to explore or extend gap sampling
 on your own data with the same masking/eligibility rules -- not as the code

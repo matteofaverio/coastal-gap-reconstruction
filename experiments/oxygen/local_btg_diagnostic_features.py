@@ -7,7 +7,7 @@ the module-level "Diagnostic status" note below).
 
 This module builds only this one small table, not the full oxygen feature-arm
 construction (external_physical_core/plus_currents/all_available, which need the
-shared 265-column external table and are out of scope for this phase -- see
+shared 265-column external table and are not yet published -- see
 `experiments/oxygen/_config.py`'s module docstring for the current scope
 boundary).
 

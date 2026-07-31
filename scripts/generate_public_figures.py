@@ -4,7 +4,7 @@ generate_public_figures.py
 Generates all public-facing figures for the coastal chlorophyll-a gap
 reconstruction benchmark (Case Study 1: Tongoy Balsa, Chile).
 
-Run from the public_export/ directory:
+Run from the repository root:
     python scripts/generate_public_figures.py
 
 Requirements:
@@ -36,7 +36,7 @@ matplotlib.rcParams.update({
 })
 
 # ---------------------------------------------------------------------------
-# Paths (relative to public_export/ as cwd)
+# Paths (relative to the repository root as cwd)
 # ---------------------------------------------------------------------------
 DATA_DIR = "data_public/chlorophyll"
 RESULTS_DIR = "results_public/chlorophyll"

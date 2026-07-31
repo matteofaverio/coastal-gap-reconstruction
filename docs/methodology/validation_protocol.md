@@ -39,13 +39,15 @@ gap is explicitly out of scope for validated comparisons.
   be scoring against an untrustworthy "true" value.
 - Gaps of a given length are sampled to be non-overlapping with a fixed
   random seed. `src/coastal_gap_reconstruction/artificial_gap_validation.py`
-  implements this masking/sampling logic and is a public illustration of the
-  rule, but it does not reproduce this exact released pool byte-for-byte:
-  the released CSV carries additional research-stage columns (sustained-event
-  flags, context-availability checks, a regime label, a checksum) that were
-  produced by logic that is not part of this public module. Treat
-  `chlorophyll_validation_gaps.csv` itself as the authoritative pool
-  definition.
+  implements this masking/sampling logic as a public illustration of the rule
+  (it does not reproduce the released pool byte-for-byte). The exact,
+  byte-for-byte reproduction of the full released 681-row pool -- including
+  the sustained-event flags, context-availability checks, regime label, and
+  checksum columns -- is `experiments/chlorophyll/target_and_gap_pool.py`; see
+  that module's docstring for the two sampling procedures involved and
+  `tests/test_gap_pool_regeneration.py` for the exact equality guarantees.
+  Either way, treat `chlorophyll_validation_gaps.csv` itself as the
+  authoritative pool definition.
 - A gap is flagged as a high-chlorophyll "event" gap if any hidden day's
   true value exceeds the 90th percentile of all eligible target values.
 
@@ -101,11 +103,9 @@ reconstruction: they are satellite estimates, not the in-situ measurement
 this benchmark reconstructs. The only valid scoring target is `chl_mean`
 (physical) or `log10(chl_mean)` (log, the benchmark's actual scoring scale --
 see `docs/methodology/target_and_gap_construction.md`), both from
-`data_public/chlorophyll/chlorophyll_daily_target.csv`. (This rule
-previously lived in a `config/contracts/target_contract.yaml` file that had
-no code or CI actually reading it; it is stated here instead, as prose,
-since nothing in this repository enforced it as a machine-checkable
-constraint.)
+`data_public/chlorophyll/chlorophyll_daily_target.csv`. This rule is stated
+here as prose rather than enforced by code; nothing in this repository
+checks it automatically.
 
 ## What gets reported
 

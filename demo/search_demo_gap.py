@@ -3,7 +3,7 @@ gap, run with the actual demo method implementations (`demo/src/methods.py`),
 not only old cached benchmark tables.
 
 Not needed to run the demo -- this is a one-off selection tool. Its output is
-a diagnostic audit table, not a notebook artifact. Run from public_export/:
+a diagnostic audit table, not a notebook artifact. Run from the repository root:
 
     python3 demo/search_demo_gap.py
 

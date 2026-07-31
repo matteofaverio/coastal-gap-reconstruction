@@ -49,8 +49,9 @@ After that, everything (including re-running the notebook) works offline.
 **If live TS-ICL genuinely cannot run** (no internet on first use, an incompatible
 environment, etc.), the notebook detects the failure explicitly (Section 8) and
 falls back to `data/cached_tsicl_predictions.csv` /
-`data/cached_tsicl_predictions_real_gap.csv` -- real TS-ICL output saved from an
-earlier live run on this same demo data, not fabricated numbers. The notebook
+`data/cached_tsicl_predictions_real_gap.csv` -- genuine TS-ICL output saved from
+an earlier live run on this same demo data, not synthetic placeholder values.
+The notebook
 prints, in plain text, whether it is running live or falling back. It never
 silently substitutes one for the other.
 

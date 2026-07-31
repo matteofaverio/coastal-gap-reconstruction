@@ -1,12 +1,13 @@
 """Builds the small CSV files used by demo/gap_reconstruction_walkthrough.ipynb.
 
 Not required to run the demo (the CSVs are already committed under demo/data/).
-Kept for transparency and reproducibility. Run from the public_export/ root:
+Kept for transparency and reproducibility. Run from the repository root:
 
     python3 demo/build_demo_data.py
 
 Reads only from data_public/ (public, redistributable chlorophyll data already
-in this repository) -- does not touch anything in the private research repo.
+in this repository) -- does not read from or write to any private/internal
+data source.
 """
 import pandas as pd
 

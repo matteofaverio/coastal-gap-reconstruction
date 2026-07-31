@@ -3,9 +3,9 @@
 The report and released benchmark score chlorophyll on log10(chl_mean), not
 physical chl_mean. notebooks/03_baselines.ipynb previously scored directly
 on physical chl_mean and invited a direct numeric comparison against the
-log10-scale benchmark table -- a real bug found in the Phase 1 authenticity
-audit (see docs/methodology/target_and_gap_construction.md, "Scoring
-scale"). These tests pin the fix.
+log10-scale benchmark table -- a real bug found during a repository
+authenticity review (see docs/methodology/target_and_gap_construction.md,
+"Scoring scale"). These tests pin the fix.
 """
 from __future__ import annotations
 
