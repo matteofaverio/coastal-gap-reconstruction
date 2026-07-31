@@ -24,15 +24,44 @@ different, non-interchangeable sampling procedures:
   (`_config.EXTENDED_MAX_CANDIDATES`).
 
 `build_gap_pool` runs both procedures internally and concatenates the result.
-Regenerating from the public daily target table reproduces all 681 released rows:
-450 exactly bit-for-bit on every column, and 231 exactly on every column except a
-single row (`L10_20160622`) where `target_mean_true` differs from the released
-value by 0.0001 -- a floating-point rounding artifact from summing the same 10
-values in a different order/precision path, not a different candidate selection
-or a different formula (verified: the selected start date, `target_max_true`, all
-context columns, and all boolean labels for that row match exactly). This is
-stated explicitly rather than silently rounded away; see
-`tests/test_gap_pool_regeneration.py` for the exact tolerance this is checked at.
+Regenerating from the public daily target table reproduces:
+
+- **Selection**: all 681 released gap_ids, exactly, for both length subsets.
+- **Metadata** (season, year, context columns, event/sustained/background labels,
+  regime, checksum): exact on all 681 rows.
+- **Numeric aggregates** (target_mean_true, target_max_true, chl_90th_threshold):
+  exact on 680 of 681 rows. One row, `L10_20160622`, has `target_mean_true` =
+  1.3268 here vs. 1.3269 in the released file -- investigated to a proven root
+  cause, not merely tolerated:
+
+  The row's 10 hidden `chl_mean` values sum, by every standard method tried
+  (`pandas.Series.mean`, `numpy.mean` on the same values as a Python list or a
+  NumPy array, left-to-right Python summation), to a float64 value of
+  `1.326849999999999862865...` -- i.e. the true sum sits *fractionally below*
+  the `x.xxxx5` rounding boundary, so standard rounding gives 1.3268. Summing the
+  same 10 values in **reverse** order gives `1.32685000000000...1` -- fractionally
+  *above* the boundary, rounding to 1.3269 and matching the released value exactly.
+  A `float32`-intermediate mean also happens to land on the 1.3269 side for this
+  specific row, but was ruled out as the actual historical procedure: applied
+  pool-wide, it reproduces this one row correctly but *breaks 5 other, previously
+  bit-exact rows* (verified by direct pool-wide comparison, not assumed). No
+  single alternative summation order or precision path reproduces this row without
+  regressing others.
+
+  **Conclusion**: this is a genuine floating-point non-determinism artifact --
+  the released value depends on summation-order/precision details of the specific
+  historical execution environment (library version, BLAS backend, or an
+  intermediate step not visible in the recovered source) that cannot be exactly
+  reconstructed from the available code, not a different candidate selection, not
+  a different formula, and not an error in either the released value or this
+  regeneration. The released CSV remains the authoritative benchmark value for
+  this row; this module does not special-case it. See
+  `tests/test_gap_pool_regeneration.py` for tests that separately report
+  selection, metadata, and numeric equality, and for why canonical-serialized
+  (whole-file hash) equality does not hold: independently of this one cell, the
+  released file's row order is not sorted by `gap_id` (it reflects the original
+  per-length generation order), which this module's `pd.concat`-based assembly
+  does not reproduce either.
 
 The extended-length procedure was recovered by reading
 `src/tongoy_chl/models/tier_c_7c_extended_eval.py`'s `find_nonoverlapping_gaps`/

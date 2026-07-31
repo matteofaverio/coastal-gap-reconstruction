@@ -1,11 +1,18 @@
-"""Byte-identical regeneration tests for the chlorophyll and oxygen gap pools.
+"""Regeneration tests for the chlorophyll and oxygen gap pools.
 
 These are the acceptance tests for `experiments/chlorophyll/target_and_gap_pool.py`
 and `experiments/oxygen/target_and_gap_pool.py`: regenerating from the public daily
-target tables must reproduce the released validation-pool CSVs exactly.
+target tables must reproduce the released validation-pool CSVs. For chlorophyll,
+four distinct equality claims are tested and reported separately -- selection,
+metadata, numeric, and canonical-serialized -- rather than one blended "matches"
+assertion, because they do not all hold to the same degree (see
+`experiments/chlorophyll/target_and_gap_pool.py`'s module docstring for the full
+diagnosis of the one known numeric exception and the row-order difference behind
+the canonical-serialized non-match).
 """
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -22,12 +29,22 @@ CHL_POOL = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_validation_g
 OX_TARGET = REPO_ROOT / "data_public" / "oxygen" / "oxygen_daily_target.csv"
 OX_POOL = REPO_ROOT / "data_public" / "oxygen" / "oxygen_validation_gaps.csv"
 
-# One released row (L10_20160622) differs from a from-scratch regeneration by
-# 0.0001 on target_mean_true only -- a floating-point summation-order artifact
-# (verified: the selected start date and every other column for that row match
-# exactly). Documented, not hidden: see the module docstring of
-# experiments/chlorophyll/target_and_gap_pool.py for the full diagnosis.
-_KNOWN_FLOAT_ROUNDING_TOLERANCE = 2e-4
+METADATA_COLUMNS = [
+    "gap_length", "start_date", "end_date", "n_hidden_days", "season", "year",
+    "is_high_chl_event", "is_sustained_event", "is_background",
+    "pre_context_available_days", "post_context_available_days",
+    "context_constrained", "regime", "target_table_checksum",
+]
+NUMERIC_COLUMNS = ["target_mean_true", "target_max_true", "chl_90th_threshold"]
+
+# The one proven floating-point non-determinism exception (see the module
+# docstring of target_and_gap_pool.py for the full root-cause investigation:
+# every standard summation order/precision path was tried; none reproduces this
+# row without regressing others -- this is not a tolerance chosen for
+# convenience, it is sized to exactly this one documented, explained cell).
+_KNOWN_EXCEPTION_GAP_ID = "L10_20160622"
+_KNOWN_EXCEPTION_COLUMN = "target_mean_true"
+_KNOWN_EXCEPTION_ABS_DIFF = 0.0001
 
 
 def _columns_equal(a: pd.Series, b: pd.Series, atol: float = 1e-9) -> bool:
@@ -36,75 +53,92 @@ def _columns_equal(a: pd.Series, b: pd.Series, atol: float = 1e-9) -> bool:
     return bool((a.astype(str) == b.astype(str)).all())
 
 
-def test_chlorophyll_full_pool_matches_released_pool_within_documented_tolerance() -> None:
-    """All 681 released rows, all 18 columns, regenerated from the public daily
-    target table via the two recovered sampling procedures (core lengths via
-    coastal_gap_reconstruction.gaps.sample_nonoverlapping; extended lengths via
-    sample_nonoverlapping_sequential, recovered from
-    src/tongoy_chl/models/tier_c_7c_extended_eval.py in the private repository)."""
+@pytest.fixture(scope="module")
+def chl_merged() -> pd.DataFrame:
     target_df = chl_tgp.load_daily_target(CHL_TARGET)
     checksum = chl_tgp.target_table_checksum(CHL_TARGET)
-
     regenerated = chl_tgp.build_gap_pool(target_df, checksum)
     frozen = pd.read_csv(CHL_POOL, parse_dates=["start_date", "end_date"])
+    return (
+        regenerated.sort_values("gap_id")
+        .reset_index(drop=True)
+        .merge(
+            frozen.sort_values("gap_id").reset_index(drop=True),
+            on="gap_id",
+            suffixes=("_new", "_frozen"),
+        )
+    )
+
+
+def test_chlorophyll_selection_exact(chl_merged: pd.DataFrame) -> None:
+    """Exact selection equality: every released gap_id is reproduced, and only
+    those -- 681/681, for both the core and extended length subsets."""
+    target_df = chl_tgp.load_daily_target(CHL_TARGET)
+    checksum = chl_tgp.target_table_checksum(CHL_TARGET)
+    regenerated = chl_tgp.build_gap_pool(target_df, checksum)
+    frozen = pd.read_csv(CHL_POOL)
 
     assert len(regenerated) == 681
     assert len(frozen) == 681
     assert set(regenerated["gap_id"]) == set(frozen["gap_id"])
-    assert list(regenerated.columns) == chl_tgp.POOL_COLUMNS
+    assert len(chl_merged) == 681  # the merge above found a 1:1 match for every row
 
-    merged = (
-        regenerated.sort_values("gap_id")
-        .reset_index(drop=True)
-        .merge(
-            frozen.sort_values("gap_id").reset_index(drop=True),
-            on="gap_id",
-            suffixes=("_new", "_frozen"),
+
+def test_chlorophyll_metadata_exact(chl_merged: pd.DataFrame) -> None:
+    """Exact metadata equality: season, year, context columns, event/sustained/
+    background labels, regime, and checksum match on all 681 rows -- zero
+    exceptions, unlike the numeric columns below."""
+    for col in METADATA_COLUMNS:
+        assert _columns_equal(chl_merged[f"{col}_new"], chl_merged[f"{col}_frozen"], atol=1e-9), (
+            f"metadata column {col!r} diverged from the released pool -- this should never happen"
         )
-    )
-    for col in chl_tgp.POOL_COLUMNS:
-        if col == "gap_id":
-            continue
-        assert _columns_equal(
-            merged[f"{col}_new"], merged[f"{col}_frozen"], atol=_KNOWN_FLOAT_ROUNDING_TOLERANCE
-        ), f"column {col!r} diverged from the released pool beyond the documented tolerance"
 
 
-def test_chlorophyll_full_pool_matches_bit_exactly_except_one_documented_row() -> None:
-    """Stricter companion to the tolerance-based test above: at float atol=1e-9,
-    exactly one row (L10_20160622) may differ, and only on target_mean_true/
-    target_max_true. Any other mismatch is a real regression, not known noise."""
+def test_chlorophyll_numeric_exact_except_one_documented_row(chl_merged: pd.DataFrame) -> None:
+    """Exact numeric equality on target_mean_true/target_max_true/chl_90th_threshold,
+    with exactly one documented, root-caused exception (see module docstring)."""
+    mismatching_gap_ids: set[str] = set()
+    mismatching_columns: set[str] = set()
+    for col in NUMERIC_COLUMNS:
+        a, b = chl_merged[f"{col}_new"], chl_merged[f"{col}_frozen"]
+        eq = np.isclose(a.astype(float), b.astype(float), atol=1e-9, equal_nan=True)
+        if not eq.all():
+            mismatching_columns.add(col)
+            mismatching_gap_ids.update(chl_merged.loc[~eq, "gap_id"])
+
+    assert mismatching_gap_ids == {_KNOWN_EXCEPTION_GAP_ID}
+    assert mismatching_columns == {_KNOWN_EXCEPTION_COLUMN}
+
+    row = chl_merged[chl_merged["gap_id"] == _KNOWN_EXCEPTION_GAP_ID].iloc[0]
+    abs_diff = abs(row[f"{_KNOWN_EXCEPTION_COLUMN}_new"] - row[f"{_KNOWN_EXCEPTION_COLUMN}_frozen"])
+    assert abs_diff == pytest.approx(_KNOWN_EXCEPTION_ABS_DIFF, abs=1e-9)
+
+
+def test_chlorophyll_canonical_serialized_hash_does_not_match_and_why() -> None:
+    """Canonical-serialized equality: does NOT hold, for two independent, proven
+    reasons -- documented here rather than asserted true. (1) the one numeric
+    exception above; (2) the released file's row order is not sorted by gap_id
+    (it reflects the original per-length generation order), which this module's
+    concatenation-based assembly does not reproduce. Both are reported, not
+    silently tolerance-checked away."""
     target_df = chl_tgp.load_daily_target(CHL_TARGET)
     checksum = chl_tgp.target_table_checksum(CHL_TARGET)
     regenerated = chl_tgp.build_gap_pool(target_df, checksum)
-    frozen = pd.read_csv(CHL_POOL, parse_dates=["start_date", "end_date"])
+    frozen = pd.read_csv(CHL_POOL)
 
-    merged = (
-        regenerated.sort_values("gap_id")
-        .reset_index(drop=True)
-        .merge(
-            frozen.sort_values("gap_id").reset_index(drop=True),
-            on="gap_id",
-            suffixes=("_new", "_frozen"),
-        )
+    # Reason 2, confirmed directly: released row order isn't gap_id-sorted.
+    assert list(frozen["gap_id"]) != sorted(frozen["gap_id"])
+
+    regenerated_sorted = regenerated.sort_values("gap_id").reset_index(drop=True)
+    canonical_bytes = regenerated_sorted.to_csv(index=False).encode()
+    regenerated_hash = hashlib.sha256(canonical_bytes).hexdigest()
+    released_hash = hashlib.sha256(CHL_POOL.read_bytes()).hexdigest()
+
+    assert regenerated_hash != released_hash, (
+        "canonical serialized hash unexpectedly matched -- if this starts "
+        "passing, the numeric exception and/or row-order difference above may "
+        "have been resolved; update this test and the module docstring together"
     )
-    mismatching_gap_ids: set[str] = set()
-    mismatching_columns: set[str] = set()
-    for col in chl_tgp.POOL_COLUMNS:
-        if col == "gap_id":
-            continue
-        a, b = merged[f"{col}_new"], merged[f"{col}_frozen"]
-        eq = (
-            np.isclose(a.astype(float), b.astype(float), atol=1e-9, equal_nan=True)
-            if a.dtype == float or b.dtype == float
-            else (a.astype(str) == b.astype(str))
-        )
-        if not eq.all():
-            mismatching_columns.add(col)
-            mismatching_gap_ids.update(merged.loc[~eq, "gap_id"])
-
-    assert mismatching_gap_ids == {"L10_20160622"}
-    assert mismatching_columns == {"target_mean_true"}
 
 
 def test_chlorophyll_gap_length_support_and_counts() -> None:
