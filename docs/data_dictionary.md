@@ -154,29 +154,43 @@ reanalysis product attributions.
 
 Not chlorophyll- or oxygen-specific -- shared between both case studies. One row
 per calendar day (same 3,988-row date coverage as every other daily table in this
-repository), 162 columns: `date` + 22 override columns + 139 new columns.
+repository), 210 columns: `date` + 70 override columns + 139 new columns.
 
 This file, together with `chlorophyll_predictor_features_curated.csv`, lets
 `coastal_gap_reconstruction.feature_tables.load_full_feature_table` reconstruct
 the full 265-column external feature snapshot that oxygen's feature-construction
 code reads directly, and that chlorophyll's ocean-current/kinematic covariate
-arms need:
+arms need. The reconstruction is verified **bitwise float64-exact** against the
+private snapshot, including canonical-CSV SHA-256 equality, not merely
+numerically close (see `tests/test_feature_table_reconstruction.py`):
 
 - **139 new columns**: GLORYS12/MULTIOBS current, transport, and kinematic-
   diagnostic features not present in the 126-column base table (alongshore/
   crossshore current components, speed/vorticity/divergence/strain/Okubo-Weiss at
   multiple spatial windows, and their rolling summaries).
-- **22 override columns**: MUR SST-derived features (`mur_sst_nearest_degC`,
-  `mur_gradient_*`, `mur_front_*`, `mur_sst_anom_*`, `mur_sst_cooling_*`,
-  `mur_sst_roll*d_degC`, `mur_coastal_grad_*`) that are also present in the base
-  table under the same names, but with **different values** -- the base table and
-  this extension were built from two snapshots that differ in one upstream
-  processing step. The values in this file are the ones the private oxygen and
-  chlorophyll-currents pipelines were actually run against; `load_full_feature_table`
-  uses these values, not the base table's, when reconstructing the full snapshot.
+- **70 override columns**: columns also present in the base table under the same
+  names, but with **different values** there -- the base table and this extension
+  were built from two snapshots that differ in an upstream processing step. Most
+  (MUR SST-derived features -- `mur_sst_nearest_degC`, `mur_gradient_*`,
+  `mur_front_*`, `mur_sst_anom_*`, `mur_sst_cooling_*`, `mur_sst_roll*d_degC`,
+  `mur_coastal_grad_*` -- plus PLV meteorological, wind, upwelling, and a few
+  satellite-chlorophyll columns) differ only by a handful of floating-point ULPs;
+  a few differ meaningfully (`mur_sst_available`, an availability flag, differs
+  on 26 dates). All 70 are overridden identically, regardless of how large the
+  difference is -- a frozen benchmark input's exactness bar is zero difference,
+  not a tolerance chosen for convenience. The values in this file are the ones
+  the private oxygen and chlorophyll-currents pipelines were actually run
+  against; `load_full_feature_table` uses these values, not the base table's,
+  when reconstructing the full snapshot.
+
+Exact reconstruction also requires reading both files with
+`float_precision="round_trip"` (done automatically by every loader in
+`coastal_gap_reconstruction.feature_tables`) rather than pandas' default CSV
+float parser, which was found, on this project's own data, to not always parse
+a written float64 value back to the same bit pattern.
 
 See `tests/test_feature_table_reconstruction.py` for the exact column-set and
-value-equality verification against the private 265-column snapshot.
+bitwise/hash-equality verification against the private 265-column snapshot.
 
 ## data_public/chlorophyll/chlorophyll_validation_gaps.csv
 

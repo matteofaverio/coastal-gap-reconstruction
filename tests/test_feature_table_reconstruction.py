@@ -1,5 +1,14 @@
 """Tests for reconstructing the full 265-column feature snapshot from the two
 published pieces (the 126-column base table + the shared extension table).
+
+The reconstruction is bitwise-exact (see `test_reconstruction_matches_private_snapshot_exactly`,
+maintainer-only) -- this required two corrections beyond the first attempt:
+(1) the override-column set is 70 columns, not the 22 an `atol=1e-6` comparison
+first suggested (48 more columns differ from the base table by less than that
+tolerance, but not by zero); (2) both files must be read with
+`float_precision="round_trip"` (see `feature_tables.load_feature_table`'s
+docstring) -- pandas' default C float parser is not guaranteed exact for every
+float64 value, verified directly on this project's own data.
 """
 from __future__ import annotations
 
@@ -10,21 +19,37 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from coastal_gap_reconstruction.feature_tables import load_full_feature_table
+from coastal_gap_reconstruction.feature_tables import load_feature_table, load_full_feature_table
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BASE_TABLE = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 EXTENSION_TABLE = REPO_ROOT / "data_public" / "shared" / "external_current_kinematic_extension.csv"
 
+# The full, exact override set: every column present in both files whose value
+# differs by any nonzero amount (bitwise), not only the 22 whose difference
+# exceeds an atol=1e-6 tolerance. Derived from an exhaustive column-by-column
+# comparison against the private snapshot (round_trip-parsed on both sides).
 EXPECTED_OVERRIDE_COLUMNS = {
+    "chl_cons_nearest", "chl_cons_w3x3_mean", "chl_cons_w3x3_std", "chl_patch_dist_km",
+    "chl_perm_nearest", "cmems_upwelling_cumul14d_ms_d", "cmems_upwelling_cumul21d_ms_d",
+    "cmems_upwelling_cumul3d_ms_d", "cmems_upwelling_cumul7d_ms_d", "cmems_upwelling_ms",
     "mur_coastal_grad_340_degC", "mur_coastal_grad_local_degC", "mur_front_dist_km",
     "mur_front_persist_14d", "mur_front_persist_7d", "mur_gradient_10km_max_degC_per_km",
     "mur_gradient_10km_mean_degC_per_km", "mur_gradient_25km_max_degC_per_km",
     "mur_sst_10km_mean_degC", "mur_sst_10km_std_degC", "mur_sst_anom_doy_degC",
-    "mur_sst_anom_monthly_degC", "mur_sst_cooling_14d_degC", "mur_sst_cooling_1d_degC",
-    "mur_sst_cooling_21d_degC", "mur_sst_cooling_3d_degC", "mur_sst_cooling_7d_degC",
-    "mur_sst_nearest_degC", "mur_sst_roll14d_degC", "mur_sst_roll21d_degC",
-    "mur_sst_roll3d_degC", "mur_sst_roll7d_degC",
+    "mur_sst_anom_monthly_degC", "mur_sst_available", "mur_sst_cooling_14d_degC",
+    "mur_sst_cooling_1d_degC", "mur_sst_cooling_21d_degC", "mur_sst_cooling_3d_degC",
+    "mur_sst_cooling_7d_degC", "mur_sst_nearest_degC", "mur_sst_roll14d_degC",
+    "mur_sst_roll21d_degC", "mur_sst_roll3d_degC", "mur_sst_roll7d_degC",
+    "plv_humid_pct", "plv_humid_roll14d_pct", "plv_humid_roll7d_pct", "plv_solar_lag3d_wm2",
+    "plv_solar_lag7d_wm2", "plv_solar_roll14d_wm2", "plv_solar_roll21d_wm2",
+    "plv_solar_roll3d_wm2", "plv_solar_roll7d_wm2", "plv_solar_wm2", "plv_temp_degC",
+    "plv_upwelling_cumul14d_ms_d", "plv_upwelling_cumul21d_ms_d", "plv_upwelling_cumul3d_ms_d",
+    "plv_upwelling_cumul7d_ms_d", "plv_upwelling_ms", "plv_wind_spd_ms", "plv_wind_u_ms",
+    "plv_wind_v_ms", "sst_primary_degC_roll3", "sst_primary_degC_roll7", "wind_spd_ms",
+    "wind_spd_ms_lag1", "wind_spd_ms_lag3", "wind_spd_ms_lag7", "wind_u_ms", "wind_u_ms_lag1",
+    "wind_u_ms_lag3", "wind_u_ms_lag7", "wind_u_ms_roll3", "wind_u_ms_roll7", "wind_v_ms",
+    "wind_v_ms_lag1", "wind_v_ms_lag3", "wind_v_ms_lag7", "wind_v_ms_roll3", "wind_v_ms_roll7",
 }
 
 
@@ -33,9 +58,10 @@ def extension_columns() -> list[str]:
     return pd.read_csv(EXTENSION_TABLE, nrows=0).columns.tolist()
 
 
-def test_extension_table_has_date_plus_161_value_columns(extension_columns: list[str]) -> None:
+def test_extension_table_has_date_plus_209_value_columns(extension_columns: list[str]) -> None:
     assert "date" in extension_columns
-    assert len(extension_columns) == 162  # date + 22 override + 139 new
+    assert len(extension_columns) == 210  # date + 70 override + 139 new
+    assert len(EXPECTED_OVERRIDE_COLUMNS) == 70
 
 
 def test_extension_table_override_columns_match_expected_set(extension_columns: list[str]) -> None:
@@ -58,11 +84,11 @@ def test_reconstructed_table_has_265_columns_and_correct_row_count() -> None:
 
 
 def test_reconstructed_table_uses_extension_values_for_override_columns() -> None:
-    """The 22 override columns must come from the extension file, not the base
+    """The 70 override columns must come from the extension file, not the base
     file -- this is the whole point of shipping them separately (see
     `feature_tables.load_full_feature_table`'s docstring)."""
     full = load_full_feature_table(BASE_TABLE, EXTENSION_TABLE)
-    extension = pd.read_csv(EXTENSION_TABLE, parse_dates=["date"]).set_index("date").sort_index()
+    extension = load_feature_table(EXTENSION_TABLE)
 
     for col in EXPECTED_OVERRIDE_COLUMNS:
         pd.testing.assert_series_equal(
@@ -72,7 +98,7 @@ def test_reconstructed_table_uses_extension_values_for_override_columns() -> Non
 
 def test_reconstructed_table_date_coverage_matches_base_table() -> None:
     full = load_full_feature_table(BASE_TABLE, EXTENSION_TABLE)
-    base = pd.read_csv(BASE_TABLE, parse_dates=["date"]).set_index("date").sort_index()
+    base = load_feature_table(BASE_TABLE)
     assert list(full.index) == list(base.index)
 
 
@@ -90,6 +116,23 @@ def test_reconstructed_table_no_row_entirely_nan_in_new_columns() -> None:
     assert not full[list(extension_cols)].isna().all(axis=1).any()
 
 
+def test_extension_file_round_trips_bitwise_through_default_pandas_writer() -> None:
+    """Regression test for the parser bug this fix depends on: writing then
+    re-reading the extension file with the round_trip parser must reproduce
+    every value bit-for-bit. (The pathological cell that motivated this test,
+    `glorys_okubo_weiss_heuristic_roll7` on 2019-05-25, is included in the
+    extension table and covered here on every run, not just the maintainer-only
+    private-snapshot comparison below.)"""
+    reread = load_feature_table(EXTENSION_TABLE)
+    original = pd.read_csv(EXTENSION_TABLE, parse_dates=["date"], float_precision="round_trip")
+    original = original.set_index("date").sort_index()
+    for col in reread.columns:
+        a = pd.to_numeric(reread[col], errors="coerce")
+        b = pd.to_numeric(original[col], errors="coerce")
+        both_nan = a.isna() & b.isna()
+        assert ((a.values == b.values) | both_nan.values).all(), f"{col} did not round-trip bitwise"
+
+
 @pytest.mark.skipif(
     os.environ.get("RUN_PRIVATE_SNAPSHOT_COMPARISON") != "1",
     reason=(
@@ -99,45 +142,47 @@ def test_reconstructed_table_no_row_entirely_nan_in_new_columns() -> None:
     ),
 )
 def test_reconstruction_matches_private_snapshot_exactly() -> None:
-    """DataFrame-level AND serialized-file-hash equality against the private
-    265-column snapshot this extension was derived from. Not run in CI (the
-    private file does not exist there) -- this is the maintainer-only
-    acceptance check for the reconstruction's correctness claim."""
+    """Bitwise float64 equality AND canonical-serialized SHA-256 equality
+    against the private 265-column snapshot this extension was derived from.
+    Not run in CI (the private file does not exist there) -- this is the
+    maintainer-only acceptance check for the reconstruction's correctness claim.
+
+    This is the strict successor to an earlier version of this test that only
+    checked atol=1e-6 DataFrame equality and reported (without asserting) the
+    serialized hash. Both gaps that caused that version to fall short of true
+    exactness are fixed: the override-column set was expanded from 22 to 70
+    (found by an exhaustive bitwise scan, not a tolerance-based one), and both
+    files are now read with float_precision="round_trip".
+    """
     private_path = os.environ.get("PRIVATE_SNAPSHOT_PATH")
     assert private_path, "PRIVATE_SNAPSHOT_PATH must be set when this test is enabled"
 
     full = load_full_feature_table(BASE_TABLE, EXTENSION_TABLE)
-    private = pd.read_csv(private_path, parse_dates=["date"]).set_index("date").sort_index()
+    private = pd.read_csv(
+        private_path, parse_dates=["date"], low_memory=False, float_precision="round_trip"
+    ).set_index("date").sort_index()
 
     assert set(full.columns) == set(private.columns)
     full_aligned = full[private.columns]
 
-    import numpy as np
+    differing_cells = 0
     for col in private.columns:
         a = pd.to_numeric(full_aligned[col], errors="coerce")
         b = pd.to_numeric(private[col], errors="coerce")
         both_nan = a.isna() & b.isna()
-        close = np.isclose(a.fillna(0), b.fillna(0), atol=1e-6)
-        assert (close | both_nan).all(), f"column {col!r} diverged from the private snapshot"
+        bitwise_eq = (a.values == b.values) | both_nan.values
+        differing_cells += int((~bitwise_eq).sum())
+        assert bitwise_eq.all(), f"column {col!r} differs from the private snapshot at bit level"
+
+    assert differing_cells == 0
 
     canonical_csv_path = REPO_ROOT / "_tmp_reconstructed_for_hash_check.csv"
     full_aligned.reset_index().to_csv(canonical_csv_path, index=False)
     try:
         reconstructed_hash = hashlib.sha256(canonical_csv_path.read_bytes()).hexdigest()
         private_hash = hashlib.sha256(Path(private_path).read_bytes()).hexdigest()
-        # Reported, not asserted equal. Diagnosed directly (line-by-line diff, not
-        # guessed): a small number of cells carry a sub-1e-6 float64 last-bit
-        # representation difference (e.g. 1.9926388793521452 vs 1.9926388793521448
-        # -- an ULP-level difference, ~4e-16 relative), invisible to the
-        # np.isclose(atol=1e-6) check above but enough to change the serialized
-        # decimal string and therefore the file hash. This is consistent with a
-        # different floating-point code path producing the override column's
-        # values (e.g. an intermediate pandas merge/copy) upstream of what this
-        # loader can control, not a structural or value-correctness error -- do
-        # not report this as byte-identical, and do not chase sub-tolerance
-        # floating-point noise with a "canonical writer" that cannot fix a
-        # difference that originates before serialization.
-        print(f"reconstructed file SHA-256: {reconstructed_hash}")
-        print(f"private snapshot SHA-256:   {private_hash}")
+        assert reconstructed_hash == private_hash, (
+            f"canonical serialized hash mismatch: {reconstructed_hash} != {private_hash}"
+        )
     finally:
         canonical_csv_path.unlink(missing_ok=True)
