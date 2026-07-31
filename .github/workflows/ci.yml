@@ -19,7 +19,7 @@ jobs:
       - name: ruff check
         run: uv run ruff check .
       - name: Unit tests
-        run: uv run pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py -q
+        run: uv run pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py tests/test_gap_pool_regeneration.py tests/test_feature_table_reconstruction.py -q
       - name: Notebook smoke tests (no TS-ICL checkpoint download)
         run: uv run pytest tests/test_notebooks_smoke.py -q
       - name: Demo smoke tests (falls back to cached predictions; does not require live TS-ICL)
