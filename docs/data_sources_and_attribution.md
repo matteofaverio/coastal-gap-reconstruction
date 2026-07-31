@@ -8,19 +8,25 @@ oxygen target table (`data_public/oxygen/oxygen_daily_target.csv`, sensor
 BTGOXD2) are both processed daily summary tables derived from hourly
 in-situ sensor data provided by CEAZAMet, the coastal/meteorological
 monitoring network operated by the Centro de Estudios Avanzados en Zonas
-Áridas (CEAZA), Chile. The hourly raw data themselves are not
-redistributed in this repository -- only the derived daily aggregate
-tables described in `docs/methodology/target_and_gap_construction.md`.
+Áridas (CEAZA), Chile. CEAZAMet's hourly observations are publicly/
+externally accessible at their source (www.ceazamet.cl) and are not
+committed to this repository in raw form -- only the derived daily
+aggregate tables described in `docs/methodology/target_and_gap_construction.md`
+are included here, with attribution.
 
-Required attribution:
+Required attribution (use one of the two formulations below, not both):
 
 > Datos provistos por CEAZA, obtenidos desde www.ceazamet.cl, 2019
+
+or
 
 > Centro de Estudios Avanzados en Zonas Áridas (CEAZA), www.ceazamet.cl, 2019
 
 Any use of the chlorophyll target data, or of any predictor feature in this
 repository sourced from CEAZAMet station data (e.g. the PLV meteorological
-station variables), should retain this attribution.
+station variables), should retain this attribution. This data-attribution
+requirement is separate from this repository's code license (MIT, see
+`LICENSE`) -- the two are independent.
 
 ## 2. NASA / PO.DAAC MUR SST attribution
 

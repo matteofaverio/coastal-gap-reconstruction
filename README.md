@@ -132,8 +132,13 @@ docs/                     methodology write-ups and data dictionary
 - [`DATA_LICENSE_AND_ATTRIBUTION.md`](DATA_LICENSE_AND_ATTRIBUTION.md) — data,
   results, and figures are not MIT licensed; required attribution for
   CEAZAMet/CEAZA, NASA/PO.DAAC MUR SST, and Copernicus/CMEMS.
-- TS-ICL (used in `demo/` and `notebooks/06_tsicl_zero_shot_imputation.ipynb`)
-  is separately licensed by its original authors — see `demo/README.md`.
+- TS-ICL (used in `demo/` and `notebooks/06_tsicl_zero_shot_imputation.ipynb`):
+  Etienne Le Naour, Tahar Nabil, Adrien Petralia, "TS-ICL: A Flexible
+  Time-Indexed Foundation Model for Time Series via In-Context Learning," 2026
+  ([EDF-Lab/ts-icl](https://github.com/EDF-Lab/ts-icl)). TS-ICL is governed by
+  its own separate non-commercial license, not this repository's MIT license —
+  see `demo/README.md` for details; the model and its checkpoint are never
+  vendored here, only imported as an optional dependency.
 
 Further detail — the full evidence hierarchy, per-notebook execution status,
 the complete data dictionary, and the sensor-adaptation checklist — lives in

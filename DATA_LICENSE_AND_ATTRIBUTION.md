@@ -37,14 +37,21 @@ Estudios Avanzados en Zonas Áridas (CEAZA), Chile. Meteorological
 predictor features sourced from the nearby Punta Lengua de Vaca (PLV)
 CEAZAMet station are also covered by this attribution.
 
-Required attribution (use both phrases):
+Required attribution (use one of the two formulations below, not both):
 
 > Datos provistos por CEAZA, obtenidos desde www.ceazamet.cl, 2019
 
+or
+
 > Centro de Estudios Avanzados en Zonas Áridas (CEAZA), www.ceazamet.cl, 2019
 
-No raw hourly CEAZAMet data are redistributed here -- only the derived
-daily aggregate table.
+CEAZAMet's hourly in-situ observations are publicly/externally accessible
+source data at their origin (www.ceazamet.cl) and are not committed to this
+repository in raw hourly form -- only the derived daily aggregate tables
+described above are included here, with the attribution above. Code
+licensing (§1) is separate from this source-data attribution requirement:
+the MIT license on this repository's code does not extend to, or relicense,
+the CEAZAMet data these derived tables are built from.
 
 ### 2.2 NASA / PO.DAAC -- MUR Sea Surface Temperature
 
