@@ -51,6 +51,33 @@ the `primary` tier (L=1-30 days) unless explicitly stated otherwise.
 Naturally-occurring missing-data periods, grouped by length class
 (short/medium/long), with gap counts and median/max length per class.
 
+## data_public/oxygen/oxygen_local_btg_diagnostic_features.csv
+
+One row per calendar day (same 3,988-row coverage as the oxygen daily target).
+Daily aggregation of two hourly station variables measured on the *same
+physical station/buoy* as the oxygen sensor itself: water temperature (BTGTA)
+and pressure (BTGPA).
+
+| Column | Description |
+|---|---|
+| date | Calendar date |
+| btg_water_temp_daily_mean | Daily mean water temperature (degC); NaN if no valid hourly readings that day |
+| btg_water_temp_valid_hours | Count of valid hourly readings that day |
+| btg_water_temp_available | True iff `btg_water_temp_valid_hours > 0` |
+| btg_pressure_daily_mean | Daily mean pressure; NaN if no valid hourly readings that day |
+| btg_pressure_valid_hours | Count of valid hourly readings that day |
+| btg_pressure_available | True iff `btg_pressure_valid_hours > 0` |
+
+**Diagnostic status, read before using**: because these variables share a
+station with the oxygen sensor, their availability may covary with oxygen
+sensor outages for reasons unrelated to any true physical relationship. This
+table feeds only the `local_btg_temp_pressure_diagnostic` arm of the oxygen
+benchmark, which is diagnostic/appendix-only in every released oxygen result --
+`results_public/oxygen/oxygen_benchmark_by_length.csv` and every other released
+oxygen table are computed on the external-only arms, not this one. No lag or
+rolling-window features are derived from these columns anywhere in this
+repository; only same-day daily aggregates are used.
+
 ## results_public/oxygen/oxygen_benchmark_by_length.csv
 
 One row per (method, gap length): gap-weighted MAE (mg/L) and gap count,
@@ -123,6 +150,34 @@ data that day). Key feature families:
 See `docs/data_sources_and_attribution.md` for the underlying satellite/
 reanalysis product attributions.
 
+## data_public/shared/external_current_kinematic_extension.csv
+
+Not chlorophyll- or oxygen-specific -- shared between both case studies. One row
+per calendar day (same 3,988-row date coverage as every other daily table in this
+repository), 162 columns: `date` + 22 override columns + 139 new columns.
+
+This file, together with `chlorophyll_predictor_features_curated.csv`, lets
+`coastal_gap_reconstruction.feature_tables.load_full_feature_table` reconstruct
+the full 265-column external feature snapshot that oxygen's feature-construction
+code reads directly, and that chlorophyll's ocean-current/kinematic covariate
+arms need:
+
+- **139 new columns**: GLORYS12/MULTIOBS current, transport, and kinematic-
+  diagnostic features not present in the 126-column base table (alongshore/
+  crossshore current components, speed/vorticity/divergence/strain/Okubo-Weiss at
+  multiple spatial windows, and their rolling summaries).
+- **22 override columns**: MUR SST-derived features (`mur_sst_nearest_degC`,
+  `mur_gradient_*`, `mur_front_*`, `mur_sst_anom_*`, `mur_sst_cooling_*`,
+  `mur_sst_roll*d_degC`, `mur_coastal_grad_*`) that are also present in the base
+  table under the same names, but with **different values** -- the base table and
+  this extension were built from two snapshots that differ in one upstream
+  processing step. The values in this file are the ones the private oxygen and
+  chlorophyll-currents pipelines were actually run against; `load_full_feature_table`
+  uses these values, not the base table's, when reconstructing the full snapshot.
+
+See `tests/test_feature_table_reconstruction.py` for the exact column-set and
+value-equality verification against the private 265-column snapshot.
+
 ## data_public/chlorophyll/chlorophyll_validation_gaps.csv
 
 One row per artificial gap in the canonical chlorophyll validation pool
@@ -134,16 +189,16 @@ One row per artificial gap in the canonical chlorophyll validation pool
 | gap_length | Number of hidden days |
 | start_date, end_date | First/last hidden day |
 | n_hidden_days | Same as gap_length |
-| season | Meteorological season (DJF/MAM/JJA/SON) of the gap start |
-| year | Calendar year of the gap start |
+| season | Meteorological season (DJF/MAM/JJA/SON) covering the *majority* of the gap's hidden days, not necessarily the gap's start date -- a gap straddling a season boundary (e.g. late February into March) is labeled by whichever season covers more hidden days, ties favor the earlier date |
+| year | Calendar year covering the majority of the gap's hidden days, by the same majority-vote rule as `season` (not necessarily the start date's year) |
 | target_mean_true, target_max_true | True mean/max chlorophyll over the hidden days (withheld from candidate methods, used only for scoring) |
-| chl_90th_threshold | The 90th-percentile chlorophyll threshold used to flag high-chlorophyll events |
-| is_high_chl_event | True if any hidden day's true value exceeds chl_90th_threshold |
-| is_sustained_event | True if the event condition persists across multiple hidden days |
-| is_background | True if the gap is not flagged as an event gap |
-| pre_context_available_days, post_context_available_days | Number of eligible days immediately before/after the gap, available as context |
-| context_constrained | True if pre/post context is limited (e.g. near the start/end of the record) |
-| regime | Internal label for the gap-construction protocol version used |
+| chl_90th_threshold | The 90th-percentile chlorophyll threshold used to flag high-chlorophyll events, recomputed fresh from the eligible days of the target table this pool was built from |
+| is_high_chl_event | True if any hidden day's true value strictly exceeds chl_90th_threshold |
+| is_sustained_event | True if `target_mean_true >= 9.9022` mg/m^3 |
+| is_background | True if the gap is flagged as neither `is_high_chl_event` nor `is_sustained_event` |
+| pre_context_available_days, post_context_available_days | Count of eligible days within a fixed window (30 days for gap_length<=30, 60 days otherwise) immediately before/after the gap -- a count within that window, not a run of unbroken consecutive eligible days |
+| context_constrained | True if `pre_context_available_days` or `post_context_available_days` is below the same length-dependent window (30 or 60 days) |
+| regime | Gap-construction protocol label; `strict_observed_only` for every row in this released pool |
 | target_table_checksum | Checksum of the target table version used to build this gap pool, for reproducibility verification |
 
 ## data_public/chlorophyll/chlorophyll_real_gap_inventory.csv
