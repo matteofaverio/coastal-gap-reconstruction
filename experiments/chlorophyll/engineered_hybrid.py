@@ -1,17 +1,18 @@
-"""The engineered hybrid reconstruction pipeline (released public name;
-private project internal name: Sprint 8 "Rule D").
+"""The engineered hybrid reconstruction pipeline ("Rule D" in the private
+project's internal history).
 
-Ported from `sprint8_final_reconstruction.py`, the only private script that
-assembles the length-routed method assignment and applies it across gap
-lengths. This is **a deterministic method-assignment rule**, not a distinct
-fitted model: for a given gap it dispatches to one of three already-defined
-component methods based on gap length alone, then returns that component's
-own prediction unmodified.
+Ported from the only private script that assembles the length-routed
+method assignment and applies it across gap lengths. This is
+**a deterministic method-assignment rule**, not a distinct fitted model:
+for a given gap it dispatches to one of three already-defined component
+methods based on gap length alone, then returns that component's own
+prediction unmodified.
 
 Assignment rule (`ASSIGNMENT_RULE`, "Rule D" in the private project, chosen
-over the "Rule C" sensitivity variant per the private project's
-`docs/status/CANONICAL_RESULTS.md` Sprint 7I-R reconciliation -- Rule D had
-the lower weighted MAE under 4 of 5 weighting schemes tested there):
+over a "Rule C" sensitivity variant per the private project's rule-
+reconciliation analysis, recorded in `docs/status/CANONICAL_RESULTS.md` --
+Rule D had the lower weighted MAE under 4 of 5 weighting schemes tested
+there):
 
     L=1-3    -> Gaussian process (`gaussian_process.run_gp_on_gap`)
     L=4-29   -> Kalman local-level smoother (`probabilistic_models.run_kalman_on_gap`)
@@ -19,10 +20,11 @@ the lower weighted MAE under 4 of 5 weighting schemes tested there):
 
 **This assignment was made on evidence from the earlier 450-gap pool, not
 re-derived from the 449-gap matched support used elsewhere in this package**
-(per `docs/status/CANONICAL_RESULTS.md`, Sprint 7I's crossover analysis used
-L=1-30 plus several intermediate lengths (2,4,5,6,12,13,21) not all of which
-are part of the 5-length matched support) -- it is reproduced here exactly as
-released, not re-optimized against the matched support.
+(per `docs/status/CANONICAL_RESULTS.md`, the private project's method-
+crossover analysis used L=1-30 plus several intermediate lengths
+(2,4,5,6,12,13,21) not all of which are part of the 5-length matched
+support) -- it is reproduced here exactly as released, not re-optimized
+against the matched support.
 
 **Known caveat, stated explicitly because it materially affects the L=4-29
 segment**: the Kalman component's fit is degenerate on this series (see

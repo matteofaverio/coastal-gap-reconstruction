@@ -1,14 +1,12 @@
 """External-only tabular reconstruction models for chlorophyll.
 
-Ported from the private project's Sprint-6H lineage
-(`sprint_6h_pipeline.py`/`_evaluation.py`/`_finalize.py`, plus the earlier
-Sprint 5/6T stages those files superseded), which is the authoritative source
-for the released "arm4 (minimal_plus_wind_relaxation) + ExtraTrees" result
-cited in `docs/status/CANONICAL_RESULTS.md`. Only the fitting/scoring
-mechanics survive here -- the private files' reporting, figure generation,
-caching, and CLI wrapping (~2000 combined lines across
-`sprint_6h_evaluation.py` and `evaluate_tier_a_tuned.py`) are dropped, not
-ported.
+Ported from the private project's curated external-spatial model lineage
+(its evaluation/pipeline/finalization scripts, plus earlier superseded
+external-tabular stages), which is the authoritative source for the
+released "arm4 (minimal_plus_wind_relaxation) + ExtraTrees" result cited in
+`docs/status/CANONICAL_RESULTS.md`. Only the fitting/scoring mechanics
+survive here -- the private files' reporting, figure generation, caching,
+and CLI wrapping (~2000 combined lines) are dropped, not ported.
 
 **Canonical vs. diagnostic**: the canonical external-tabular result is
 `ExtraTreesRegressor` on the 47-column `arm4` feature set (`ARM4_COLUMNS`
