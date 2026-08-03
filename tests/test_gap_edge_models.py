@@ -100,6 +100,20 @@ def test_dependency_window_excludes_rows_that_overlap_held_out_gap():
     assert list(mask) == [True, True, False, False]
 
 
+def test_run_loco_evaluation_predictions_include_gap_length_column():
+    """Regression test for a real bug found this session: `predictions_df`
+    never included a `gap_length` column, which crashed
+    `run_classical_benchmark.score_by_length` (a KeyError on `groupby`) the
+    first time it was actually exercised end-to-end on `tier_ch_deployed`/
+    `ext_tabular_extratrees` output."""
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+    preds, _ = gem.run_loco_evaluation(candidates, target_df, features_df, [])
+    assert "gap_length" in preds.columns
+    assert (preds["gap_length"] == 3).all()
+
+
 def test_run_loco_evaluation_produces_predictions_with_enough_gaps():
     target_df = _synthetic_target(400)
     candidates = _candidates(target_df, gap_length=3, n=15)

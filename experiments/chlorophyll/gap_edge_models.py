@@ -490,6 +490,7 @@ def run_loco_evaluation(
         y_all = design["residual_log_true_minus_interp_log"].to_numpy(dtype=float)
     interp_log_all = design["linear_interp_log_chl"].to_numpy(dtype=float)
     true_all = design["true_chl"].to_numpy(dtype=float)
+    gap_length_all = design["gap_length"].to_numpy(dtype=int)
 
     pred_rows: list[dict] = []
     warn_rows: list[dict] = []
@@ -530,6 +531,7 @@ def run_loco_evaluation(
             pred = float(10.0**pred_log) if pred_log == pred_log else np.nan
             pred_rows.append({
                 "gap_id": gid, "date": pd.Timestamp(dates[ridx]),
+                "gap_length": int(gap_length_all[ridx]),
                 "pred_log10": pred_log, "pred": pred,
                 "true": float(true_all[ridx]) if true_all[ridx] == true_all[ridx] else np.nan,
                 "n_train": n_train,
