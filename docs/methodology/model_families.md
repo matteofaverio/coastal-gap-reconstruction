@@ -22,6 +22,30 @@ Three simple, fast, fully transparent baselines:
 See `src/coastal_gap_reconstruction/baseline_imputation.py` and
 `notebooks/03_baselines.ipynb`.
 
+**Two distinct interpolation formulas, not one.** This package's classical
+benchmark (`experiments/chlorophyll/run_classical_benchmark.py`) uses linear
+interpolation in two different roles, with two different, non-interchangeable
+formulas:
+
+- **Standalone `canonical_interpolation` baseline**
+  (`experiments/chlorophyll/interpolation_baselines.py`): interpolates in
+  **log10(chl_mean) space** between the bracketing observations, then
+  back-transforms. This is the exact formula that produced the frozen
+  `canonical_interpolation` row in
+  `chlorophyll_matched_support_method_metrics.csv` (verified against the
+  private source script, not just the aggregate number).
+- **Gap-edge residual anchor** (`gap_edge_models.compute_interp`):
+  interpolates in **physical (mg/m^3) space**, then takes log10 of the
+  result. This is the anchor the gap-edge residual model predicts a
+  correction against -- an internal detail of that model, never used as a
+  standalone baseline.
+
+These formulas agree only at the two bracketing observations and diverge at
+every interior day. See `interpolation_baselines.py`'s module docstring for
+the full explanation and `tests/test_interpolation_baselines.py` for the
+regression test pinning the standalone baseline to the released per-length
+numbers.
+
 ## Engineered tabular and gap-edge models
 
 Classical machine learning models (linear/ridge/lasso regression, random
@@ -38,14 +62,39 @@ sub-families were explored:
   of the gap are actually observed (and are explicitly excluded from
   forecast-style use cases).
 
-**Public implementations**: `experiments/chlorophyll/tabular_models.py`
-(external-only; canonical learner: `ExtraTreesRegressor` on the 47-column
-`arm4`/`minimal_plus_wind_relaxation` feature set, `ARM4_COLUMNS`;
-`HistGradientBoostingRegressor` is a diagnostic comparator only) and
-`experiments/chlorophyll/gap_edge_models.py` (retrospective, residual-over-
-interpolation; the exact feature families -- `meta`/`pre`/`post`/`edge`/
-`interp` -- are enumerated in `gap_edge_models.build_feature_registry()`,
-not just described in prose).
+**Two external-tabular protocols, not one.** The private project evaluated
+external-predictor tabular models under two distinct protocols, kept
+separate here as separate methods rather than conflated:
+
+- **Plain external-only protocol** (`experiments/chlorophyll/tabular_models.py`,
+  method IDs `external_only_extratrees`/`external_only_hgb`): the 47-column
+  `arm4`/`minimal_plus_wind_relaxation` feature set (`ARM4_COLUMNS`, 46
+  numeric after dropping the categorical `sst_primary_source`) only, no
+  gap-position information. Evaluated for its own sake -- it has **no row**
+  in the released `chlorophyll_matched_support_method_metrics.csv`.
+- **Matched-reference protocol** (`experiments/chlorophyll/gap_edge_models.py`'s
+  `run_reference_arm_loco_evaluation`, method IDs `ext_tabular_extratrees`/
+  `ext_tabular_hgb`): the same `arm4` columns plus 5 structural meta-features
+  describing gap length and within-gap position (`gap_length`,
+  `day_index_within_gap`, `gap_position_fraction`, `distance_to_left_edge`,
+  `distance_to_right_edge` -- never a hidden target value), fit under
+  leave-one-gap-out with a stricter pre-only dependency-window exclusion.
+  **This is the protocol that actually produced the released
+  `ext_tabular_extratrees`/`ext_tabular_hgb` rows** -- confirmed against the
+  private project's own per-gap prediction table
+  (`data/interim/models/tier_c_7a/predictions.csv`, `arm_name ==
+  "tier_a_arm4_reference"`), not merely by matching an aggregate MAE. Because
+  it conditions on gap length/position, it is not strictly external-only or
+  forecast-safe in the same sense as the plain protocol: it assumes the
+  gap's length and the hidden day's position are known in advance.
+
+In both protocols, `ExtraTreesRegressor(n_estimators=500)` is the canonical
+learner; `HistGradientBoostingRegressor` is a diagnostic comparator only.
+
+`experiments/chlorophyll/gap_edge_models.py` also implements the retrospective,
+residual-over-interpolation gap-edge model (`tier_ch_deployed`) -- the exact
+feature families (`meta`/`pre`/`post`/`edge`/`interp`) are enumerated in
+`gap_edge_models.build_feature_registry()`, not just described in prose.
 
 The released "engineered hybrid" reconstruction output combines the gap-edge
 model with a Gaussian process and a state-space (Kalman-filter) model under
@@ -55,20 +104,27 @@ the private project's internal history): Gaussian process for gaps of
 for 30+ days. This is a fixed assignment by gap length, not a per-gap fitted
 choice -- see `experiments/chlorophyll/engineered_hybrid.py::ASSIGNMENT_RULE`.
 See `results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv`
-and the column documentation in `docs/data_dictionary.md`.
+and the column documentation in `docs/data_dictionary.md`. **Support status**:
+the engineered hybrid has a released row on the full 681-gap pool
+(`chlorophyll_benchmark_summary.csv`), but **not** on the 449-gap matched
+support -- when this package's benchmark runs it on the matched support
+(`benchmark_contract.METHODS["engineered_hybrid"].support_status ==
+"new_evaluation_on_matched_449"`), that is a new consistency evaluation for
+comparability with the other matched-support methods, not a reproduction of
+a released matched-support number.
 
 See `notebooks/04_engineered_tabular_models.ipynb` for a walkthrough of
-how external predictor feature tables are built and why external predictors
+how external predictor feature tables are built, why external predictors
 alone did not clearly beat interpolation in this low-data local setting, and
+a real run of both protocols side by side, and
 `notebooks/05_gap_edge_residual_models.ipynb` for the gap-edge residual
 correction approach: predicting a correction over linear interpolation from
 both gap edges, and how it compares as a classical ML comparator to TS-ICL.
 
-**Running the classical benchmark**: the four methods above, plus linear
-interpolation and the engineered hybrid, can be re-run on the released
-449-gap matched support (`experiments/chlorophyll/benchmark_contract.py` --
-the exact gap-length-restricted subset every one of these methods is scored
-on, distinct from the full 681-gap pool TS-ICL diagnostics use) with:
+**Running the classical benchmark**: all methods above can be re-run on the
+released 449-gap matched support (`experiments/chlorophyll/benchmark_contract.py`
+-- the exact gap-length-restricted subset every one of these methods is
+scored on, distinct from the full 681-gap pool TS-ICL diagnostics use) with:
 
 ```bash
 python -m experiments.chlorophyll.run_classical_benchmark
@@ -77,12 +133,36 @@ python -m experiments.chlorophyll.run_classical_benchmark --verify
 
 Expect this to take on the order of tens of minutes on a laptop CPU (the
 external-tabular and gap-edge arms each fit one 500-tree `ExtraTrees` model
-per gap, ~450 fits; the GP arm fits a full Gaussian process per gap).
-Outputs go to a gitignored `build/chlorophyll/classical_benchmark/`
-directory by default and never overwrite the frozen `results_public/`
-tables; `--verify` classifies each method's reproduction against the frozen
-`chlorophyll_matched_support_method_metrics.csv` as bit-identical,
-numerically exact, within tolerance, or not reproduced.
+per gap, ~450 fits per method x 2 protocols; the GP arm fits a full Gaussian
+process per gap). Outputs go to a gitignored
+`build/chlorophyll/classical_benchmark/` directory by default and never
+overwrite the frozen `results_public/` tables. A method's cached predictions
+are only reused across re-runs if a metadata sidecar
+(`predictions_<method>.meta.json`) confirms the exact same gap set, input
+file hashes, and configuration produced them -- any drift forces a
+recompute. `--verify` writes a structured, per-metric
+`verification_report.csv`/`verification_summary.json` classifying each
+metric (day-weighted/gap-weighted MAE, RMSE, bias, median/p90 absolute
+error, aggregate and by gap length) as exact, numerically equal, within a
+documented method-specific tolerance, mismatched, or not applicable (for
+methods with no frozen row, e.g. the plain external-only protocol) --
+**not** a single global tolerance on one aggregate number.
+
+**Reproduction tolerance evidence.** `canonical_interpolation` and the
+matched-reference external-tabular protocol (`ext_tabular_extratrees`/
+`ext_tabular_hgb`) are deterministic/near-deterministic and reproduce the
+released numbers to within 1e-6 (essentially exact). `gp_m1` and
+`tier_ch_deployed` involve library-version-sensitive numerical optimization
+(scikit-learn's GP hyperparameter optimizer; `ExtraTreesRegressor`'s random
+splitting) -- observed reproduction gaps in this closure sprint were
+0.000895 (GP, day-weighted MAE, matched-449) and 0.000276 (gap-edge), both
+well under 1% of the metric's own scale and stable in sign/direction across
+gap lengths (not a scientific-protocol mismatch, which would show as a
+systematic, length-dependent divergence, which was checked and not found --
+see `docs/methodology/validation_protocol.md` "Reproduction tolerance
+evidence" and `tests/test_run_classical_benchmark.py` for the per-length
+breakdown). `METRIC_TOLERANCE` in `run_classical_benchmark.py` encodes these
+two tolerance classes explicitly rather than one global number.
 
 ## Probabilistic sequence models
 

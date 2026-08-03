@@ -67,6 +67,33 @@ every method actually has a prediction for. Run
 `python -m experiments.chlorophyll.run_classical_benchmark` to reproduce it
 (see `docs/methodology/model_families.md`).
 
+**Event flag naming**: the matched-support manifest's `is_high_chl_event`
+column is the same 90th-percentile-threshold flag as the full pool's
+`is_high_chl_event` (see above) -- it is **not** an independently-thresholded
+85th-percentile flag. A private overnight aggregation script
+(`scripts/overnight_chl/build_matched_support_metrics.py`) had renamed this
+column `event_p85` while attaching it to the matched-support table; that was
+a naming artifact in that one script, not a distinct computation, and this
+package's manifest uses the correct name throughout. The column was not used
+to select the 449 gaps (selection is the cross-method gap-ID intersection
+described above) -- it is carried along only for event/non-event stratified
+reporting.
+
+**Engineered hybrid's support status on the matched-449**: the engineered
+hybrid has a released row on the full 681-gap pool
+(`results_public/chlorophyll/chlorophyll_benchmark_summary.csv`), but *no*
+released row on the 449-gap matched support -- its Kalman-routed L=4-29
+segment and gap-edge-routed L>=30 segment were historically evaluated
+against the earlier 450-gap pool, not re-scored as an integrated rule
+against the matched-449 support before this package. When
+`run_classical_benchmark.py` runs `engineered_hybrid` on the matched-449
+support, that is a **new consistency evaluation** built for comparability
+with the other matched-support methods, not a reproduction of a released
+matched-support number -- `benchmark_contract.METHODS["engineered_hybrid"]
+.support_status == "new_evaluation_on_matched_449"` states this
+programmatically, and `--verify` reports it `not_applicable` rather than
+`not_reproduced`.
+
 ## Oxygen gap-length support
 
 The oxygen benchmark (`data_public/oxygen/oxygen_validation_gaps.csv`) uses

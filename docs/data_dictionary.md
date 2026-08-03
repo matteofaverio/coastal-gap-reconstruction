@@ -227,7 +227,7 @@ an exact subset of `chlorophyll_validation_gaps.csv` above (see
 | gap_id | Matches a `gap_id` in `chlorophyll_validation_gaps.csv` |
 | gap_length | Number of hidden days (1, 3, 7, 14, or 30 only) |
 | season | Meteorological season, same convention as `chlorophyll_validation_gaps.csv` |
-| event_p85 | The gap-level `is_high_chl_event` flag (constant within a gap) |
+| is_high_chl_event | Gap-level high-chlorophyll event flag (90th-percentile threshold, constant within a gap) -- same definition as `chlorophyll_validation_gaps.csv`'s `is_high_chl_event`; not used to select the 449 matched gaps, only for event/non-event stratified reporting. (A private overnight script had renamed this column `event_p85`; it is not an 85th-percentile flag -- corrected here to its actual name.) |
 | n_days | Same as `gap_length` |
 
 ## results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv, chlorophyll_matched_support_by_length.csv, chlorophyll_matched_support_summary.csv
