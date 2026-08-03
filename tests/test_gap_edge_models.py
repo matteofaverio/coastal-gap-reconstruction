@@ -1,9 +1,9 @@
 """Tests for the gap-edge residual reconstruction model.
 
-Uses a small synthetic series (not the full 449-gap benchmark, which is
-covered separately by the byte-identical/tolerance regression tests in
-`test_released_result_reproduction.py`) so this suite runs in CI in well
-under a second.
+Uses a small synthetic series (not the full 449-gap matched-support
+benchmark, which is exercised separately via
+`experiments.chlorophyll.run_classical_benchmark --verify` against the
+frozen released tables) so this suite runs in CI in well under a second.
 """
 
 from __future__ import annotations
@@ -48,6 +48,39 @@ def test_observed_series_excludes_ineligible_and_nonpositive():
     obs = gem.observed_series(df)
     assert df.index[5] not in obs.index
     assert df.index[10] not in obs.index
+
+
+def test_build_tier_c_feature_table_tolerates_present_but_nan_optional_columns():
+    """Regression test for a real bug found this session: a candidates row
+    concatenated onto a pool that already has `season`/`year`/
+    `is_high_chl_event`/`target_mean_true` columns gets an explicit NaN for
+    those columns if it doesn't supply them itself -- `.get(key, default)`
+    does NOT fall through to the default in that case (the key is present,
+    just NaN), so a naive read crashed with `ValueError: cannot convert
+    float NaN to integer` on `year`. Every one of these columns is
+    bookkeeping/labeling only and must degrade to the computed default
+    whenever the value is missing OR NaN."""
+    target_df = _synthetic_target(60)
+    candidates = pd.DataFrame([
+        {
+            "gap_id": "with_labels", "gap_length": 3, "start_date": target_df.index[10],
+            "end_date": target_df.index[12], "season": "JJA", "year": 2018,
+            "is_high_chl_event": True, "target_mean_true": 5.0,
+        },
+        {
+            # Same columns present (from concatenation with the row above),
+            # but this row's own values are NaN -- must not crash.
+            "gap_id": "nan_labels", "gap_length": 3, "start_date": target_df.index[30],
+            "end_date": target_df.index[32], "season": float("nan"), "year": float("nan"),
+            "is_high_chl_event": float("nan"), "target_mean_true": float("nan"),
+        },
+    ])
+    feature_table, _, _ = gem.build_tier_c_feature_table(target_df, candidates)
+    nan_rows = feature_table[feature_table["gap_id"] == "nan_labels"]
+    assert not nan_rows.empty
+    assert (nan_rows["year"] == target_df.index[30].year).all()
+    assert (nan_rows["season"] != "nan").all()
+    assert (nan_rows["is_high_chl_event"] == False).all()  # noqa: E712 - pandas Series comparison
 
 
 def test_compute_interp_matches_linear_baseline():

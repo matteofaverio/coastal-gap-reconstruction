@@ -66,3 +66,27 @@ def test_run_engineered_hybrid_over_multiple_lengths():
     methods_by_gap = preds.groupby("gap_id")["assigned_method"].first().to_dict()
     assert methods_by_gap.get("g1") == "gaussian_process"
     assert methods_by_gap.get("g2") == "kalman_local_level"
+
+
+def test_run_engineered_hybrid_gap_edge_branch_uses_pool_wide_context():
+    """Regression test for a real bug found this session: the gap_edge_residual
+    branch (L>=30) must draw leave-one-gap-out training rows from the *entire*
+    candidate pool, not just its own (empty) context -- a lone L>=30 gap with
+    no other gaps to train against will otherwise silently produce zero
+    prediction rows for every L>=30 gap (discovered via the full 449-gap
+    matched-support run, where every one of the 50 L=30 gaps failed with
+    "insufficient_training_rows" before this fix)."""
+    target_df = _synthetic_target(n=3000)
+    features_df = pd.DataFrame(index=target_df.index)
+    starts = target_df.index[60 : 60 + 20 * 120 : 120]
+    candidates = pd.DataFrame([
+        {
+            "gap_id": f"L30_{i}", "gap_length": 35, "start_date": s,
+            "end_date": s + pd.Timedelta(days=34),
+        }
+        for i, s in enumerate(starts)
+    ])
+    preds, _ = eh.run_engineered_hybrid(candidates, target_df, features_df)
+    assert not preds.empty, "gap_edge_residual branch produced no predictions with a realistic context pool"
+    assert (preds["assigned_method"] == "gap_edge_residual").all()
+    assert set(preds["gap_id"]).issuperset(set(candidates["gap_id"].iloc[:5]))

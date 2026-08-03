@@ -260,10 +260,20 @@ def build_tier_c_feature_table(
         start = pd.Timestamp(g["start_date"])
         end = pd.Timestamp(g["end_date"])
         hidden = pd.date_range(start, periods=L, freq="D")
-        season = g.get("season", SEASON_MAP.get(start.month, "UNK"))
-        year = int(g.get("year", start.year))
-        is_spike = bool(g.get("is_high_chl_event", False))
-        target_mean_true = float(g.get("target_mean_true", np.nan))
+        # `.get(key, default)` only falls back when the column is absent, not
+        # when it is present-but-NaN for this particular row (e.g. a row
+        # freshly concatenated onto a pool that has these columns elsewhere).
+        # Every one of these is bookkeeping/labeling only -- never a
+        # predictor -- so a NaN-safe fallback to the computed default is
+        # always correct here, not merely convenient.
+        season_val = g.get("season", np.nan)
+        season = season_val if isinstance(season_val, str) else SEASON_MAP.get(start.month, "UNK")
+        year_val = g.get("year", np.nan)
+        year = int(year_val) if year_val == year_val else start.year
+        event_val = g.get("is_high_chl_event", np.nan)
+        is_spike = bool(event_val) if event_val in (True, False) else False
+        target_mean_val = g.get("target_mean_true", np.nan)
+        target_mean_true = float(target_mean_val) if target_mean_val == target_mean_val else np.nan
         is_sustained = (
             target_mean_true >= SUSTAINED_MEAN_THRESHOLD if target_mean_true == target_mean_true else False
         )
