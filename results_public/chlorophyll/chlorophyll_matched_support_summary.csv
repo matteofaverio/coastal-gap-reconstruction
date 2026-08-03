@@ -1,0 +1,2 @@
+design,support_label,n_gaps,n_day_rows,gap_lengths,n_event_gaps,n_nonevent_gaps,scale,primary_weighting,reference_method,n_boot,seed
+A_matched_support,matched_449,449,3999,"1,3,7,14,30",98,351,log10(chl_mean),day_weighted,tsicl_satellite_proxy,2000,12345
