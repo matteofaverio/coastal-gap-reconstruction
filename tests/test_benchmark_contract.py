@@ -70,6 +70,8 @@ def test_gap_lengths_reexports_config():
         "gp_m1",
         "ext_tabular_extratrees",
         "ext_tabular_hgb",
+        "external_only_extratrees",
+        "external_only_hgb",
         "tier_ch_deployed",
         "engineered_hybrid",
     ],
@@ -78,6 +80,46 @@ def test_classical_benchmark_methods_registered(method_id):
     spec = bc.METHODS[method_id]
     assert spec.role == "classical_benchmark"
     assert spec.method_id == method_id
+
+
+def test_matched_support_manifest_uses_the_correct_event_flag_name():
+    """The matched-support manifest's event column must be named
+    `is_high_chl_event` (the actual, 90th-percentile-threshold definition),
+    not `event_p85` -- a private overnight script's naming artifact that
+    never corresponded to a distinct 85th-percentile computation. See
+    `benchmark_contract.py`'s "Event flag" docstring section."""
+    ids = bc.load_matched_support_gap_ids()
+    assert "is_high_chl_event" in ids.columns
+    assert "event_p85" not in ids.columns
+    assert ids["is_high_chl_event"].dtype == bool
+
+
+def test_frozen_vs_new_methods_have_correct_support_status():
+    """`ext_tabular_extratrees`/`ext_tabular_hgb`/`tier_ch_deployed`/
+    `canonical_interpolation`/`gp_m1` have a row in the frozen released
+    matched-449 table; `external_only_extratrees`/`external_only_hgb` (the
+    plain external-only protocol) and `engineered_hybrid` (run on matched
+    support only as a new consistency check, never released at this support)
+    do not."""
+    frozen = {"canonical_interpolation", "gp_m1", "ext_tabular_extratrees",
+              "ext_tabular_hgb", "tier_ch_deployed"}
+    new = {"external_only_extratrees", "external_only_hgb", "engineered_hybrid"}
+    for method_id in frozen:
+        assert bc.METHODS[method_id].support_status == "frozen_matched_449", method_id
+    for method_id in new:
+        assert bc.METHODS[method_id].support_status == "new_evaluation_on_matched_449", method_id
+
+
+def test_new_evaluation_methods_absent_from_frozen_matched_metrics_table():
+    """Confirms, against the actual frozen CSV (not just the registry's own
+    claim about itself), that `engineered_hybrid` and the plain
+    external-only protocol have no row in the released matched-449 table --
+    i.e. `support_status="new_evaluation_on_matched_449"` is not an
+    unfounded label."""
+    released = pd.read_csv(bc.MATCHED_SUPPORT_METRICS_PATH)
+    released_matched_ids = set(released[released["support"] == "matched_449"]["method_id"])
+    for method_id in ("engineered_hybrid", "external_only_extratrees", "external_only_hgb"):
+        assert method_id not in released_matched_ids, method_id
 
 
 def test_method_public_names_match_frozen_released_table():
@@ -100,6 +142,14 @@ def test_method_public_names_match_frozen_released_table():
     )
     for spec in bc.METHODS.values():
         if spec.role != "classical_benchmark":
+            continue
+        if spec.support_status != "frozen_matched_449" and spec.method_id != "engineered_hybrid":
+            # New/diagnostic methods (e.g. the plain external-only protocol)
+            # have no frozen row to match by construction -- see
+            # MethodSpec.support_status. `engineered_hybrid` is the one
+            # exception: it has no frozen *matched-449* row (support_status
+            # reflects that), but its label is still checked against the
+            # full-681-pool table it does appear in, per this test's docstring.
             continue
         assert spec.public_name in matched_names or spec.public_name in full_pool_names, (
             f"{spec.method_id}: {spec.public_name!r} not found in any frozen "

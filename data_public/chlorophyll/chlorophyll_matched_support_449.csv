@@ -1,4 +1,4 @@
-gap_id,gap_length,season,event_p85,n_days
+gap_id,gap_length,season,is_high_chl_event,n_days
 L01_20150820,1,JJA,False,1
 L01_20150908,1,SON,False,1
 L01_20151027,1,SON,False,1

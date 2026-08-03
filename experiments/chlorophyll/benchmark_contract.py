@@ -28,6 +28,21 @@ re-running every model first -- a chicken-and-egg the frozen file avoids. What t
 module *does* test is that the frozen 449 IDs are all members of the full 681-gap
 pool and that they cover exactly the five core lengths with the released per-length
 counts (`test_benchmark_contract.py`).
+
+**Event flag: `is_high_chl_event`, 90th-percentile threshold -- not an 85th-percentile
+flag.** The matched-support manifest's event column is the same boolean as the full
+pool's `is_high_chl_event` (True iff any hidden day's chl_mean exceeds the 90th
+percentile of eligible days, recomputed fresh at pool-build time -- see
+`docs/methodology/validation_protocol.md`). An earlier private overnight script
+(`scripts/overnight_chl/build_matched_support_metrics.py`) renamed this same p90-based
+column to `event_p85` while attaching it to the matched-support gap-ID table -- a
+naming artifact in that one private script, not a distinct p85-threshold computation;
+no second, differently-thresholded event flag exists anywhere in the pipeline. This
+column was **not** used to select the 449 matched-support gaps (selection is purely
+the cross-method gap-ID intersection above); it is carried along only for
+event/non-event stratified reporting. This package's matched-support file uses the
+correct name `is_high_chl_event` throughout (the public CSV header was corrected from
+the private script's `event_p85` to match).
 """
 
 from __future__ import annotations
@@ -95,57 +110,96 @@ PRIMARY_METRIC = "day_weighted_mae"
 class MethodSpec:
     """One row of the benchmark's method registry.
 
-    `method_id` is the internal/programmatic key (matches the frozen result
-    tables' `method_id` column); `public_name` is the exact label used in
-    `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`
-    and in any figure/table built from it. `role` distinguishes methods this
-    package actually implements a driver for (`classical_benchmark`) from
-    methods scored in the same released table but implemented elsewhere or not
-    yet ported (`external_reference`, e.g. TS-ICL, out of scope for this task).
+    `method_id` is the internal/programmatic key; `public_name` is the exact
+    label used in figures/tables built from this registry. `role`
+    distinguishes methods this package actually implements a driver for
+    (`classical_benchmark`) from methods scored elsewhere and not ported here
+    (`external_reference`, e.g. TS-ICL, out of scope for this task).
+
+    `support_status` states, precisely, this method's relationship to the
+    frozen released matched-support table
+    (`results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`):
+
+    - `"frozen_matched_449"`: this `method_id` has a row in that table, and
+      this package's implementation is expected to reproduce it (within the
+      classification `run_classical_benchmark.py --verify` reports).
+    - `"new_evaluation_on_matched_449"`: this method is run on the same
+      449-gap support for comparability, but **has no row in the frozen
+      table** -- there is no released number to reproduce, and
+      `--verify` must report it `not_applicable`, never `not_reproduced`.
+    - `"external_reference"`: not implemented by this package at all (TS-ICL).
     """
 
     method_id: str
     public_name: str
     role: str
     canonical_learner: str | None = None
+    support_status: str = "frozen_matched_449"
 
 
 METHODS: dict[str, MethodSpec] = {
     "canonical_interpolation": MethodSpec(
-        "canonical_interpolation", "Linear interpolation", "classical_benchmark", None
+        "canonical_interpolation", "Linear interpolation", "classical_benchmark", None,
+        "frozen_matched_449",
     ),
     "gp_m1": MethodSpec(
-        "gp_m1", "Gaussian process", "classical_benchmark", "GaussianProcessRegressor (Matern 3/2, time-only)"
+        "gp_m1", "Gaussian process", "classical_benchmark",
+        "GaussianProcessRegressor (Matern 3/2, time-only)", "frozen_matched_449",
     ),
     "ext_tabular_extratrees": MethodSpec(
         "ext_tabular_extratrees",
         "External tabular (ExtraTrees)",
         "classical_benchmark",
-        "ExtraTreesRegressor(n_estimators=500)",
+        "ExtraTreesRegressor(n_estimators=500); matched-reference protocol -- external "
+        "(arm4) + 5 gap-position meta-features, strict pre-only dependency-window LOCO. "
+        "See gap_edge_models.run_reference_arm_loco_evaluation. NOT the same protocol as "
+        "external_only_extratrees (plain external-only, no gap-position features).",
+        "frozen_matched_449",
     ),
     "ext_tabular_hgb": MethodSpec(
         "ext_tabular_hgb",
         "External tabular (HGB)",
         "classical_benchmark",
-        "HistGradientBoostingRegressor (diagnostic comparator, not the canonical arm)",
+        "HistGradientBoostingRegressor; matched-reference protocol (diagnostic comparator, "
+        "not the canonical learner of this protocol -- ExtraTrees is).",
+        "frozen_matched_449",
+    ),
+    "external_only_extratrees": MethodSpec(
+        "external_only_extratrees",
+        "External tabular, plain external-only protocol (ExtraTrees)",
+        "classical_benchmark",
+        "ExtraTreesRegressor(n_estimators=500); external (arm4) only, no gap-position "
+        "features -- see tabular_models.run_loco_evaluation",
+        "new_evaluation_on_matched_449",
+    ),
+    "external_only_hgb": MethodSpec(
+        "external_only_hgb",
+        "External tabular, plain external-only protocol (HGB)",
+        "classical_benchmark",
+        "HistGradientBoostingRegressor (diagnostic comparator)",
+        "new_evaluation_on_matched_449",
     ),
     "tier_ch_deployed": MethodSpec(
         "tier_ch_deployed",
         "Gap-edge residual model",
         "classical_benchmark",
         "ExtraTreesRegressor(n_estimators=500), residual-over-interpolation",
+        "frozen_matched_449",
     ),
     "engineered_hybrid": MethodSpec(
         "engineered_hybrid",
         "Engineered hybrid pipeline (validation-aware method assignment)",
         "classical_benchmark",
         "length-routed GP -> Kalman -> gap-edge assignment",
+        "new_evaluation_on_matched_449",
     ),
     "tsicl_target_only": MethodSpec(
-        "tsicl_target_only", "TS-ICL target-only", "external_reference", None
+        "tsicl_target_only", "TS-ICL target-only", "external_reference", None,
+        "frozen_matched_449",
     ),
     "tsicl_satellite_proxy": MethodSpec(
-        "tsicl_satellite_proxy", "TS-ICL satellite-proxy", "external_reference", None
+        "tsicl_satellite_proxy", "TS-ICL satellite-proxy", "external_reference", None,
+        "frozen_matched_449",
     ),
 }
 
@@ -153,7 +207,7 @@ METHODS: dict[str, MethodSpec] = {
 def load_matched_support_gap_ids() -> pd.DataFrame:
     """Load the frozen 449-row matched-support gap-ID table.
 
-    Columns: gap_id, gap_length, season, event_p85, n_days.
+    Columns: gap_id, gap_length, season, is_high_chl_event, n_days.
     """
     return pd.read_csv(MATCHED_SUPPORT_PATH)
 

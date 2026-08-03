@@ -26,6 +26,15 @@ crossover analysis used L=1-30 plus several intermediate lengths
 support) -- it is reproduced here exactly as released, not re-optimized
 against the matched support.
 
+**Support status**: this pipeline has a released row on the full 681-gap
+pool (`results_public/chlorophyll/chlorophyll_benchmark_summary.csv`) but
+**no** released row on the 449-gap matched support --
+`benchmark_contract.METHODS["engineered_hybrid"].support_status ==
+"new_evaluation_on_matched_449"`. Running it on the matched support (as
+`run_classical_benchmark.py` does, for comparability with the other
+matched-support methods) is a new consistency evaluation, not a
+reproduction of a released number; `--verify` reports it `not_applicable`.
+
 **Known caveat, stated explicitly because it materially affects the L=4-29
 segment**: the Kalman component's fit is degenerate on this series (see
 `probabilistic_models`'s module docstring) -- its predictions in that segment
