@@ -38,11 +38,22 @@ sub-families were explored:
   of the gap are actually observed (and are explicitly excluded from
   forecast-style use cases).
 
-The released "engineered hybrid" reconstruction output combines several of
-these engineered components with a Gaussian process and a state-space
-(Kalman-filter) model under a single validation-aware method-assignment
-policy: for each real gap, the method assignment is chosen based on which
-family had validated, statistically supported skill at gaps of that length.
+**Public implementations**: `experiments/chlorophyll/tabular_models.py`
+(external-only; canonical learner: `ExtraTreesRegressor` on the 47-column
+`arm4`/`minimal_plus_wind_relaxation` feature set, `ARM4_COLUMNS`;
+`HistGradientBoostingRegressor` is a diagnostic comparator only) and
+`experiments/chlorophyll/gap_edge_models.py` (retrospective, residual-over-
+interpolation; the exact feature families -- `meta`/`pre`/`post`/`edge`/
+`interp` -- are enumerated in `gap_edge_models.build_feature_registry()`,
+not just described in prose).
+
+The released "engineered hybrid" reconstruction output combines the gap-edge
+model with a Gaussian process and a state-space (Kalman-filter) model under
+a single, deterministic, length-routed method-assignment rule ("Rule D" in
+the private project's internal history): Gaussian process for gaps of
+1-3 days, Kalman local-level smoother for 4-29 days, gap-edge residual model
+for 30+ days. This is a fixed assignment by gap length, not a per-gap fitted
+choice -- see `experiments/chlorophyll/engineered_hybrid.py::ASSIGNMENT_RULE`.
 See `results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv`
 and the column documentation in `docs/data_dictionary.md`.
 
@@ -53,21 +64,55 @@ alone did not clearly beat interpolation in this low-data local setting, and
 correction approach: predicting a correction over linear interpolation from
 both gap edges, and how it compares as a classical ML comparator to TS-ICL.
 
+**Running the classical benchmark**: the four methods above, plus linear
+interpolation and the engineered hybrid, can be re-run on the released
+449-gap matched support (`experiments/chlorophyll/benchmark_contract.py` --
+the exact gap-length-restricted subset every one of these methods is scored
+on, distinct from the full 681-gap pool TS-ICL diagnostics use) with:
+
+```bash
+python -m experiments.chlorophyll.run_classical_benchmark
+python -m experiments.chlorophyll.run_classical_benchmark --verify
+```
+
+Expect this to take on the order of tens of minutes on a laptop CPU (the
+external-tabular and gap-edge arms each fit one 500-tree `ExtraTrees` model
+per gap, ~450 fits; the GP arm fits a full Gaussian process per gap).
+Outputs go to a gitignored `build/chlorophyll/classical_benchmark/`
+directory by default and never overwrite the frozen `results_public/`
+tables; `--verify` classifies each method's reproduction against the frozen
+`chlorophyll_matched_support_method_metrics.csv` as bit-identical,
+numerically exact, within tolerance, or not reproduced.
+
 ## Probabilistic sequence models
 
 Two probabilistic time-series models were evaluated:
 
-- **Gaussian process (time-only)** -- a GP regression over time, used as a
-  smooth interpolant with calibrated uncertainty. It outperforms linear
-  interpolation at short gap lengths in the artificial-gap benchmark.
-- **State-space / Kalman filter** -- a linear-Gaussian state-space model
-  fit to the target series. A known limitation: in this benchmark, the
-  fitted Kalman component converged to a degenerate parameterization that
-  made its point predictions numerically near-identical to linear
-  interpolation, rather than exploiting the state-space structure as
-  intended. This is documented here as a caveat, not fixed in this release
-  -- a known limitation of the Kalman component as currently configured,
-  not a property of state-space models in general.
+- **Gaussian process (time-only)** -- `coastal_gap_reconstruction.gaussian_process`
+  (reusable across targets). An ARD Matern-3/2 kernel plus white noise, fit
+  on a local context window (default 30 days pre/post) around each gap over
+  `t_rel`/`doy_sin`/`doy_cos`. `run_gp_on_gap` returns the model's actual
+  posterior predictive mean and standard deviation on the modelling
+  (log10) scale -- a genuine per-point predictive uncertainty from the
+  fitted kernel, not a generic "confidence interval" label. It outperforms
+  linear interpolation at short gap lengths in the artificial-gap
+  benchmark.
+- **State-space / Kalman filter** -- `experiments/chlorophyll/probabilistic_models.py`,
+  a linear-Gaussian local-level model fit to the target series (chlorophyll-
+  specific, not published as a reusable core module the way GP is, because
+  the finding below is evidence about this specific series). **Known
+  limitation, reproduced exactly, not fixed**: the maximum-likelihood fit
+  converges to a near-zero observation-noise standard deviation
+  (`sigma_r` &approx; 1e-13 to 1e-15 depending on exact library/BLAS
+  versions), which makes a random-walk state-space model's RTS-smoothed
+  mean mathematically equal to linear interpolation between flanking
+  observations -- confirmed bit-identical to interpolation in the large
+  majority of gaps on the private project's full pool (632/681, 93%). This
+  means the "Kalman smoothing" component of the engineered hybrid's L=4-29
+  segment does not currently demonstrate skill distinct from interpolation,
+  despite its historical rationale. `probabilistic_models.kalman_degeneracy_report`
+  and `tests/test_probabilistic_models.py`'s pinned regression test make
+  this an assertion, not only a claim in prose.
 
 ## Zero-shot foundation model (TS-ICL)
 

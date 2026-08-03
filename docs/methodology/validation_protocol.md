@@ -51,6 +51,22 @@ gap is explicitly out of scope for validated comparisons.
 - A gap is flagged as a high-chlorophyll "event" gap if any hidden day's
   true value exceeds the 90th percentile of all eligible target values.
 
+## Matched support for the classical/probabilistic/gap-edge benchmark
+
+The full 681-gap pool above (L=1,3,7,10,14,21,30,45,60) is used for TS-ICL
+calibration/covariate diagnostics. The external-tabular, gap-edge residual,
+Gaussian process, and engineered hybrid methods in
+`experiments/chlorophyll/` are instead scored on a **449-gap matched
+support** (`data_public/chlorophyll/chlorophyll_matched_support_449.csv`,
+L=1,3,7,14,30 only -- an exact subset of the 681-gap pool, see
+`experiments/chlorophyll/benchmark_contract.py`). This restriction exists
+because the gap-edge residual model's hindcast feature construction only
+ever ran on these five original ("core") gap lengths in the private
+project's history -- a fair comparison across every method needs a support
+every method actually has a prediction for. Run
+`python -m experiments.chlorophyll.run_classical_benchmark` to reproduce it
+(see `docs/methodology/model_families.md`).
+
 ## Oxygen gap-length support
 
 The oxygen benchmark (`data_public/oxygen/oxygen_validation_gaps.csv`) uses

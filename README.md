@@ -106,6 +106,9 @@ manuscript/               report, presentations, poster (PDF + LaTeX source)
 notebooks/                numbered, runnable notebooks (see notebooks/README.md)
 demo/                     live, runnable TS-ICL demo
 src/coastal_gap_reconstruction/  reusable Python utilities
+experiments/chlorophyll/  chlorophyll experiment drivers (tabular, gap-edge,
+                           probabilistic, engineered-hybrid, matched-support
+                           benchmark runner -- see docs/methodology/model_families.md)
 tests/                    smoke tests for the demo and public notebooks
 docs/                     methodology write-ups and data dictionary
 ```
