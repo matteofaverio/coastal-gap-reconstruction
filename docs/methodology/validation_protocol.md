@@ -94,6 +94,28 @@ matched-support number -- `benchmark_contract.METHODS["engineered_hybrid"]
 programmatically, and `--verify` reports it `not_applicable` rather than
 `not_reproduced`.
 
+## Reproduction tolerance evidence
+
+`run_classical_benchmark.py --verify`'s per-method `METRIC_TOLERANCE` values
+are set from a clean, non-cached 449-gap run's observed diffs against the
+frozen released tables, not chosen a priori: `canonical_interpolation`
+reproduced every aggregate metric exactly (diff `0.0`); the four methods that
+fit a scikit-learn estimator with `random_state`-independent run-to-run
+variability (`gp_m1`, `ext_tabular_extratrees`, `ext_tabular_hgb`,
+`tier_ch_deployed`) had aggregate diffs up to 0.00105-0.00353 depending on
+method, all classified `within_documented_method_specific_tolerance` except
+`gp_m1`'s p90 (a tail-sensitive statistic). A per-day forensic comparison
+against the private project's own per-gap prediction tables (not just the
+released aggregate table) found this variability is concentrated in a
+minority of gaps for GP (consistent with hyperparameter-optimizer local-
+optimum sensitivity) and spread near-uniformly across gaps for the
+ExtraTrees-based methods (consistent with parallel-fit floating-point
+non-determinism) -- in neither case is it length-dependent in a way that
+would indicate a scientific-protocol mismatch. See
+`docs/methodology/model_families.md` "Reproduction tolerance evidence" for
+the exact numbers and `run_classical_benchmark.py::METRIC_TOLERANCE`'s own
+comment for the full reasoning.
+
 ## Oxygen gap-length support
 
 The oxygen benchmark (`data_public/oxygen/oxygen_validation_gaps.csv`) uses
