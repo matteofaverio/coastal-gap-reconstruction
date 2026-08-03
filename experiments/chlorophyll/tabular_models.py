@@ -1,29 +1,41 @@
-"""External-only tabular reconstruction models for chlorophyll.
+"""External-only tabular reconstruction models for chlorophyll -- **Protocol A**
+("plain external-only") in the private project's two-protocol split.
 
-Ported from the private project's curated external-spatial model lineage
-(its evaluation/pipeline/finalization scripts, plus earlier superseded
-external-tabular stages), which is the authoritative source for the
-released "arm4 (minimal_plus_wind_relaxation) + ExtraTrees" result cited in
-`docs/status/CANONICAL_RESULTS.md`. Only the fitting/scoring mechanics
-survive here -- the private files' reporting, figure generation, caching,
-and CLI wrapping (~2000 combined lines) are dropped, not ported.
+**Two distinct external-tabular protocols exist in the private project and are
+kept apart on purpose (see `docs/methodology/model_families.md` "Two
+external-tabular protocols" section):**
 
-**Canonical vs. diagnostic**: the canonical external-tabular result is
-`ExtraTreesRegressor` on the 47-column `arm4` feature set (`ARM4_COLUMNS`
-below, from `curated_external_model_feature_sets_proposed.csv`'s
-`minimal_plus_wind_relaxation` row -- one of the 47 listed columns,
-`sst_primary_source`, is a categorical column and is dropped automatically at
-fit time, leaving 46 numeric predictors; this exclusion is itself part of the
-released procedure, see `load_arm4_numeric_columns`). `HistGradientBoosting`
-is retained as a diagnostic comparator only (`ext_tabular_hgb` in
-`benchmark_contract.METHODS`) -- it is not the canonical arm and must never be
-presented as such.
+- **Protocol A (this module, "plain external-only")**: `ARM4_COLUMNS` only (46
+  numeric predictors after dropping the categorical `sst_primary_source`), no
+  gap-position information, plain LOCO with no dependency-window exclusion
+  (unnecessary here since no target-history feature is used -- see
+  `forbidden_target_history_columns`). Public method IDs
+  `external_only_extratrees`/`external_only_hgb`. Ported from the private
+  project's curated external-spatial model lineage. **This protocol is not the
+  source of the frozen `ext_tabular_extratrees`/`ext_tabular_hgb` rows in
+  `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`**
+  -- it is a separate, plain-external diagnostic comparison, evaluated here
+  for its own sake, not to reproduce a released number.
+- **Protocol B ("matched-reference")**: `ARM4_COLUMNS` plus 5 structural
+  meta-features describing gap length and within-gap position, strict
+  dependency-window LOCO. Public method IDs `ext_tabular_extratrees`/
+  `ext_tabular_hgb` (the frozen IDs -- kept because this protocol is what
+  actually produced those released numbers; see
+  `gap_edge_models.run_reference_arm_loco_evaluation`, which implements it).
+
+Only the fitting/scoring mechanics survive from the private files here -- the
+private files' reporting, figure generation, caching, and CLI wrapping
+(~2000 combined lines) are dropped, not ported.
+
+`HistGradientBoostingRegressor` is retained in both protocols as a diagnostic
+comparator to `ExtraTreesRegressor`, never presented as the canonical arm on
+its own.
 
 Every model here is fit per-gap under leave-one-gap-out (LOCO): the training
 set excludes the gap's own hidden days by construction (the target column is
 already masked upstream in the released daily-target table) and never reads
 any other gap's hidden days either, since training uses only rows where the
-target is observed. No dependency-window exclusion is needed for this arm
+target is observed. No dependency-window exclusion is needed for Protocol A
 specifically because it uses no target-history feature (arm4 is
 target-history-free by design -- see `forbidden_target_history_columns`).
 """
@@ -94,8 +106,8 @@ def load_arm4_numeric_columns(features_df: pd.DataFrame) -> list[str]:
     """`ARM4_COLUMNS` filtered to columns present and numeric in `features_df`.
 
     Reproduces the released procedure exactly: `sst_primary_source` is a
-    string column and is silently dropped here (not an error), matching
-    `sprint_6h_evaluation.py::load_feature_arms`'s non-numeric exclusion.
+    string column and is silently dropped here (not an error), matching the
+    private project's feature-arm loader's non-numeric exclusion.
     """
     numeric: list[str] = []
     for col in ARM4_COLUMNS:
@@ -195,14 +207,14 @@ def fit_predict_gap(
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        if model_name == "ext_tabular_extratrees":
+        if model_name == "external_only_extratrees":
             imp = SimpleImputer(strategy="mean")
             X_train_i = imp.fit_transform(X_train)
             X_pred_i = imp.transform(X_pred)
             model = build_extratrees()
             model.fit(X_train_i, y_train)
             y_pred_log = model.predict(X_pred_i)
-        elif model_name == "ext_tabular_hgb":
+        elif model_name == "external_only_hgb":
             model = build_hgb_diagnostic()
             model.fit(X_train, y_train)
             y_pred_log = model.predict(X_pred)

@@ -60,7 +60,7 @@ __all__ = [
     "compute_edge_features", "compute_interp", "build_tier_c_feature_table",
     "build_feature_registry", "arm_feature_columns",
     "build_extratrees", "admissible_train_mask", "assemble_design",
-    "run_loco_evaluation",
+    "run_loco_evaluation", "run_reference_arm_loco_evaluation",
 ]
 
 TARGET_COL = _config.TARGET_COL
@@ -414,9 +414,41 @@ def run_loco_evaluation(
     external_cols: list[str] | None = None,
     groups: list[str] = CANONICAL_GROUPS,
     score_gap_ids: list[str] | None = None,
+    target_mode: str = "residual_log",
+    dep_window: str = "hind",
+    model_name: str = "extratrees",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Leave-one-gap-out evaluation of the canonical residual-over-interpolation
-    gap-edge model.
+    """Leave-one-gap-out evaluation of a Tier-C-family arm.
+
+    Defaults (`target_mode="residual_log"`, `dep_window="hind"`,
+    `model_name="extratrees"`, `groups=CANONICAL_GROUPS`) reproduce the
+    canonical residual-over-interpolation gap-edge model (`tier_ch_deployed`)
+    exactly as before -- this signature is a superset of the original, not a
+    behavior change for existing callers.
+
+    `target_mode`:
+      - `"residual_log"` (default): predict `residual_log = true_log -
+        interp_log`, add the (leakage-safe) linear-interpolation anchor back
+        to recover the final log10 prediction. This is the gap-edge model.
+      - `"log"`: predict `true_log` directly -- used by the matched-reference
+        external-tabular protocol (`run_reference_arm_loco_evaluation`
+        below), which has no interpolation anchor to add back.
+
+    `dep_window`:
+      - `"hind"` (default): use the row's hindcast dependency window
+        (`dep_min_hind`/`dep_max_hind` -- depends on both pre- and post-gap
+        observations). Required whenever `groups` includes `post`/`edge`/
+        `interp` features.
+      - `"pre"`: use the pre-only dependency window (`dep_min_pre`/
+        `dep_max_pre`). Matches the private project's `tier_a_arm4_reference`
+        arm, which uses no post-gap feature but is still evaluated with the
+        stricter dependency-window LOCO (not a plain train/test split) --
+        reproduced here exactly, not approximated by dropping the window
+        check.
+
+    `model_name`: `"extratrees"` (mean-imputed) or `"hgb"` (native NaN
+    handling, no imputer -- matches the private project's `fit_predict`
+    dispatch for these two learners).
 
     `candidates` supplies the full training-context pool (every row's
     dependency window can admit or exclude other rows from training); by
@@ -428,9 +460,14 @@ def run_loco_evaluation(
     of fitting a model for every gap in a large pool.
 
     Returns `(predictions_df, warnings_df)`. `predictions_df` has one row per
-    (gap_id, date) with `pred_log10`/`pred`/`true` columns, back-transformed
-    from the residual target.
+    (gap_id, date) with `pred_log10`/`pred`/`true` columns.
     """
+    if target_mode not in ("residual_log", "log"):
+        raise ValueError(f"unknown target_mode {target_mode!r}")
+    if dep_window not in ("hind", "pre"):
+        raise ValueError(f"unknown dep_window {dep_window!r}")
+    if model_name not in ("extratrees", "hgb"):
+        raise ValueError(f"unknown model_name {model_name!r}")
     if external_cols is None:
         external_cols = tm.load_arm4_numeric_columns(features_df)
     score_rows = candidates if score_gap_ids is None else candidates[candidates["gap_id"].isin(score_gap_ids)]
@@ -439,12 +476,18 @@ def run_loco_evaluation(
     design = assemble_design(feature_table, features_df, external_cols)
     feat_cols = arm_feature_columns(external_cols, groups)
 
+    dep_min_col = "dep_min_pre" if dep_window == "pre" else "dep_min_hind"
+    dep_max_col = "dep_max_pre" if dep_window == "pre" else "dep_max_hind"
+
     X_all = design[feat_cols].to_numpy(dtype=float)
     gap_ids = design["gap_id"].to_numpy()
-    dep_min = design["dep_min_hind"].astype("datetime64[ns]").astype("int64").to_numpy()
-    dep_max = design["dep_max_hind"].astype("datetime64[ns]").astype("int64").to_numpy()
+    dep_min = design[dep_min_col].astype("datetime64[ns]").astype("int64").to_numpy()
+    dep_max = design[dep_max_col].astype("datetime64[ns]").astype("int64").to_numpy()
     dates = design["date"].to_numpy()
-    y_all = design["residual_log_true_minus_interp_log"].to_numpy(dtype=float)
+    if target_mode == "log":
+        y_all = design["true_log"].to_numpy(dtype=float)
+    else:
+        y_all = design["residual_log_true_minus_interp_log"].to_numpy(dtype=float)
     interp_log_all = design["linear_interp_log_chl"].to_numpy(dtype=float)
     true_all = design["true_chl"].to_numpy(dtype=float)
 
@@ -466,16 +509,24 @@ def run_loco_evaluation(
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            imp = SimpleImputer(strategy="mean")
-            X_tr = imp.fit_transform(X_all[train_mask])
-            X_te = imp.transform(X_all[test_idx])
-            model = build_extratrees()
-            model.fit(X_tr, y_all[train_mask])
-            resid_pred = model.predict(X_te)
+            if model_name == "hgb":
+                model = tm.build_hgb_diagnostic()
+                model.fit(X_all[train_mask], y_all[train_mask])
+                raw_pred = model.predict(X_all[test_idx])
+            else:
+                imp = SimpleImputer(strategy="mean")
+                X_tr = imp.fit_transform(X_all[train_mask])
+                X_te = imp.transform(X_all[test_idx])
+                model = build_extratrees()
+                model.fit(X_tr, y_all[train_mask])
+                raw_pred = model.predict(X_te)
 
         for j, ridx in enumerate(test_idx):
-            il = interp_log_all[ridx]
-            pred_log = float(il + resid_pred[j]) if il == il else np.nan
+            if target_mode == "log":
+                pred_log = float(raw_pred[j])
+            else:
+                il = interp_log_all[ridx]
+                pred_log = float(il + raw_pred[j]) if il == il else np.nan
             pred = float(10.0**pred_log) if pred_log == pred_log else np.nan
             pred_rows.append({
                 "gap_id": gid, "date": pd.Timestamp(dates[ridx]),
@@ -487,3 +538,41 @@ def run_loco_evaluation(
     predictions_df = pd.DataFrame(pred_rows)
     warnings_df = pd.DataFrame(warn_rows) if warn_rows else pd.DataFrame(columns=["gap_id", "warning"])
     return predictions_df, warnings_df
+
+
+def run_reference_arm_loco_evaluation(
+    model_name: str,
+    candidates: pd.DataFrame,
+    target_df: pd.DataFrame,
+    features_df: pd.DataFrame,
+    external_cols: list[str] | None = None,
+    score_gap_ids: list[str] | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The matched-reference external-tabular protocol (private `tier_a_arm4_reference`).
+
+    External (arm4, 46 numeric columns) plus the 5 structural `META_COLS`
+    (gap length and within-gap position -- **not** hidden target values),
+    predicting `true_log10` directly under leave-one-gap-out with the
+    pre-only dependency window. This is the protocol that actually produced
+    the frozen `ext_tabular_extratrees`/`ext_tabular_hgb` rows in
+    `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`
+    (verified: private `models/tier_c_gap_edge_eval.py`'s
+    `ARM_SPECS["tier_a_arm4_reference"]`, source of
+    `data/interim/models/tier_c_7a/predictions.csv`'s
+    `arm_name == "tier_a_arm4_reference"` rows, which is exactly what the
+    private `scripts/overnight_chl/build_matched_support_metrics.py` reads
+    for these two method IDs).
+
+    Because it conditions on `gap_length`/`day_index_within_gap`/
+    `gap_position_fraction`/edge-distance features, this arm is **not**
+    strictly external-only or forecast-safe in the same sense as the plain
+    external-only protocol (`tabular_models.run_loco_evaluation` with
+    `external_only_extratrees`/`external_only_hgb`): it assumes the gap's
+    length and the hidden day's position within it are known in advance. It
+    never reads a hidden target value.
+    """
+    return run_loco_evaluation(
+        candidates, target_df, features_df, external_cols,
+        groups=["external", "meta"], score_gap_ids=score_gap_ids,
+        target_mode="log", dep_window="pre", model_name=model_name,
+    )

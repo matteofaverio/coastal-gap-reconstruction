@@ -46,7 +46,7 @@ def test_forbidden_target_history_columns_rejects_chl_mean():
 def test_fit_predict_gap_rejects_forbidden_columns(target_df, features_df):
     with pytest.raises(ValueError):
         tm.fit_predict_gap(
-            "ext_tabular_extratrees", target_df, features_df,
+            "external_only_extratrees", target_df, features_df,
             pd.Timestamp("2020-01-01"), 1, ["chl_mean", "doy_sin"],
         )
 
@@ -54,7 +54,7 @@ def test_fit_predict_gap_rejects_forbidden_columns(target_df, features_df):
 def test_fit_predict_gap_extratrees_produces_predictions(target_df, features_df):
     cols = tm.load_arm4_numeric_columns(features_df)
     result = tm.fit_predict_gap(
-        "ext_tabular_extratrees", target_df, features_df,
+        "external_only_extratrees", target_df, features_df,
         pd.Timestamp("2020-06-01"), 3, cols,
     )
     assert result["warning"] is None
@@ -66,7 +66,7 @@ def test_fit_predict_gap_extratrees_produces_predictions(target_df, features_df)
 def test_fit_predict_gap_hgb_diagnostic_produces_predictions(target_df, features_df):
     cols = tm.load_arm4_numeric_columns(features_df)
     result = tm.fit_predict_gap(
-        "ext_tabular_hgb", target_df, features_df,
+        "external_only_hgb", target_df, features_df,
         pd.Timestamp("2020-06-01"), 3, cols,
     )
     assert result["warning"] is None
@@ -99,11 +99,11 @@ def test_tamper_invariance_hidden_values_do_not_change_predictions(target_df, fe
     start = pd.Timestamp("2020-06-01")
     hidden = pd.date_range(start, periods=3, freq="D")
 
-    baseline = tm.fit_predict_gap("ext_tabular_extratrees", target_df, features_df, start, 3, cols)
+    baseline = tm.fit_predict_gap("external_only_extratrees", target_df, features_df, start, 3, cols)
 
     tampered = target_df.copy()
     tampered.loc[hidden, _config.TARGET_COL] = 9999.0
-    tampered_result = tm.fit_predict_gap("ext_tabular_extratrees", tampered, features_df, start, 3, cols)
+    tampered_result = tm.fit_predict_gap("external_only_extratrees", tampered, features_df, start, 3, cols)
 
     # Same training-set size (hidden dates excluded from both) implies the
     # tampered values were never read as training data.

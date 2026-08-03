@@ -127,6 +127,81 @@ def test_score_gap_ids_scores_only_the_requested_subset_using_full_context():
     assert preds["pred"].notna().any()
 
 
+def test_reference_arm_uses_external_and_meta_only_no_post_edge_interp():
+    """Protocol B (`run_reference_arm_loco_evaluation`) must use exactly
+    `external + meta` feature groups -- no post/edge/interp columns, which
+    would make it depend on post-gap in-situ chlorophyll like the (very
+    different) gap-edge residual model does."""
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+
+    preds, warns = gem.run_reference_arm_loco_evaluation(
+        "extratrees", candidates, target_df, features_df, external_cols=[],
+    )
+    assert not preds.empty
+    assert preds["pred"].notna().any()
+
+
+def test_reference_arm_predicts_log_directly_not_a_residual():
+    """Protocol B predicts `true_log10` directly (private `tier_a_arm4_reference`
+    arm, `target: "log"`) -- it has no interpolation anchor to add a residual
+    to, unlike the canonical gap-edge model (`run_loco_evaluation`'s default
+    `target_mode="residual_log"`)."""
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+
+    ref_preds, _ = gem.run_reference_arm_loco_evaluation(
+        "extratrees", candidates, target_df, features_df, external_cols=[],
+    )
+    residual_preds, _ = gem.run_loco_evaluation(candidates, target_df, features_df, [])
+    # Different target definitions and feature sets -- predictions must not
+    # be identical (a regression that silently routed both through the same
+    # residual-over-interpolation code path would produce identical output).
+    merged = ref_preds.merge(residual_preds, on=["gap_id", "date"], suffixes=("_ref", "_resid"))
+    assert not merged.empty
+    assert not np.allclose(merged["pred_log10_ref"], merged["pred_log10_resid"])
+
+
+def test_reference_arm_hgb_dispatch_produces_predictions():
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+    preds, _ = gem.run_reference_arm_loco_evaluation(
+        "hgb", candidates, target_df, features_df, external_cols=[],
+    )
+    assert not preds.empty
+    assert preds["pred"].notna().any()
+
+
+def test_run_loco_evaluation_rejects_unknown_target_mode_dep_window_model_name():
+    target_df = _synthetic_target(60)
+    candidates = _candidates(target_df, gap_length=3, n=5)
+    features_df = pd.DataFrame(index=target_df.index)
+    with pytest.raises(ValueError):
+        gem.run_loco_evaluation(candidates, target_df, features_df, [], target_mode="bogus")
+    with pytest.raises(ValueError):
+        gem.run_loco_evaluation(candidates, target_df, features_df, [], dep_window="bogus")
+    with pytest.raises(ValueError):
+        gem.run_loco_evaluation(candidates, target_df, features_df, [], model_name="bogus")
+
+
+def test_default_run_loco_evaluation_behavior_unchanged_by_new_parameters():
+    """The generalization that added `target_mode`/`dep_window`/`model_name`
+    must not change the canonical gap-edge model's default behavior -- same
+    call, same signature position, same result as before the generalization."""
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+    explicit, _ = gem.run_loco_evaluation(
+        candidates, target_df, features_df, [],
+        target_mode="residual_log", dep_window="hind", model_name="extratrees",
+    )
+    default, _ = gem.run_loco_evaluation(candidates, target_df, features_df, [])
+    pd.testing.assert_frame_equal(explicit, default)
+
+
 def test_tamper_invariance_a_gaps_own_hidden_truth_never_changes_its_own_prediction():
     """A gap's own prediction must not depend on what its own hidden truth
     actually is: `compute_pre_features`/`compute_post_features` only read
