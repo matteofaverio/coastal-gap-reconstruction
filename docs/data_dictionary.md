@@ -215,6 +215,41 @@ One row per artificial gap in the canonical chlorophyll validation pool
 | regime | Gap-construction protocol label; `strict_observed_only` for every row in this released pool |
 | target_table_checksum | Checksum of the target table version used to build this gap pool, for reproducibility verification |
 
+## data_public/chlorophyll/chlorophyll_matched_support_449.csv
+
+The 449-gap matched support (L=1,3,7,14,30) every headline
+external-tabular/gap-edge/GP/engineered-hybrid comparator is scored on --
+an exact subset of `chlorophyll_validation_gaps.csv` above (see
+`experiments/chlorophyll/benchmark_contract.py`).
+
+| Column | Description |
+|---|---|
+| gap_id | Matches a `gap_id` in `chlorophyll_validation_gaps.csv` |
+| gap_length | Number of hidden days (1, 3, 7, 14, or 30 only) |
+| season | Meteorological season, same convention as `chlorophyll_validation_gaps.csv` |
+| event_p85 | The gap-level `is_high_chl_event` flag (constant within a gap) |
+| n_days | Same as `gap_length` |
+
+## results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv, chlorophyll_matched_support_by_length.csv, chlorophyll_matched_support_summary.csv
+
+Frozen released metrics for the 449-gap matched support (and, for
+comparison, the same methods' full-681-gap numbers where available), one row
+per method (`_method_metrics.csv`) or per method x gap length
+(`_by_length.csv`); `_summary.csv` records the matched-support design
+(support label, gap count, day-row count, scale, weighting, seed). Used by
+`run_classical_benchmark.py --verify` as the released-result comparison
+target for the ported classical/probabilistic/gap-edge/engineered-hybrid
+methods.
+
+| Column (`_method_metrics.csv`) | Description |
+|---|---|
+| method_id | Internal method key, matches `experiments/chlorophyll/benchmark_contract.py::METHODS` |
+| method_label | Public display name |
+| support | `matched_449` or `full_681` |
+| scale, weighting_primary | Scoring scale (log10) and weighting convention (day_weighted) |
+| n_gaps, n_rows | Gap and hidden-day-row counts for this support |
+| mae_day_weighted, mae_gap_weighted, rmse, bias_mean, median_abs_error, p90_abs_error | Released error metrics on the log10 scale |
+
 ## data_public/chlorophyll/chlorophyll_real_gap_inventory.csv
 
 One row per real (naturally occurring) gap in the observed record.
