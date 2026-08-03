@@ -22,8 +22,8 @@ behaves like interpolation. This module reproduces the model exactly as
 released (same fitting procedure, same degenerate result) because that is
 what `engineered_hybrid.py` needs to reproduce the released reconstruction;
 it does not attempt to fix the degeneracy (re-fitting with a constrained
-`sigma_r` would be a model-definition change, out of scope for a publication
-port, see the private project's `CLAUDE.md` governance rule on that point).
+`sigma_r` would be a model-definition change, a scientific decision out of
+scope for a publication port of already-released results).
 `estimate_kalman_params` and `kalman_degeneracy_report` make the degenerate
 `sigma_r` visible to any caller rather than hiding it inside an opaque fit.
 

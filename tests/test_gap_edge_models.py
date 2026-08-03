@@ -79,6 +79,21 @@ def test_run_loco_evaluation_produces_predictions_with_enough_gaps():
     assert preds["pred"].notna().any()
 
 
+def test_score_gap_ids_scores_only_the_requested_subset_using_full_context():
+    """`score_gap_ids` should fit/score only the requested gaps, but still
+    draw admissible training rows from the entire `candidates` pool (not
+    just the scored subset) -- this is what makes a small, fast notebook
+    illustration possible without shrinking the training context."""
+    target_df = _synthetic_target(400)
+    candidates = _candidates(target_df, gap_length=3, n=15)
+    features_df = pd.DataFrame(index=target_df.index)
+    subset_ids = candidates["gap_id"].iloc[[2, 7]].tolist()
+
+    preds, _ = gem.run_loco_evaluation(candidates, target_df, features_df, [], score_gap_ids=subset_ids)
+    assert set(preds["gap_id"]) == set(subset_ids)
+    assert preds["pred"].notna().any()
+
+
 def test_tamper_invariance_a_gaps_own_hidden_truth_never_changes_its_own_prediction():
     """A gap's own prediction must not depend on what its own hidden truth
     actually is: `compute_pre_features`/`compute_post_features` only read

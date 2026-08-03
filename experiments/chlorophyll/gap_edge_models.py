@@ -403,9 +403,19 @@ def run_loco_evaluation(
     features_df: pd.DataFrame,
     external_cols: list[str] | None = None,
     groups: list[str] = CANONICAL_GROUPS,
+    score_gap_ids: list[str] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Leave-one-gap-out evaluation of the canonical residual-over-interpolation
-    gap-edge model over every row of `candidates`.
+    gap-edge model.
+
+    `candidates` supplies the full training-context pool (every row's
+    dependency window can admit or exclude other rows from training); by
+    default every row of `candidates` is also scored. Pass `score_gap_ids` to
+    fit/score only that subset while still drawing admissible training rows
+    from the *entire* `candidates` pool -- e.g. for a small, fast, real
+    illustration that still trains against realistic context (see
+    `notebooks/05_gap_edge_residual_models.ipynb`), without paying the cost
+    of fitting a model for every gap in a large pool.
 
     Returns `(predictions_df, warnings_df)`. `predictions_df` has one row per
     (gap_id, date) with `pred_log10`/`pred`/`true` columns, back-transformed
@@ -413,6 +423,7 @@ def run_loco_evaluation(
     """
     if external_cols is None:
         external_cols = tm.load_arm4_numeric_columns(features_df)
+    score_rows = candidates if score_gap_ids is None else candidates[candidates["gap_id"].isin(score_gap_ids)]
 
     feature_table, _, _ = build_tier_c_feature_table(target_df, candidates)
     design = assemble_design(feature_table, features_df, external_cols)
@@ -430,7 +441,7 @@ def run_loco_evaluation(
     pred_rows: list[dict] = []
     warn_rows: list[dict] = []
 
-    for _, gm in candidates.iterrows():
+    for _, gm in score_rows.iterrows():
         gid = str(gm["gap_id"])
         a0 = np.datetime64(pd.Timestamp(gm["start_date"]), "ns").astype("int64")
         a1 = np.datetime64(pd.Timestamp(gm["end_date"]), "ns").astype("int64")
