@@ -114,12 +114,18 @@ def verify_checkpoint_provenance(model) -> dict:
     Returns a dict of the verified provenance facts (never raises after
     building this successfully) -- useful for run-metadata provenance
     logging even outside `load_tsicl_strict()`.
+
+    **Portability**: the returned dict deliberately does not include the
+    local cache filesystem path (e.g. `/Users/.../.cache/huggingface/...`).
+    A local path is a fact about the machine that ran the benchmark, not
+    about the result, and must never end up in a committed run-metadata
+    file, a review table, or executed-notebook output. The path is only
+    ever printed to the console (`_locate_checkpoint`'s caller may log it
+    for interactive debugging) -- callers that need it for that purpose
+    should call `_locate_checkpoint()` directly rather than reading it off
+    this function's return value.
     """
-    cache_dir_name = f"models--{CHECKPOINT_REPO_ID.replace('/', '--')}"
-    checkpoint_path = (
-        Path.home() / ".cache" / "huggingface" / "hub" / cache_dir_name
-        / "snapshots" / CHECKPOINT_REVISION / CHECKPOINT_FILENAME
-    )
+    checkpoint_path = _locate_checkpoint()
     if not checkpoint_path.exists():
         raise TSICLProvenanceError(
             f"Expected checkpoint not found at pinned revision {CHECKPOINT_REVISION!r}: "
@@ -144,9 +150,53 @@ def verify_checkpoint_provenance(model) -> dict:
         "checkpoint_revision": CHECKPOINT_REVISION,
         "checkpoint_filename": CHECKPOINT_FILENAME,
         "checkpoint_sha256": actual_sha256,
-        "checkpoint_path": str(checkpoint_path),
+        "checkpoint_size_bytes": checkpoint_path.stat().st_size,
         "max_context_length": int(max_context_length),
+        "dtype": "float32",
     }
+
+
+def _locate_checkpoint() -> Path:
+    """Locate the pinned checkpoint blob on disk.
+
+    Prefers the Hugging Face Hub's own cache-resolution API
+    (`huggingface_hub.try_to_load_from_cache`), which respects
+    `HF_HOME`/`HUGGINGFACE_HUB_CACHE` and any other non-default cache
+    location the environment configures. Falls back to the documented
+    default cache layout (`~/.cache/huggingface/hub/...`) only if
+    `huggingface_hub` itself is not importable -- this module's other
+    functions already require `tsicl` (which depends on it), so this
+    fallback path is a defensive measure, not the primary mechanism.
+    """
+    import os
+
+    # HF_HOME/HUGGINGFACE_HUB_CACHE, if set, take priority (this is what
+    # `huggingface_hub`/`tsicl.pipeline`'s own download call would honor) --
+    # otherwise fall back to the documented default cache root under
+    # `Path.home()`, so a test can still isolate this by monkeypatching
+    # `Path.home()` without needing to set an environment variable.
+    hf_home = os.environ.get("HF_HOME") or os.environ.get("HUGGINGFACE_HUB_CACHE")
+    default_cache_dir = (
+        Path(hf_home) / "hub" if os.environ.get("HF_HOME")
+        else Path(hf_home) if os.environ.get("HUGGINGFACE_HUB_CACHE")
+        else Path.home() / ".cache" / "huggingface" / "hub"
+    )
+    try:
+        from huggingface_hub import try_to_load_from_cache
+
+        resolved = try_to_load_from_cache(
+            repo_id=CHECKPOINT_REPO_ID, filename=CHECKPOINT_FILENAME, revision=CHECKPOINT_REVISION,
+            cache_dir=str(default_cache_dir),
+        )
+        # try_to_load_from_cache returns a str path, None (nothing cached),
+        # or the special `_CACHED_NO_EXIST` sentinel (a cached negative
+        # lookup) -- only a real str path is usable here.
+        if isinstance(resolved, str):
+            return Path(resolved)
+    except ImportError:
+        pass
+    cache_dir_name = f"models--{CHECKPOINT_REPO_ID.replace('/', '--')}"
+    return default_cache_dir / cache_dir_name / "snapshots" / CHECKPOINT_REVISION / CHECKPOINT_FILENAME
 
 
 @dataclass
