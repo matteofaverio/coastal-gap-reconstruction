@@ -225,4 +225,34 @@ uncertainty bands for the missing region.
 
 The TS-ICL run using a satellite chlorophyll proxy covariate is the leading
 candidate in this benchmark under artificial-gap validation -- see
-`docs/methodology/tsicl_usage.md` and `notebooks/06_tsicl_zero_shot_imputation.ipynb`.
+`docs/methodology/tsicl_usage.md` for the full checkpoint/package
+provenance, installation environment, exact commands, and reproduction
+tolerance evidence.
+
+**Public implementations** (all original wrapper/orchestration code around
+the `tsicl` package's own API -- TS-ICL itself is never vendored, and
+remains an optional dependency under its own separate non-commercial
+license, see `docs/methodology/tsicl_usage.md`):
+
+- `coastal_gap_reconstruction/tsicl_helpers.py` -- the single authoritative
+  calling layer (checkpoint provenance verification, gap/context
+  orchestration, strict-by-default input/output validation) shared by the
+  demo, notebooks, and both benchmark drivers below.
+- `experiments/chlorophyll/run_tsicl_benchmark.py` -- the target-only and
+  satellite-proxy-covariate benchmark, restart-safe, over either the full
+  681-gap pool or the matched 449-gap support (the support to use for a
+  direct TS-ICL-vs-classical-ML comparison, since it is the only support
+  every method in `benchmark_contract.py` and TS-ICL both have a released
+  row on).
+- `experiments/chlorophyll/tsicl_covariate_registry.py` +
+  `run_tsicl_covariate_analysis.py` -- the covariate-arm dissection, every
+  retained arm identified by a descriptive public name (reused from the
+  already-released `chlorophyll_covariate_mechanism_summary.csv`, never an
+  internal short code), plus the four placebo/negative-control transforms.
+- `coastal_gap_reconstruction/paired_statistics.py` -- the gap-clustered
+  paired bootstrap comparison mechanics behind every TS-ICL-vs-baseline
+  confidence interval in the released tables.
+
+Running these requires the separately-locked `.venv_tsicl` environment
+(`docs/methodology/tsicl_usage.md` has the exact install/run commands) --
+they are not part of this repository's standard `uv sync` environment.
