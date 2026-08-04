@@ -1,0 +1,22 @@
+[project]
+name = "coastal-gap-reconstruction-tsicl-env"
+version = "0.1.0"
+description = "Genuinely locked, isolated environment for running real TS-ICL inference against coastal-gap-reconstruction's TS-ICL drivers. Not part of the main project's dependency tree -- see ../../docs/methodology/tsicl_usage.md."
+requires-python = "==3.13.3"
+dependencies = [
+    "tsicl==0.2.1",
+    "torch==2.9.1",
+    "numpy==2.5.1",
+    "pandas==3.0.5",
+    "scipy==1.18.0",
+    "scikit-learn==1.9.0",
+    "huggingface_hub==1.25.1",
+    "einops==0.8.2",
+    "hydra-core==1.3.4",
+    "python-dotenv==1.2.2",
+    "matplotlib==3.11.1",
+    "seaborn==0.13.2",
+]
+
+[tool.uv]
+package = false
