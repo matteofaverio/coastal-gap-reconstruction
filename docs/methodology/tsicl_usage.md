@@ -23,6 +23,42 @@ checkpoint or the `tsicl` package's own inference code). Review the full
 license text in the authors' repository before using TS-ICL in your own
 work.
 
+## Reproducibility levels
+
+This document covers a lot of ground. Most readers only need the first
+level below -- pick the one that matches what you're actually trying to do.
+
+**QUICK** (minutes, no TS-ICL checkpoint download required for most of it):
+run the standard test suite, notebooks, and demo; a single bounded TS-ICL
+inference call (the demo, or the "verify the fresh install" command below)
+if you want to confirm live inference works at all. This is enough to use
+and inspect the repository.
+
+**STANDARD** (tens of minutes to a few hours): the matched-449-support
+target-only/satellite-proxy benchmark and the matched-449 covariate arms,
+plus inspecting the released result tables in `results_public/chlorophyll/`
+directly. This is enough to compare TS-ICL against the classical/
+probabilistic methods on shared support, and is what most reproduction
+checks should use.
+
+**EXPENSIVE** (hours to days) -- **optional, not required for publication
+closure or for using this repository**: the full-681-gap primary target
+benchmark (8,172 calls) and/or the complete 28,602-call full covariate
+dissection. Both are published, tested, and restart-safe. The full target
+benchmark has been run to completion at least once (§ "Full-681 target
+run," below) with the results checked into this document. The full
+covariate dissection has been validated live on a partial real execution
+(2,150/28,602 calls, 0 failures) confirming the driver, resume logic, and
+scoring pipeline all work correctly at full-681 scale -- the complete
+28,602-call regeneration was intentionally not run to completion, because
+its compute cost (on the order of a day of continuous CPU inference) is
+disproportionate to what a public reproducibility artifact needs: the
+released `chlorophyll_covariate_mechanism_summary.csv` is the authoritative,
+complete covariate ranking, and the code that produced the equivalent
+result is published, tested, and available to run in full if you choose to.
+Running the complete 28,602-call dissection is never required to use,
+review, or trust this repository.
+
 ## Checkpoint and package provenance (pinned, verified)
 
 | Field | Value |
@@ -105,11 +141,23 @@ PYTHONPATH=src environments/tsicl/.venv/bin/python -m experiments.chlorophyll.ru
     --arms target_only,target_plus_calendar,target_plus_physical_forcing,satellite_proxy,target_plus_physical_forcing_plus_proxy,wrong_lag_physical_forcing \
     --context-modes full_series,edge_balanced \
     --out build/chlorophyll/tsicl_benchmark_full681
+```
 
+**EXPENSIVE, optional** -- the complete covariate dissection (28,602 calls,
+on the order of a day of CPU time). Not required for publication closure or
+for using this repository (see "Reproducibility levels" above); the
+released `chlorophyll_covariate_mechanism_summary.csv` is the authoritative
+complete result. The command below is restart-safe and will resume cleanly
+from `build/chlorophyll/tsicl_covariates_full681_verified/`'s existing
+partial state (2,150/28,602 calls, 0 failures as of this document's last
+update -- see `PARTIAL_RUN_STOP_RECORD.json` in that directory) if you
+choose to run it further:
+
+```bash
 PYTHONPATH=src environments/tsicl/.venv/bin/python -m experiments.chlorophyll.run_tsicl_covariate_analysis \
     --support full_681 --include-placebos \
     --arms target_only,satellite_proxy,solar_only,wind_upwelling_only,sst_thermal_only,plv_meteorological,current_transport_only,availability_proxy_only,solar_upwelling_interaction,upwelling_cooling_interaction,curated_physical,full_physical_redundant,proxy_plus_solar,proxy_plus_wind_upwelling,proxy_plus_sst,proxy_plus_plv_met,proxy_plus_current_transport,proxy_plus_availability \
-    --out build/chlorophyll/tsicl_covariates_full681
+    --out build/chlorophyll/tsicl_covariates_full681_verified
 ```
 
 Score a completed run (aggregate/by-length/event metrics, paired bootstrap
@@ -290,26 +338,45 @@ frozen-only
   `experiments/chlorophyll/score_tsicl_run.py`'s `VERIFICATION_STATUS`
   classification, which uses an empirical reporting band
   (`TSICL_METRIC_TOLERANCE`), not an assumed threshold.
-- **Frozen-only** (not reproduced or re-run by the code in this
-  repository): the 128-real-gap reconstruction candidate output
-  (`chlorophyll_reconstruction_tsicl_satellite_proxy.csv`) -- this
-  repository does not publish the real-gap deployment driver. The full
-  28,602-call covariate dissection **is** now published and runnable
-  end-to-end (`run_tsicl_covariate_analysis.py --include-placebos
-  --support full_681` over all 18 registry arms); see the full-support
-  closure handoff for its actual execution status as of this document's
-  last update.
+- **Frozen, authoritative, and not required to be regenerated**: the
+  128-real-gap reconstruction candidate output
+  (`chlorophyll_reconstruction_tsicl_satellite_proxy.csv`, this repository
+  does not publish the real-gap deployment driver at all) and the complete
+  28,602-call covariate dissection ranking
+  (`chlorophyll_covariate_mechanism_summary.csv`). The driver that could
+  regenerate the latter (`run_tsicl_covariate_analysis.py
+  --include-placebos --support full_681`) is published, tested, restart-
+  safe, and was validated live on a real partial execution (2,150/28,602
+  calls, 0 failures, all 42 arm/placebo variants exercised on 51-52
+  L=1 gaps) before being intentionally stopped -- a deliberate,
+  compute-bounded publication decision, not a code or reliability problem.
+  See `build/chlorophyll/tsicl_covariates_full681_verified/
+  PARTIAL_RUN_STOP_RECORD.json` and the full-support closure handoff.
+  Running it to completion remains available and resumable but is not
+  required for publication closure or for using this repository (see
+  "Reproducibility levels" above).
 
 ## Runtime and compute requirements
 
 CPU inference: measured at approximately 1.0-1.5 seconds per
-gap-context-arm call on a laptop CPU during the full-681 closure run (no
-GPU required or used). The full primary target benchmark (681 gaps x 2
-context modes x 6 primary arms = 8,172 calls) is several hours; the full
-covariate dissection (681 gaps x 42 variants = 28,602 calls) is on the
-order of a day. Both are run sequentially, never concurrently, to avoid
-uncontrolled CPU contention between two large TS-ICL jobs -- see
-`build/run_full_support_closure.sh`. The matched-449 support (449 gaps)
-at one context mode is more tractable for a quick reproduction check. Both
-drivers checkpoint incrementally specifically because of this runtime, so a
-long run can be safely interrupted and resumed.
+gap-context-arm call for the target benchmark's arms, but substantially
+more for the largest covariate arms (the current/transport and full-
+tabular-redundant arms carry far more covariate channels; the private
+project's own cost profile put these at roughly 24-43s/call vs. ~2s/call
+for the cheapest arms) -- covariate-dissection throughput is not uniform
+across arms and should not be extrapolated from the target benchmark's
+rate. No GPU required or used.
+
+Measured, not estimated: the full primary target benchmark (681 gaps x 2
+context modes x 6 primary arms = 8,172 calls) took **3h01m33s wall clock**
+end to end, 0 failures. The full covariate dissection (681 gaps x 42
+variants = 28,602 calls) is **EXPENSIVE and optional** (see
+"Reproducibility levels" above) -- on the order of a day of continuous CPU
+time at the rate observed for the arms reached so far; both jobs are run
+sequentially, never concurrently, to avoid uncontrolled CPU contention (see
+`build/run_full_support_closure.sh`). The matched-449 support (449 gaps) at
+one context mode is far more tractable for a quick reproduction check
+(STANDARD level). Both drivers checkpoint every 25 calls specifically
+because of this runtime, so a long run can be safely interrupted (including
+by `SIGTERM`) and resumed, or left intentionally stopped as a validated
+partial execution.

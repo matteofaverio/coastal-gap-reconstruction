@@ -97,7 +97,7 @@ def test_full_681_primary_total_calls_matches_the_private_grid_exactly():
 
 def test_full_681_covariate_total_calls_matches_the_private_28602_figure():
     """18 base arms + 6 placebo families x 4 transforms = 42 variants;
-    681 x 42 = 28,602 -- matches c0_c13_dissection.py's own documented call
+    681 x 42 = 28,602 -- matches the private covariate-dissection module's own documented call
     count, verified against build_run_plan()'s actual 18/6/4 arithmetic
     rather than trusted from a docstring alone."""
     assert tc.FULL_681_COVARIATE_N_VARIANTS == 42
