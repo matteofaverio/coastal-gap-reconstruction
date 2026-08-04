@@ -63,10 +63,9 @@ Regenerating from the public daily target table reproduces:
   per-length generation order), which this module's `pd.concat`-based assembly
   does not reproduce either.
 
-The extended-length procedure was recovered by reading
-`src/tongoy_chl/models/tier_c_7c_extended_eval.py`'s `find_nonoverlapping_gaps`/
-`generate_all_candidates` functions directly (a private-project gap-edge
-evaluation script that generates its own extended-length candidate pool inline
+The extended-length procedure was recovered by reading the private project's
+extended-gap-edge evaluation script's own gap-generation functions directly
+(a script that generates its own extended-length candidate pool inline
 rather than through the core `artificial_gaps.py` module) -- not guessed or
 reverse-engineered from the released CSV alone.
 """

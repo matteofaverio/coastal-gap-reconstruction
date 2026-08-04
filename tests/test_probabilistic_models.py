@@ -3,6 +3,7 @@ degeneracy-regression test against the released daily target table."""
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -60,13 +61,30 @@ def test_estimate_kalman_params_reproduces_the_documented_degeneracy_on_the_rele
     """Pinned regression test: fitting on the real released chlorophyll daily
     target must reproduce the documented sigma_r degeneracy (order ~1e-13 to
     ~1e-15), not merely "some small number" -- this is the exact finding the
-    module docstring and the private root-cause audit both describe."""
+    module docstring and the private root-cause audit both describe.
+
+    The optimizer's search passes through a genuinely degenerate region
+    (S -> 0 in `_neg_log_lik_local_level`, the historical likelihood's own
+    numerical behavior, reproduced exactly rather than repaired) that emits
+    `RuntimeWarning: divide by zero encountered in log` and
+    `RuntimeWarning: invalid value encountered in scalar divide`. Both are
+    asserted and locally captured here -- expected, understood degeneracy,
+    not an uncontrolled numerical failure -- so normal test output stays
+    clean without a blanket global warning suppression that could also hide
+    an unrelated, genuinely unexpected warning elsewhere."""
     df = pd.read_csv(TARGET_PATH, parse_dates=["date"]).set_index("date").sort_index()
     eligible = df["target_eligible_default"].fillna(False).astype(bool)
     y = df["chl_mean"].where(eligible & (df["chl_mean"] > 1e-4))
     y_log = np.log10(y).dropna().to_numpy()
 
-    sigma_q, sigma_r = pm.estimate_kalman_params(y_log)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", RuntimeWarning)
+        sigma_q, sigma_r = pm.estimate_kalman_params(y_log)
+
+    messages = [str(w.message) for w in caught if issubclass(w.category, RuntimeWarning)]
+    assert any("divide by zero encountered in log" in m for m in messages)
+    assert any("invalid value encountered in scalar divide" in m for m in messages)
+
     report = pm.kalman_degeneracy_report(sigma_q, sigma_r)
 
     assert report["is_degenerate"] is True

@@ -70,10 +70,9 @@ every method actually has a prediction for. Run
 **Event flag naming**: the matched-support manifest's `is_high_chl_event`
 column is the same 90th-percentile-threshold flag as the full pool's
 `is_high_chl_event` (see above) -- it is **not** an independently-thresholded
-85th-percentile flag. A private overnight aggregation script
-(`scripts/overnight_chl/build_matched_support_metrics.py`) had renamed this
-column `event_p85` while attaching it to the matched-support table; that was
-a naming artifact in that one script, not a distinct computation, and this
+85th-percentile flag. A private aggregation step had renamed this column
+`event_p85` while attaching it to the matched-support table; that was a
+naming artifact in that one step, not a distinct computation, and this
 package's manifest uses the correct name throughout. The column was not used
 to select the 449 gaps (selection is the cross-method gap-ID intersection
 described above) -- it is carried along only for event/non-event stratified
@@ -94,27 +93,34 @@ matched-support number -- `benchmark_contract.METHODS["engineered_hybrid"]
 programmatically, and `--verify` reports it `not_applicable` rather than
 `not_reproduced`.
 
-## Reproduction tolerance evidence
+## Reproduction comparison bands
 
 `run_classical_benchmark.py --verify`'s per-method `METRIC_TOLERANCE` values
-are set from a clean, non-cached 449-gap run's observed diffs against the
-frozen released tables, not chosen a priori: `canonical_interpolation`
-reproduced every aggregate metric exactly (diff `0.0`); the four methods that
-fit a scikit-learn estimator with `random_state`-independent run-to-run
-variability (`gp_m1`, `ext_tabular_extratrees`, `ext_tabular_hgb`,
+are **empirical reporting bands from the current reference environment**,
+read directly off a clean, non-cached 449-gap run's observed diffs against
+the frozen released tables, with headroom -- not pre-specified or
+independently validated reproduction thresholds. `canonical_interpolation`
+reproduced every aggregate metric exactly (diff `0.0`). The other four
+methods (`gp_m1`, `ext_tabular_extratrees`, `ext_tabular_hgb`,
 `tier_ch_deployed`) had aggregate diffs up to 0.00105-0.00353 depending on
-method, all classified `within_documented_method_specific_tolerance` except
-`gp_m1`'s p90 (a tail-sensitive statistic). A per-day forensic comparison
-against the private project's own per-gap prediction tables (not just the
-released aggregate table) found this variability is concentrated in a
-minority of gaps for GP (consistent with hyperparameter-optimizer local-
-optimum sensitivity) and spread near-uniformly across gaps for the
-ExtraTrees-based methods (consistent with parallel-fit floating-point
-non-determinism) -- in neither case is it length-dependent in a way that
-would indicate a scientific-protocol mismatch. See
-`docs/methodology/model_families.md` "Reproduction tolerance evidence" for
-the exact numbers and `run_classical_benchmark.py::METRIC_TOLERANCE`'s own
-comment for the full reasoning.
+method, all landing inside their band except `gp_m1`'s p90 (a tail-sensitive
+statistic). A per-day forensic comparison against the private project's own
+per-gap prediction tables (not just the released aggregate table) found this
+variability concentrated in a minority of gaps for GP and spread
+near-uniformly across gaps for the ExtraTrees-based methods -- in neither
+case is it length-dependent in a way that would indicate a
+scientific-protocol mismatch, which was checked directly. **What caused the
+residual differences was not fully isolated**: these methods fit a
+scikit-learn estimator, which is one plausible source of environment/version
+sensitivity, but the original and current runs used different, not fully
+pinned software/runtime environments, and only one independent corrected
+model fit was executed in this phase -- that is not sufficient evidence to
+name a specific causal mechanism (e.g. parallel floating-point summation
+order, or HGB's validation split) as proven. See
+`docs/methodology/model_families.md` "Reproduction comparison, from an
+actual clean 449-gap run" for the exact numbers and
+`run_classical_benchmark.py::METRIC_TOLERANCE`'s own comment for the full
+reasoning.
 
 ## Oxygen gap-length support
 

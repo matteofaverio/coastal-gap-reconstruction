@@ -11,7 +11,7 @@ shared 265-column external table and are not yet published -- see
 `experiments/oxygen/_config.py`'s module docstring for the current scope
 boundary).
 
-Ported from the private project's `oxygen_features.py::build_local_btg_daily`,
+Ported from the private project's local BTG diagnostic feature builder,
 verified byte-identical against the private output (see
 `tests/test_local_btg_diagnostic_features.py`).
 

@@ -2,13 +2,12 @@
 "Gap-edge residual model" / private "Tier C-H", `tier_ch_deployed` in
 `benchmark_contract.METHODS`).
 
-Ported from the private project's `features/tier_c_gap_edge.py` (feature
-construction, published here near-verbatim -- it is already self-contained
-and target/candidate-only, no private paths) and the fitting/leakage-control
-core of `models/tier_c_gap_edge_eval.py` (731 lines) merged with
-`models/tier_c_7c_extended_eval.py` (1117 lines, the L=10/21/45/60
-extension) -- the reporting, figure, caching, and CLI code in both private
-files is dropped, not ported.
+Ported from the private project's gap-edge feature-construction module
+(published here near-verbatim -- it is already self-contained and
+target/candidate-only, no private paths) and the fitting/leakage-control
+core of its evaluation driver (merged with a later extension covering the
+L=10/21/45/60 gap lengths) -- the reporting, figure, caching, and CLI code
+in both private files is dropped, not ported.
 
 **Retrospective only, not forecast-safe.** Every feature family beyond `pre`
 (the `post`, `edge`, and `interp` groups) is built from post-gap in-situ
@@ -16,15 +15,14 @@ chlorophyll, so this model requires observations on *both* sides of a gap.
 It is a plausible historical reconstruction method, never a deployable
 forward forecaster. `META_COLS`/`PRE_COLS` alone (the "pre-only" mode) would
 be forecast-safe, but that is not the arm this module fits by default --
-`tier_a.py`'s external-tabular arm4 is the project's forecast-safe external
-model; this module is deliberately the retrospective specialist.
+`tabular_models.py`'s external-tabular arm4 is the project's forecast-safe
+external model; this module is deliberately the retrospective specialist.
 
 **Canonical arm**: `residual_log = true_log - interpolation_log`, predicted
 by an `ExtraTreesRegressor` over `external + meta + pre + post + edge +
 interp` columns, then added back to the linear-interpolation baseline to
-recover the final log10 prediction (`tier_c_residual_over_interp` in the
-private project, the arm cited in `docs/status/CANONICAL_RESULTS.md` and
-scored in `results_public/chlorophyll/
+recover the final log10 prediction (the residual-over-interpolation arm in
+the private project's own results register, scored in `results_public/chlorophyll/
 chlorophyll_matched_support_method_metrics.csv` as `tier_ch_deployed`).
 Predicting the *residual* rather than the raw log value, then adding back
 the (leakage-safe) interpolation baseline, is why this arm needs the
@@ -550,20 +548,17 @@ def run_reference_arm_loco_evaluation(
     external_cols: list[str] | None = None,
     score_gap_ids: list[str] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """The matched-reference external-tabular protocol (private `tier_a_arm4_reference`).
+    """The matched-reference external-tabular protocol.
 
-    External (arm4, 46 numeric columns) plus the 5 structural `META_COLS`
-    (gap length and within-gap position -- **not** hidden target values),
-    predicting `true_log10` directly under leave-one-gap-out with the
-    pre-only dependency window. This is the protocol that actually produced
-    the frozen `ext_tabular_extratrees`/`ext_tabular_hgb` rows in
-    `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`
-    (verified: private `models/tier_c_gap_edge_eval.py`'s
-    `ARM_SPECS["tier_a_arm4_reference"]`, source of
-    `data/interim/models/tier_c_7a/predictions.csv`'s
-    `arm_name == "tier_a_arm4_reference"` rows, which is exactly what the
-    private `scripts/overnight_chl/build_matched_support_metrics.py` reads
-    for these two method IDs).
+    The external predictors (arm4, 46 numeric columns) plus 5 structural
+    gap-position covariates (`META_COLS`: gap length and within-gap position
+    -- **not** hidden target values), predicting `true_log10` directly under
+    leave-one-gap-out with the pre-only dependency window. This is the
+    protocol that actually produced the frozen `ext_tabular_extratrees`/
+    `ext_tabular_hgb` rows in `results_public/chlorophyll/
+    chlorophyll_matched_support_method_metrics.csv` -- confirmed directly
+    against the private project's own per-gap prediction records for these
+    two method IDs, not inferred from a label.
 
     Because it conditions on `gap_length`/`day_index_within_gap`/
     `gap_position_fraction`/edge-distance features, this arm is **not**

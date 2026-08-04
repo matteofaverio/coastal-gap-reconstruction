@@ -81,12 +81,11 @@ separate here as separate methods rather than conflated:
   leave-one-gap-out with a stricter pre-only dependency-window exclusion.
   **This is the protocol that actually produced the released
   `ext_tabular_extratrees`/`ext_tabular_hgb` rows** -- confirmed against the
-  private project's own per-gap prediction table
-  (`data/interim/models/tier_c_7a/predictions.csv`, `arm_name ==
-  "tier_a_arm4_reference"`), not merely by matching an aggregate MAE. Because
-  it conditions on gap length/position, it is not strictly external-only or
-  forecast-safe in the same sense as the plain protocol: it assumes the
-  gap's length and the hidden day's position are known in advance.
+  private project's own per-gap prediction records, not merely by matching an
+  aggregate MAE. Because it conditions on gap length/position, it is not
+  strictly external-only or forecast-safe in the same sense as the plain
+  protocol: it assumes the gap's length and the hidden day's position are
+  known in advance.
 
 In both protocols, `ExtraTreesRegressor(n_estimators=500)` is the canonical
 learner; `HistGradientBoostingRegressor` is a diagnostic comparator only.
@@ -148,35 +147,42 @@ documented method-specific tolerance, mismatched, or not applicable (for
 methods with no frozen row, e.g. the plain external-only protocol) --
 **not** a single global tolerance on one aggregate number.
 
-**Reproduction tolerance evidence, from an actual clean 449-gap run.**
+**Reproduction comparison, from an actual clean 449-gap run.**
 `canonical_interpolation` is a closed-form deterministic formula and
 reproduced the released numbers **exactly** (diff `0.0` on every aggregate
 metric). `gp_m1`, `ext_tabular_extratrees`, `ext_tabular_hgb`, and
-`tier_ch_deployed` all fit scikit-learn estimators with an internal source of
-run-to-run numerical variability that is **not** bit-reproducible across
-environments even under a fixed `random_state` -- GP's L-BFGS-B
-hyperparameter optimizer reaching different local optima on a minority of
-gaps; `ExtraTreesRegressor`/`HistGradientBoostingRegressor` with `n_jobs=-1`
-parallel floating-point summation order; HGB's early-stopping validation
-split adds a further source for that learner specifically. Observed
-aggregate-metric diffs from the clean run: `gp_m1` up to 0.00105 (rmse),
-`ext_tabular_extratrees` up to 0.00123 (rmse), `tier_ch_deployed` up to
-0.00066 (bias), `ext_tabular_hgb` up to 0.00353 (p90, the diagnostic
-comparator, largest gap). All aggregate metrics for all four methods land
-`within_documented_method_specific_tolerance` except `gp_m1`'s p90 (a
-tail-sensitive statistic, expected to be more sensitive to the same
-small-outlier-gap pattern found in the per-day forensic comparison). A
-handful of by-length cells (smaller subsets, as few as 50-100 gaps) remain
-`mismatched` even though the aggregate is within tolerance -- expected
-statistical behavior for smaller-n subsets, reported honestly rather than
-hidden by widening the tolerance further. None of this pattern is
-length-dependent/systematic in a way that would indicate a scientific-
-protocol mismatch (checked directly, not assumed) -- see
-`docs/methodology/validation_protocol.md` "Reproduction tolerance evidence"
+`tier_ch_deployed` all showed small but real residual differences from the
+frozen release after the scientific protocol itself was confirmed to match
+(the model family, feature set, and training/evaluation procedure are the
+same as the ones that produced the frozen numbers -- see the protocol
+sections above). Observed aggregate-metric diffs from the clean run: `gp_m1`
+up to 0.00105 (rmse), `ext_tabular_extratrees` up to 0.00123 (rmse),
+`tier_ch_deployed` up to 0.00066 (bias), `ext_tabular_hgb` up to 0.00353
+(p90, the diagnostic comparator, largest gap). A handful of by-length cells
+(smaller subsets, as few as 50-100 gaps) remain outside the descriptive
+comparison band below even though the aggregate is within it.
+
+**On the cause of these residual differences: not fully isolated, stated
+conservatively.** These four methods all fit a scikit-learn estimator, which
+is one plausible source of environment/version-sensitive numerical
+variability (e.g. `ExtraTreesRegressor`/`HistGradientBoostingRegressor` with
+`n_jobs=-1`, or GP's L-BFGS-B hyperparameter optimizer). The original run
+that produced the frozen release and this sprint's corrected run used
+different, not fully pinned software/runtime environments, and only one
+independent corrected model fit was executed in this phase (this run's own
+cached rescoring against the frozen tables is a comparison, not a second
+independent rerun) -- that is not sufficient evidence to name a specific
+causal mechanism. **Residual environment/version sensitivity remains after
+matching the scientific protocol. Its exact numerical source was not fully
+isolated.** None of this pattern is length-dependent/systematic in the way a
+scientific-protocol mismatch would be (checked directly, not assumed) -- see
+`docs/methodology/validation_protocol.md` "Reproduction comparison bands"
 and `build/chlorophyll/classical_benchmark_corrected/verification_report.csv`
 for the full per-metric breakdown. `METRIC_TOLERANCE` in
-`run_classical_benchmark.py` encodes each method's tolerance from this
-evidence, not as one global number.
+`run_classical_benchmark.py` documents each method's **empirical reporting
+band from the current reference environment** -- read directly off this
+run's own observed diffs with headroom, not an independently pre-specified
+or independently validated reproduction threshold.
 
 ## Probabilistic sequence models
 

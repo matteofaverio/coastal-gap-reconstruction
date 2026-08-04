@@ -6,7 +6,7 @@ conflated:**
 1. **Standalone baseline** (this module; `canonical_interpolation` in
    `benchmark_contract.METHODS`): interpolates in **log10(chl_mean) space** between the
    two bracketing eligible observations, then back-transforms to physical units. This is
-   an exact port of the private project's `scripts/stage_b_canonical_interpolation.py`,
+   an exact port of the private project's canonical-interpolation generator script,
    which is the source of the frozen `canonical_interpolation` row in the released
    `chlorophyll_matched_support_method_metrics.csv` (verified against the private
    per-day predictions this table was built from, not merely against the aggregate MAE).
@@ -15,8 +15,8 @@ conflated:**
    **physical (mg/m^3) space** between the same two bracketing observations, then takes
    log10 of the interpolated physical value. This is the anchor the gap-edge residual
    model (`tier_ch_deployed`) predicts a residual against -- it is an exact port of the
-   private project's `features/tier_c_gap_edge.py::compute_interp`, used there and only
-   there, never as a standalone baseline.
+   private project's gap-edge feature module's own interpolation function, used there and
+   only there, never as a standalone baseline.
 
 These two formulas agree only at the two bracketing observations themselves and diverge
 at every interior day (log10-space interpolation is a straight line in log space, i.e. a

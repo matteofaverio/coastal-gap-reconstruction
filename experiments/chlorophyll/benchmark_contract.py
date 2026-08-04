@@ -33,11 +33,11 @@ counts (`test_benchmark_contract.py`).
 flag.** The matched-support manifest's event column is the same boolean as the full
 pool's `is_high_chl_event` (True iff any hidden day's chl_mean exceeds the 90th
 percentile of eligible days, recomputed fresh at pool-build time -- see
-`docs/methodology/validation_protocol.md`). An earlier private overnight script
-(`scripts/overnight_chl/build_matched_support_metrics.py`) renamed this same p90-based
-column to `event_p85` while attaching it to the matched-support gap-ID table -- a
-naming artifact in that one private script, not a distinct p85-threshold computation;
-no second, differently-thresholded event flag exists anywhere in the pipeline. This
+`docs/methodology/validation_protocol.md`). An earlier private aggregation step renamed
+this same p90-based column to `event_p85` while attaching it to the matched-support
+gap-ID table -- a naming artifact in that one step, not a distinct p85-threshold
+computation; no second, differently-thresholded event flag exists anywhere in the
+pipeline. This
 column was **not** used to select the 449 matched-support gaps (selection is purely
 the cross-method gap-ID intersection above); it is carried along only for
 event/non-event stratified reporting. This package's matched-support file uses the
