@@ -82,7 +82,7 @@ PLV_MET_COLUMNS: list[str] = [
 # Current/transport columns require the full 265-column feature snapshot
 # (`coastal_gap_reconstruction.feature_tables.load_full_feature_table`,
 # joining `data_public/shared/external_current_kinematic_extension.csv` onto
-# the base 126-column table -- Phase 2A's shared extension loader), not the
+# the base 126-column table -- this repository's shared extension loader), not the
 # base table alone -- see `requires_extended_table` below.
 CURRENT_TRANSPORT_COLUMNS: list[str] = [
     "glorys_uo_surface_ms", "glorys_vo_surface_ms", "glorys_speed_surface_ms",
