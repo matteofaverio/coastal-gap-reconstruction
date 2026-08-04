@@ -217,11 +217,16 @@ COVARIATE_ARMS: dict[str, CovariateArmSpec] = {
 # columns, not a separate arm identity) ─────────────────────────────────
 PLACEBO_TRANSFORMS: list[str] = ["wrong_lag", "season_shuffled", "year_shifted", "permuted"]
 
-# Which primary arms the placebo battery is run against (matches the
-# released placebo_robustness_test row: curated physical vs. its own
-# randomized/shuffled controls).
+# Which primary arms the placebo battery is run against. Corrected this
+# sprint: the private `c0_c13_dissection.py::PLACEBO_FAMILIES` covers
+# exactly 6 families (C1 solar, C2 wind/upwelling, C3 SST thermal,
+# C5 current/transport, C6 availability, C9 curated physical) x 4 transforms
+# = 24 placebo variants -- `availability_proxy_only` (C6) was missing from
+# this list, silently dropping one whole placebo family (4 of the 24
+# variants) from any run using this registry as its source of truth.
 PLACEBO_ELIGIBLE_ARMS: list[str] = ["curated_physical", "wind_upwelling_only", "solar_only",
-                                     "sst_thermal_only", "current_transport_only"]
+                                     "sst_thermal_only", "current_transport_only",
+                                     "availability_proxy_only"]
 
 
 def build_engineered_products(features_df):

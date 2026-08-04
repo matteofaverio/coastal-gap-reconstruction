@@ -54,41 +54,92 @@ local cache (`~/.cache/huggingface/hub/`).
 ## Installation environment
 
 TS-ICL (and its `torch` dependency) is **not** part of this repository's
-standard locked environment (`uv.lock`) -- it is a separately-locked,
-optional execution environment, kept apart so that installing or running it
-never destabilizes the lightweight core package that every other notebook
-and test in this repository uses.
+standard locked environment (`uv.lock`) -- it is a genuinely, separately
+locked execution environment under `environments/tsicl/`
+(`pyproject.toml` + `uv.lock`, pinning Python, `tsicl`, `torch`, `numpy`,
+`pandas`, `scipy`, `scikit-learn`, `huggingface_hub`, and every other
+transitive dependency the drivers need), kept apart so that installing or
+running it never destabilizes the lightweight core package that every
+other notebook and test in this repository uses. An earlier draft of this
+document described a bare `pip install tsicl==0.2.1 torch==2.9.1 pandas
+numpy` command as "separately locked" -- it was not: pandas/NumPy and every
+transitive dependency were left unpinned. This has been corrected; the
+commands below use the real, committed lock file.
 
 ```bash
 # Core environment (no torch/tsicl) -- what everything else in this
 # repository uses by default.
 uv sync --locked
 
-# Separate TS-ICL execution environment.
-python -m venv .venv_tsicl
-.venv_tsicl/bin/pip install tsicl==0.2.1 torch==2.9.1 pandas numpy
+# Separate, genuinely locked TS-ICL execution environment.
+cd environments/tsicl
+uv sync --locked
+cd ../..
 ```
 
-The first call that constructs `TSICL()` downloads the ~209 MB checkpoint
-from Hugging Face Hub (network access required, one-time). All TS-ICL
-drivers in this repository (`experiments/chlorophyll/run_tsicl_benchmark.py`,
-`run_tsicl_covariate_analysis.py`) must be run with `.venv_tsicl`'s Python,
-not the core environment's:
+Verify the fresh install before trusting it for a reproducibility run:
 
 ```bash
-PYTHONPATH=src .venv_tsicl/bin/python -m experiments.chlorophyll.run_tsicl_benchmark \
-    --support matched_449 --arms target_only,satellite_proxy \
-    --context-modes full_series \
-    --out build/chlorophyll/tsicl_benchmark
-
-PYTHONPATH=src .venv_tsicl/bin/python -m experiments.chlorophyll.run_tsicl_covariate_analysis \
-    --arms curated_physical,satellite_proxy --support matched_449 \
-    --out build/chlorophyll/tsicl_covariates
+PYTHONPATH=src environments/tsicl/.venv/bin/python -c "
+from coastal_gap_reconstruction import tsicl_helpers as th
+model, provenance = th.load_tsicl_strict()
+print(provenance)
+"
 ```
 
-Both drivers are restart-safe (checkpoint every 25 calls to
-`predictions.jsonl`/`done_keys.json`; re-running the same command resumes
-rather than recomputes) and never overwrite `results_public/` by default.
+This must print a provenance dict with the checkpoint hash below and raise
+nothing -- if it raises `TSICLProvenanceError`/`TSICLDependencyError`, do
+not proceed with a benchmark run.
+
+The first call that constructs `TSICL()` downloads the ~209 MB checkpoint
+from Hugging Face Hub (network access required, one-time; respects
+`HF_HOME`/`HUGGINGFACE_HUB_CACHE` if set, otherwise the standard
+`~/.cache/huggingface/hub/` default). All TS-ICL drivers in this repository
+(`experiments/chlorophyll/run_tsicl_benchmark.py`,
+`run_tsicl_covariate_analysis.py`) must be run with
+`environments/tsicl/.venv`'s Python, not the core environment's:
+
+```bash
+PYTHONPATH=src environments/tsicl/.venv/bin/python -m experiments.chlorophyll.run_tsicl_benchmark \
+    --support full_681 \
+    --arms target_only,target_plus_calendar,target_plus_physical_forcing,satellite_proxy,target_plus_physical_forcing_plus_proxy,wrong_lag_physical_forcing \
+    --context-modes full_series,edge_balanced \
+    --out build/chlorophyll/tsicl_benchmark_full681
+
+PYTHONPATH=src environments/tsicl/.venv/bin/python -m experiments.chlorophyll.run_tsicl_covariate_analysis \
+    --support full_681 --include-placebos \
+    --arms target_only,satellite_proxy,solar_only,wind_upwelling_only,sst_thermal_only,plv_meteorological,current_transport_only,availability_proxy_only,solar_upwelling_interaction,upwelling_cooling_interaction,curated_physical,full_physical_redundant,proxy_plus_solar,proxy_plus_wind_upwelling,proxy_plus_sst,proxy_plus_plv_met,proxy_plus_current_transport,proxy_plus_availability \
+    --out build/chlorophyll/tsicl_covariates_full681
+```
+
+Score a completed run (aggregate/by-length/event metrics, paired bootstrap
+vs. a freshly generated interpolation comparator, `VERIFICATION_STATUS`):
+
+```bash
+.venv/bin/python -m experiments.chlorophyll.score_tsicl_run --run-dir build/chlorophyll/tsicl_benchmark_full681
+```
+
+### Restart safety and configuration-bound output directories
+
+Both drivers are restart-safe. All resume/failure/completion accounting is
+recomputed from `predictions.jsonl`/`failures.jsonl` on every invocation --
+there is no separate compact cache that can silently go stale. **A failed
+call is retried on every subsequent invocation by default** (an earlier
+version of both drivers recorded a call's key as "done" even when it
+failed, so a resume silently skipped a permanently-failed call and could
+report completion despite an unresolved failure -- this was a real bug,
+found and fixed this sprint, not a hypothetical risk; see
+`tsicl_run_state.py` and `tests/test_tsicl_run_state.py` /
+`tests/test_run_tsicl_benchmark.py` for the fix and its regression tests).
+`RUN_COMPLETE` requires every expected call to have exactly one valid
+successful record and zero unresolved failures.
+
+Each output directory is bound to the exact configuration (support, arm
+list, context modes, checkpoint hash, input file hashes) that first wrote
+into it, via `run_manifest.json` (`tsicl_run_manifest.py`). Resuming the
+same directory with a different configuration raises immediately, instead
+of silently mixing predictions from two incompatible runs -- use a new,
+empty `--out` directory for a different configuration.
 
 ## Two supports: full 681-gap pool vs. matched 449-gap support
 
@@ -98,9 +149,18 @@ definitions. In short:
 - **Full 681-gap pool** (`--support full_681`, the default): the primary
   support for the released target-only/satellite-proxy paired comparison
   (`chlorophyll_benchmark_summary.csv`) and the 18-arm covariate ranking
-  (`chlorophyll_covariate_mechanism_summary.csv`). Uses both `full_series`
-  and `edge_balanced` context modes for the primary target-only/satellite-
-  proxy arms.
+  (`chlorophyll_covariate_mechanism_summary.csv`). The authoritative
+  primary target benchmark grid, resolved by direct inspection of the
+  private `run_full_benchmark.py` (not assumed): **681 gaps x 2 context
+  modes (`full_series`, `edge_balanced`) x 6 primary arms** --
+  `target_only`, `target_plus_calendar`, `target_plus_physical_forcing`,
+  `satellite_proxy`, `target_plus_physical_forcing_plus_proxy`, and a
+  `wrong_lag_physical_forcing` placebo control -- 8,172 calls total,
+  `target_repr="raw"` throughout (see `tsicl_contract.PRIMARY_ARMS`/
+  `PRIMARY_ARM_ORDER`/`FULL_681_PRIMARY_TOTAL_CALLS`). An earlier version
+  of this document and of `run_tsicl_benchmark.py` implemented only 2 of
+  these 6 arms (`target_only`, `satellite_proxy`); the other 4 were
+  entirely missing from the public driver until this correction.
 - **Matched 449-gap support** (`--support matched_449`): the same support
   the classical/probabilistic/gap-edge benchmark uses
   (`experiments/chlorophyll/benchmark_contract.py`). `tsicl_target_only`/
@@ -158,9 +218,19 @@ See `experiments/chlorophyll/tsicl_covariate_registry.py`
 descriptive public name (reusing the names already published in
 `chlorophyll_covariate_mechanism_summary.csv`, never the private project's
 internal short codes), exact column membership, and role
-(primary/supporting/exploratory). Four placebo/negative-control transforms
-(`wrong_lag`, `season_shuffled`, `year_shifted`, `permuted`) are available
-for the arms the released placebo-robustness check used.
+(primary/supporting/exploratory). **18 base arms.** Four placebo/negative-
+control transforms (`wrong_lag`, `season_shuffled`, `year_shifted`,
+`permuted`) are each applied to **6 placebo-eligible families**
+(`PLACEBO_ELIGIBLE_ARMS`: `curated_physical`, `wind_upwelling_only`,
+`solar_only`, `sst_thermal_only`, `current_transport_only`,
+`availability_proxy_only`) -- 24 placebo variants. **18 + 24 = 42 total
+variants**, `context_mode="full_series"` only, matching the private
+`c0_c13_dissection.py::build_run_plan`'s own arithmetic exactly (681 gaps x
+42 variants = 28,602 calls for the full covariate dissection, matching that
+module's own documented call count). An earlier version of this registry's
+`PLACEBO_ELIGIBLE_ARMS` list was missing `availability_proxy_only`,
+silently dropping one whole placebo family (4 of the 24 variants) from any
+`--include-placebos` run; this has been corrected.
 
 ## Paired statistical procedure
 
@@ -169,6 +239,17 @@ clustered paired bootstrap: **resample `gap_id` with replacement; every day
 inside a resampled gap comes along with it.** A day-level bootstrap is
 never used -- days within one gap are not independent draws. 2000
 replicates, seed 42, 95% percentile CI, significance = CI excludes zero.
+
+**Exact day-level pairing is enforced, not assumed.** Sharing a `gap_id` is
+not sufficient to pair two methods' day rows: `bootstrap_compare` verifies
+that both methods have day rows on *exactly* the same dates within every
+common gap, with no duplicate (method, gap, date) rows, before computing
+any metric. The default (`pairing="strict"`) raises `ValueError` on any
+within-gap date-support mismatch; `pairing="intersection"` restricts a
+mismatched gap to its common date subset and records the exclusion
+explicitly (`PairedComparisonResult.excluded_gaps`) rather than silently
+comparing rows from different days as if they were the same observation.
+
 Reported findings this procedure supports:
 
 - The pooled (all-gaps) target-only/satellite-proxy TS-ICL improvement over
@@ -185,27 +266,50 @@ frozen-only
 - **Exact**: checkpoint identity (hash-verified), gap pool membership,
   input construction (masking, context slicing) -- these do not depend on
   the runtime environment.
-- **Environment-sensitive**: the model's own numeric output. Foundation-
-  model inference is sensitive to `torch` version, dtype, device, and the
-  `tsicl` package/API version; this repository states this directly rather
-  than claiming bit-reproducibility it has not verified (see "Determinism"
-  above). Compare freshly generated predictions against the frozen tables
-  using the classification your own run's `--verify`-equivalent evidence
-  supports, not an assumed tolerance.
+- **Same-environment per-day repeatability: directly verified, not
+  inferred from aggregate equality.**
+  `experiments/chlorophyll/verify_same_environment_repeatability.py` runs a
+  bounded sample of real gaps through two fully independent process
+  invocations and diffs point predictions and quantiles day-by-day (not
+  just the aggregate MAE, which can hide compensating per-day errors). The
+  result on a 10-gap x 2-arm (20-key) sample:
+  `bitwise_repeatable_in_this_environment` -- every point prediction and
+  every quantile value identical to the last bit across two separate
+  process runs (see `build/chlorophyll/same_environment_repeatability/` for
+  the raw comparison output this claim is based on). This is
+  same-environment evidence only; bit-exact reproduction across different
+  machines/torch versions/CPU vs. GPU remains **not** independently
+  verified (see "Determinism" above) -- do not extrapolate this result
+  beyond a fixed environment.
+- **Environment-sensitive across different environments**: the model's own
+  numeric output. Foundation-model inference is sensitive to `torch`
+  version, dtype, device, and the `tsicl` package/API version; this
+  repository states this directly rather than claiming cross-environment
+  bit-reproducibility it has not verified. Compare freshly generated
+  predictions against the frozen tables using
+  `experiments/chlorophyll/score_tsicl_run.py`'s `VERIFICATION_STATUS`
+  classification, which uses an empirical reporting band
+  (`TSICL_METRIC_TOLERANCE`), not an assumed threshold.
 - **Frozen-only** (not reproduced or re-run by the code in this
   repository): the 128-real-gap reconstruction candidate output
-  (`chlorophyll_reconstruction_tsicl_satellite_proxy.csv`) and the full
-  28,602-call C0-C13 covariate dissection's exhaustive sub-variant grid --
-  this repository publishes and can re-run the retained primary/supporting
-  arms (`tsicl_covariate_registry.py`), not every private sub-variant ever
-  explored.
+  (`chlorophyll_reconstruction_tsicl_satellite_proxy.csv`) -- this
+  repository does not publish the real-gap deployment driver. The full
+  28,602-call covariate dissection **is** now published and runnable
+  end-to-end (`run_tsicl_covariate_analysis.py --include-placebos
+  --support full_681` over all 18 registry arms); see the full-support
+  closure handoff for its actual execution status as of this document's
+  last update.
 
 ## Runtime and compute requirements
 
-CPU inference: approximately 1.5-3 seconds per gap-context-arm call on a
-laptop CPU (no GPU required or used by the released benchmark). The full
-primary target-only benchmark (681 gaps x 2 context modes x 2 primary arms)
-is on the order of hours, not minutes; the matched-449 support (449 gaps)
+CPU inference: measured at approximately 1.0-1.5 seconds per
+gap-context-arm call on a laptop CPU during the full-681 closure run (no
+GPU required or used). The full primary target benchmark (681 gaps x 2
+context modes x 6 primary arms = 8,172 calls) is several hours; the full
+covariate dissection (681 gaps x 42 variants = 28,602 calls) is on the
+order of a day. Both are run sequentially, never concurrently, to avoid
+uncontrolled CPU contention between two large TS-ICL jobs -- see
+`build/run_full_support_closure.sh`. The matched-449 support (449 gaps)
 at one context mode is more tractable for a quick reproduction check. Both
 drivers checkpoint incrementally specifically because of this runtime, so a
 long run can be safely interrupted and resumed.

@@ -238,21 +238,32 @@ license, see `docs/methodology/tsicl_usage.md`):
   calling layer (checkpoint provenance verification, gap/context
   orchestration, strict-by-default input/output validation) shared by the
   demo, notebooks, and both benchmark drivers below.
-- `experiments/chlorophyll/run_tsicl_benchmark.py` -- the target-only and
-  satellite-proxy-covariate benchmark, restart-safe, over either the full
-  681-gap pool or the matched 449-gap support (the support to use for a
-  direct TS-ICL-vs-classical-ML comparison, since it is the only support
-  every method in `benchmark_contract.py` and TS-ICL both have a released
-  row on).
+- `experiments/chlorophyll/run_tsicl_benchmark.py` -- the primary
+  target-conditioned benchmark: all 6 authoritative primary arms
+  (`target_only`, `target_plus_calendar`, `target_plus_physical_forcing`,
+  `satellite_proxy`, `target_plus_physical_forcing_plus_proxy`,
+  `wrong_lag_physical_forcing`), restart-safe, over either the full
+  681-gap pool (8,172 calls: 681 x 2 context modes x 6 arms) or the
+  matched 449-gap support (the support to use for a direct
+  TS-ICL-vs-classical-ML comparison, since it is the only support every
+  method in `benchmark_contract.py` and TS-ICL both have a released row
+  on).
 - `experiments/chlorophyll/tsicl_covariate_registry.py` +
-  `run_tsicl_covariate_analysis.py` -- the covariate-arm dissection, every
-  retained arm identified by a descriptive public name (reused from the
-  already-released `chlorophyll_covariate_mechanism_summary.csv`, never an
-  internal short code), plus the four placebo/negative-control transforms.
+  `run_tsicl_covariate_analysis.py` -- the covariate-arm dissection (18
+  base arms), every retained arm identified by a descriptive public name
+  (reused from the already-released
+  `chlorophyll_covariate_mechanism_summary.csv`, never an internal short
+  code), plus the four placebo/negative-control transforms over 6
+  eligible families (42 variants total, 28,602 calls on the full pool).
+- `experiments/chlorophyll/score_tsicl_run.py` -- structured scoring
+  (aggregate/by-length/event metrics, paired bootstrap vs. a freshly
+  generated interpolation comparator) and `VERIFICATION_STATUS`
+  classification for a completed run.
 - `coastal_gap_reconstruction/paired_statistics.py` -- the gap-clustered
   paired bootstrap comparison mechanics behind every TS-ICL-vs-baseline
-  confidence interval in the released tables.
+  confidence interval in the released tables, with exact day-level pairing
+  enforced (not merely a shared `gap_id`).
 
-Running these requires the separately-locked `.venv_tsicl` environment
+Running these requires the genuinely locked `environments/tsicl/` environment
 (`docs/methodology/tsicl_usage.md` has the exact install/run commands) --
-they are not part of this repository's standard `uv sync` environment.
+it is not part of this repository's standard `uv sync` environment.

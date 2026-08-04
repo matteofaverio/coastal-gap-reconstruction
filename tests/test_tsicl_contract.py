@@ -63,3 +63,53 @@ def test_context_modes_and_quantile_levels_are_nonempty():
     assert "full_series" in tc.PRIMARY_CONTEXT_MODES
     assert len(tc.QUANTILE_LEVELS) == 7
     assert tc.QUANTILE_LEVELS == sorted(tc.QUANTILE_LEVELS)
+
+
+def test_primary_arms_has_exactly_six_arms_matching_the_private_grid():
+    """Resolved from src/tongoy_chl/tsicl/run_full_benchmark.py's
+    PRIMARY_ARMS = ["A","B","C","D","E","F"] -- not assumed."""
+    assert len(tc.PRIMARY_ARMS) == 6
+    assert set(tc.PRIMARY_ARMS) == set(tc.PRIMARY_ARM_ORDER)
+    private_codes = {spec["private_code"] for spec in tc.PRIMARY_ARMS.values()}
+    assert private_codes == {"A", "B", "C", "D", "E", "F"}
+
+
+def test_primary_arm_target_only_and_satellite_proxy_match_the_covariate_registry():
+    """target_only (A) and satellite_proxy (D) must be the same public
+    identity/columns used by tsicl_covariate_registry.py, not a silently
+    diverging duplicate definition."""
+    from experiments.chlorophyll import tsicl_covariate_registry as reg
+    assert tc.PRIMARY_ARMS["target_only"]["columns"] == []
+    assert tc.PRIMARY_ARMS["satellite_proxy"]["columns"] == reg.COVARIATE_ARMS["satellite_proxy"].columns
+
+
+def test_wrong_lag_arm_is_a_placebo_transform_of_the_physical_forcing_columns():
+    spec = tc.PRIMARY_ARMS["wrong_lag_physical_forcing"]
+    assert spec["transform"] == "wrong_lag"
+    assert spec["columns"] == tc.PRIMARY_PHYSICAL_FORCING_COLUMNS
+
+
+def test_full_681_primary_total_calls_matches_the_private_grid_exactly():
+    """681 gaps x 2 context modes x 6 arms = 8172 -- the private project's
+    own primary full-benchmark call count."""
+    assert tc.FULL_681_PRIMARY_TOTAL_CALLS == 681 * 2 * 6 == 8172
+
+
+def test_full_681_covariate_total_calls_matches_the_private_28602_figure():
+    """18 base arms + 6 placebo families x 4 transforms = 42 variants;
+    681 x 42 = 28,602 -- matches c0_c13_dissection.py's own documented call
+    count, verified against build_run_plan()'s actual 18/6/4 arithmetic
+    rather than trusted from a docstring alone."""
+    assert tc.FULL_681_COVARIATE_N_VARIANTS == 42
+    assert tc.FULL_681_COVARIATE_TOTAL_CALLS == 681 * 42 == 28602
+
+
+def test_covariate_registry_base_arm_count_matches_contract():
+    from experiments.chlorophyll import tsicl_covariate_registry as reg
+    assert len(reg.COVARIATE_ARMS) == tc.FULL_681_COVARIATE_N_BASE_ARMS
+
+
+def test_covariate_registry_placebo_eligible_arm_count_matches_contract():
+    from experiments.chlorophyll import tsicl_covariate_registry as reg
+    assert len(reg.PLACEBO_ELIGIBLE_ARMS) == tc.FULL_681_COVARIATE_N_PLACEBO_FAMILIES
+    assert len(reg.PLACEBO_TRANSFORMS) == tc.FULL_681_COVARIATE_N_PLACEBO_TRANSFORMS

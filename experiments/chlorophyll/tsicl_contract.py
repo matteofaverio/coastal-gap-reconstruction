@@ -61,6 +61,17 @@ __all__ = [
     "MAX_CONTEXT_LENGTH",
     "QUANTILE_LEVELS",
     "PRIMARY_CONTEXT_MODES",
+    "PRIMARY_CALENDAR_COLUMNS",
+    "PRIMARY_PHYSICAL_FORCING_COLUMNS",
+    "PRIMARY_BIOLOGICAL_PROXY_COLUMNS",
+    "PRIMARY_ARMS",
+    "PRIMARY_ARM_ORDER",
+    "FULL_681_PRIMARY_TOTAL_CALLS",
+    "FULL_681_COVARIATE_N_BASE_ARMS",
+    "FULL_681_COVARIATE_N_PLACEBO_FAMILIES",
+    "FULL_681_COVARIATE_N_PLACEBO_TRANSFORMS",
+    "FULL_681_COVARIATE_N_VARIANTS",
+    "FULL_681_COVARIATE_TOTAL_CALLS",
     "ArtifactSpec",
     "ARTIFACTS",
 ]
@@ -98,6 +109,75 @@ QUANTILE_LEVELS: list[float] = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
 # the private project's own primary run for runtime-budget reasons -- not
 # reproduced here either, for the same reason).
 PRIMARY_CONTEXT_MODES: list[str] = ["full_series", "edge_balanced"]
+
+# ── The authoritative primary full benchmark grid (Phase 2B2 full-support
+# closure) ───────────────────────────────────────────────────────────────
+#
+# Resolved by direct inspection of the private
+# `src/tongoy_chl/tsicl/run_full_benchmark.py` (not assumed/inferred from a
+# prior handoff's prose): the released primary target-only/covariate
+# benchmark is **681 gaps x 2 context modes x 6 primary arms** (private
+# codes A-F), `target_repr="raw"` only -- 8,172 calls total. This corrects
+# an earlier public driver that implemented only 2 of these 6 arms
+# (`target_only`=A, `satellite_proxy`=D) under the `target_only`-benchmark
+# label; the other 4 (calendar, physical-forcing, physical-forcing+proxy,
+# and a `wrong_lag` placebo control) were previously missing from
+# `run_tsicl_benchmark.py` entirely.
+#
+# Column lists are ported verbatim from the private
+# `pilot_pipeline.py::PHYSICAL_FORCING_COLS`/`BIOLOGICAL_PROXY_COLS`/
+# `CALENDAR_COLS` (the same private source `tsicl_covariate_registry.py`'s
+# 18-arm covariate-dissection column lists were ported from).
+PRIMARY_CALENDAR_COLUMNS: list[str] = ["doy_sin", "doy_cos"]
+PRIMARY_PHYSICAL_FORCING_COLUMNS: list[str] = [
+    "plv_solar_wm2", "plv_solar_roll7d_wm2", "plv_upwelling_ms", "plv_upwelling_cumul7d_ms_d",
+    "sst_primary_degC", "sst_primary_degC_roll7", "wind_spd_ms",
+]
+PRIMARY_BIOLOGICAL_PROXY_COLUMNS: list[str] = ["chl_cons_w3x3_mean", "chl_anom_log10_doy"]
+
+# arm_id (public, descriptive) -> (private code, columns, placebo transform).
+# `target_only` (A) and `satellite_proxy` (D) are the two arms the earlier
+# driver already implemented; the remaining four complete the private
+# project's actual 6-arm primary grid.
+PRIMARY_ARMS: dict[str, dict] = {
+    "target_only": {"private_code": "A", "columns": [], "transform": "none"},
+    "target_plus_calendar": {"private_code": "B", "columns": PRIMARY_CALENDAR_COLUMNS, "transform": "none"},
+    "target_plus_physical_forcing": {
+        "private_code": "C", "columns": PRIMARY_PHYSICAL_FORCING_COLUMNS, "transform": "none",
+    },
+    "satellite_proxy": {"private_code": "D", "columns": PRIMARY_BIOLOGICAL_PROXY_COLUMNS, "transform": "none"},
+    "target_plus_physical_forcing_plus_proxy": {
+        "private_code": "E",
+        "columns": PRIMARY_PHYSICAL_FORCING_COLUMNS + PRIMARY_BIOLOGICAL_PROXY_COLUMNS,
+        "transform": "none",
+    },
+    "wrong_lag_physical_forcing": {
+        "private_code": "F", "columns": PRIMARY_PHYSICAL_FORCING_COLUMNS, "transform": "wrong_lag",
+    },
+}
+PRIMARY_ARM_ORDER: list[str] = [
+    "target_only", "target_plus_calendar", "target_plus_physical_forcing", "satellite_proxy",
+    "target_plus_physical_forcing_plus_proxy", "wrong_lag_physical_forcing",
+]
+FULL_681_PRIMARY_TOTAL_CALLS = FULL_POOL_N_GAPS * len(PRIMARY_CONTEXT_MODES) * len(PRIMARY_ARM_ORDER)  # 8,172
+
+# The authoritative full covariate dissection grid: 18 base arms (this
+# module's `covariate_arm_ranking` artifact, exact column membership in
+# `tsicl_covariate_registry.COVARIATE_ARMS`) + 4 placebo transforms on each
+# of 6 eligible families (`PLACEBO_ELIGIBLE_ARMS`) = 18 + 24 = 42 variants,
+# `context_mode="full_series"` only -- resolved from
+# `src/tongoy_chl/tsicl/c0_c13_dissection.py::build_run_plan` (18 arms in
+# `minimum_required`+`remaining_c11`+`[C4,C7,C8]`, 6 placebo families x 4
+# transforms = 24), matching that module's own "28,602 calls" docstring
+# claim exactly (681 x 42 = 28,602) rather than trusting it uninspected.
+FULL_681_COVARIATE_N_BASE_ARMS = 18
+FULL_681_COVARIATE_N_PLACEBO_FAMILIES = 6
+FULL_681_COVARIATE_N_PLACEBO_TRANSFORMS = 4
+FULL_681_COVARIATE_N_VARIANTS = (
+    FULL_681_COVARIATE_N_BASE_ARMS
+    + FULL_681_COVARIATE_N_PLACEBO_FAMILIES * FULL_681_COVARIATE_N_PLACEBO_TRANSFORMS
+)  # 42
+FULL_681_COVARIATE_TOTAL_CALLS = FULL_POOL_N_GAPS * FULL_681_COVARIATE_N_VARIANTS  # 28,602
 
 
 @dataclass(frozen=True)
