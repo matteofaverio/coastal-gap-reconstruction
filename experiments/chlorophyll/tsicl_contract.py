@@ -166,7 +166,7 @@ FULL_681_PRIMARY_TOTAL_CALLS = FULL_POOL_N_GAPS * len(PRIMARY_CONTEXT_MODES) * l
 # `tsicl_covariate_registry.COVARIATE_ARMS`) + 4 placebo transforms on each
 # of 6 eligible families (`PLACEBO_ELIGIBLE_ARMS`) = 18 + 24 = 42 variants,
 # `context_mode="full_series"` only -- resolved from
-# `src/tongoy_chl/tsicl/c0_c13_dissection.py::build_run_plan` (18 arms in
+# the private project's covariate-dissection run-plan builder (18 arms in
 # `minimum_required`+`remaining_c11`+`[C4,C7,C8]`, 6 placebo families x 4
 # transforms = 24), matching that module's own "28,602 calls" docstring
 # claim exactly (681 x 42 = 28,602) rather than trusting it uninspected.

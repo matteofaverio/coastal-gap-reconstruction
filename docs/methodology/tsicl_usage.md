@@ -225,7 +225,7 @@ control transforms (`wrong_lag`, `season_shuffled`, `year_shifted`,
 `solar_only`, `sst_thermal_only`, `current_transport_only`,
 `availability_proxy_only`) -- 24 placebo variants. **18 + 24 = 42 total
 variants**, `context_mode="full_series"` only, matching the private
-`c0_c13_dissection.py::build_run_plan`'s own arithmetic exactly (681 gaps x
+the private project's own covariate-dissection run-plan arithmetic exactly (681 gaps x
 42 variants = 28,602 calls for the full covariate dissection, matching that
 module's own documented call count). An earlier version of this registry's
 `PLACEBO_ELIGIBLE_ARMS` list was missing `availability_proxy_only`,

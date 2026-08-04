@@ -3,7 +3,7 @@ pool: every retained arm in `tsicl_covariate_registry.COVARIATE_ARMS`
 (18 base arms), plus the placebo/negative-control battery
 (4 transforms x 6 eligible families = 24 variants) for the full authoritative
 grid -- 42 variants total, matching the private
-`c0_c13_dissection.py::build_run_plan`'s own 42-variant plan (681 gaps x 42
+the private project's own covariate-dissection run-plan builder (681 gaps x 42
 = 28,602 calls for the full run) exactly, not approximately.
 
 Requires the optional `tsicl` extra. Uses `full_series` context only,
