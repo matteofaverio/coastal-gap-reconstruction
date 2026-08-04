@@ -14,11 +14,15 @@ def _synthetic_day_level(n_gaps=30, days_per_gap=3, seed=0) -> pd.DataFrame:
     rows = []
     for i in range(n_gaps):
         gap_id = f"g{i}"
+        base_date = pd.Timestamp("2020-01-01") + pd.Timedelta(days=10 * i)
         err_a = rng.normal(0.2, 0.05, days_per_gap).clip(min=0)
         err_b = rng.normal(0.3, 0.05, days_per_gap).clip(min=0)  # b is worse
         for d in range(days_per_gap):
-            rows.append({"method_id": "method_a", "gap_id": gap_id, "day": d, "absolute_error_log10": err_a[d]})
-            rows.append({"method_id": "method_b", "gap_id": gap_id, "day": d, "absolute_error_log10": err_b[d]})
+            date = base_date + pd.Timedelta(days=d)
+            rows.append({"method_id": "method_a", "gap_id": gap_id, "day": d, "date": date,
+                         "absolute_error_log10": err_a[d]})
+            rows.append({"method_id": "method_b", "gap_id": gap_id, "day": d, "date": date,
+                         "absolute_error_log10": err_b[d]})
     return pd.DataFrame(rows)
 
 
@@ -46,8 +50,8 @@ def test_gap_cluster_bootstrap_ci_handles_empty_input():
 
 def test_bootstrap_compare_returns_none_when_no_shared_gaps():
     df = pd.DataFrame([
-        {"method_id": "a", "gap_id": "g1", "absolute_error_log10": 0.1},
-        {"method_id": "b", "gap_id": "g2", "absolute_error_log10": 0.2},
+        {"method_id": "a", "gap_id": "g1", "date": "2020-01-01", "absolute_error_log10": 0.1},
+        {"method_id": "b", "gap_id": "g2", "date": "2020-01-01", "absolute_error_log10": 0.2},
     ])
     assert ps.bootstrap_compare("a", "b", df) is None
 
@@ -100,10 +104,12 @@ def test_bootstrap_uses_gap_level_resampling_not_day_level():
     rows = []
     for i in range(30):
         gap_id = f"g{i}"
+        base_date = pd.Timestamp("2020-01-01") + pd.Timedelta(days=10 * i)
         base = 0.2
         for d in range(4):
-            rows.append({"method_id": "a", "gap_id": gap_id, "absolute_error_log10": base})
-            rows.append({"method_id": "b", "gap_id": gap_id, "absolute_error_log10": base + 0.1})
+            date = base_date + pd.Timedelta(days=d)
+            rows.append({"method_id": "a", "gap_id": gap_id, "date": date, "absolute_error_log10": base})
+            rows.append({"method_id": "b", "gap_id": gap_id, "date": date, "absolute_error_log10": base + 0.1})
     df = pd.DataFrame(rows)
     r1 = ps.bootstrap_compare("a", "b", df, n_replicates=500, seed=1)
 
@@ -116,3 +122,80 @@ def test_bootstrap_uses_gap_level_resampling_not_day_level():
     r2 = ps.bootstrap_compare("a", "b", df2, n_replicates=500, seed=1)
 
     assert r1.metrics["day_weighted_mae"]["delta"] == pytest.approx(r2.metrics["day_weighted_mae"]["delta"])
+
+
+# ── Exact day-level pairing (Phase 2B2 full-support-closure fix) ──────────
+
+def _two_gap_frame(dates_a: dict[str, list[str]], dates_b: dict[str, list[str]]) -> pd.DataFrame:
+    """Build a minimal two-method day-level frame from {gap_id: [dates]} maps."""
+    rows = []
+    for gap_id, dates in dates_a.items():
+        for i, d in enumerate(dates):
+            rows.append({"method_id": "a", "gap_id": gap_id, "date": d, "absolute_error_log10": 0.1 + i})
+    for gap_id, dates in dates_b.items():
+        for i, d in enumerate(dates):
+            rows.append({"method_id": "b", "gap_id": gap_id, "date": d, "absolute_error_log10": 0.2 + i})
+    return pd.DataFrame(rows)
+
+
+def test_strict_pairing_raises_on_different_dates_within_a_shared_gap():
+    df = _two_gap_frame(
+        {"g0": ["2020-01-01", "2020-01-02"]},
+        {"g0": ["2020-01-01", "2020-01-03"]},
+    )
+    with pytest.raises(ValueError, match="date_support_mismatch"):
+        ps.bootstrap_compare("a", "b", df, n_replicates=50, seed=1)
+
+
+def test_strict_pairing_raises_when_one_method_is_missing_one_day():
+    df = _two_gap_frame(
+        {"g0": ["2020-01-01", "2020-01-02", "2020-01-03"]},
+        {"g0": ["2020-01-01", "2020-01-02"]},
+    )
+    with pytest.raises(ValueError, match="date_support_mismatch"):
+        ps.bootstrap_compare("a", "b", df, n_replicates=50, seed=1)
+
+
+def test_strict_pairing_raises_on_duplicate_dates():
+    df = _two_gap_frame(
+        {"g0": ["2020-01-01", "2020-01-01"]},
+        {"g0": ["2020-01-01", "2020-01-02"]},
+    )
+    with pytest.raises(ValueError, match="duplicate_date_rows"):
+        ps.bootstrap_compare("a", "b", df, n_replicates=50, seed=1)
+
+
+def test_strict_pairing_accepts_same_date_support_in_different_row_order():
+    df = _two_gap_frame(
+        {"g0": ["2020-01-02", "2020-01-01"]},
+        {"g0": ["2020-01-01", "2020-01-02"]},
+    )
+    # Should not raise -- date *sets* match even though row order differs.
+    result = ps.bootstrap_compare("a", "b", df, n_replicates=50, seed=1, pairing="intersection")
+    assert result is not None
+    assert result.paired_gap_count == 1
+    assert result.paired_day_count == 2
+
+
+def test_intersection_pairing_restricts_to_common_dates_and_records_exclusion():
+    df = _two_gap_frame(
+        {"g0": ["2020-01-01", "2020-01-02", "2020-01-03"]},
+        {"g0": ["2020-01-01", "2020-01-02"]},
+    )
+    result = ps.bootstrap_compare("a", "b", df, n_replicates=50, seed=1, pairing="intersection")
+    assert result is not None
+    assert result.paired_gap_count == 1
+    assert result.paired_day_count == 2  # only the common 2 days, not 3
+    assert len(result.excluded_gaps) == 1
+    assert result.excluded_gaps[0]["gap_id"] == "g0"
+    assert result.excluded_gaps[0]["reason"] == "date_support_mismatch"
+
+
+def test_paired_gap_and_day_counts_and_original_gap_counts_recorded():
+    df = _synthetic_day_level(n_gaps=20, days_per_gap=3, seed=7)
+    result = ps.bootstrap_compare("method_a", "method_b", df, n_replicates=50, seed=1)
+    assert result.original_gap_count_a == 20
+    assert result.original_gap_count_b == 20
+    assert result.paired_gap_count == 20
+    assert result.paired_day_count == 60
+    assert result.excluded_gaps == []
