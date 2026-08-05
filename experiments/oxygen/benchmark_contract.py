@@ -109,7 +109,7 @@ FORBIDDEN_PREDICTOR_SUBSTRINGS: tuple[str, ...] = (
 # satellite-chlorophyll column family is forbidden outright for TS-ICL
 # covariates specifically, unlike the classical `external_all_available` arm
 # above. Matches the private project's own
-# `oxygen_pipeline.py::FORBIDDEN_SUBSTRINGS` exactly.
+# the private project's own oxygen TS-ICL covariate-safety check exactly.
 TSICL_FORBIDDEN_COVARIATE_SUBSTRINGS: tuple[str, ...] = (
     "chl_mean", "chl_cons", "chl_perm", "chl_anom", "chl_log10", "chl_is_gapfree",
     "BTGOXD", "BTGOXSATPC", "BTGSAL", "BTGTUR", "BTGCND",

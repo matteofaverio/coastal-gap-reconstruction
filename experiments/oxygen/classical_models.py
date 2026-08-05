@@ -13,7 +13,7 @@ release (see `oxygen_classical_models_audit.md`) and must reproduce those
 exactly, not merely something structurally similar.
 
 Exact learner configurations (ported verbatim from the private
-`oxygen_tabular_sprint4_expansion.py`/`oxygen_gap_edge_sprint4_expansion.py`):
+the private project's final tabular/gap-edge model modules):
 Ridge(alpha=1.0), ElasticNet(alpha=0.05, l1_ratio=0.5, max_iter=5000),
 HistGradientBoostingRegressor(max_iter=300, max_leaf_nodes=31,
 learning_rate=0.01, l2_regularization=0.001), ExtraTreesRegressor
@@ -210,7 +210,7 @@ def run_tabular_loco_evaluation(
 # pre_only_forecast_safe, and the tree-ensemble learners under
 # residual_interp_hindcast) require the private project's own multi-gap
 # pooled edge-feature training design
-# (`oxygen_gap_edge_sprint4_expansion.py`'s `build_tier_c_feature_table`-
+# (the private project's own `build_tier_c_feature_table`-
 # style pooled fit, analogous to chlorophyll's `gap_edge_models.py`) to
 # reproduce correctly -- porting a simplified/single-gap substitute would
 # silently misrepresent what those released numbers actually measure. Given
