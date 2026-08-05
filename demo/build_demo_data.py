@@ -5,7 +5,7 @@ Kept for transparency and reproducibility. Run from the repository root:
 
     python3 demo/build_demo_data.py
 
-Reads only from data_public/ (public, redistributable chlorophyll data already
+Reads only from data/ (public, redistributable chlorophyll data already
 in this repository) -- does not read from or write to any private/internal
 data source.
 """
@@ -26,9 +26,9 @@ REAL_GAP_END = pd.Timestamp("2015-07-14")
 
 
 def main():
-    target = pd.read_csv("data_public/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
+    target = pd.read_csv("data/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
     feat = pd.read_csv(
-        "data_public/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"]
+        "data/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"]
     )
 
     window_start = GAP_START - pd.Timedelta(days=CONTEXT_DAYS)

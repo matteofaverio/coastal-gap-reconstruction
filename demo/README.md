@@ -13,20 +13,21 @@ bash run_demo.sh
 
 (or `bash demo/run_demo.sh` from the repository root.)
 
-This creates an isolated virtual environment (`.venv_tsicl_demo/`, git-ignored),
-installs everything needed, registers a Jupyter kernel, and executes the notebook
-end to end. Tested on macOS (Apple Silicon, CPU-only inference -- TS-ICL has no
-CUDA GPU on that machine and runs on CPU).
+This sets up (if not already present) and uses `environments/tsicl/` -- this
+repository's single, genuinely locked TS-ICL environment, the same one the
+chlorophyll and oxygen benchmark drivers use (see `docs/reproducibility.md`)
+-- registers it as a Jupyter kernel, and executes the notebook end to end.
+Tested on macOS (Apple Silicon, CPU-only inference -- TS-ICL has no CUDA GPU
+on that machine and runs on CPU).
 
-**Measured timing** (macOS, Apple Silicon, CPU-only, checkpoint already present
-in the local Hugging Face cache from a prior run): `bash demo/run_demo.sh` from
-a freshly deleted `.venv_tsicl_demo/` -- venv creation, `pip install`, kernel
-registration, and full notebook execution together -- took **1m 31s** wall
-clock. Within that run, TS-ICL model load was **4.32s** and each of its three
-`impute()` calls took **0.05-0.06s** (see the runtime table in Section 9 of the
-executed notebook). No fresh checkpoint download was timed in this measurement
-(the ~209 MB download itself was not re-triggered); expect materially more
-wall time than this on a genuinely first-ever run with no cache.
+**Measured timing** (macOS, Apple Silicon, CPU-only, `environments/tsicl/.venv`
+and the Hugging Face checkpoint cache already present from a prior run):
+kernel registration plus full notebook execution together took **~12s** wall
+clock; TS-ICL model load was **1.36s** (see the runtime table in Section 9 of
+the executed notebook for per-`impute()`-call timing). No fresh checkpoint
+download or environment build was timed in this measurement; expect several
+more minutes on a genuinely first-ever run (locked-environment resolution plus
+the one-time ~209 MB checkpoint download).
 
 Output: `gap_reconstruction_walkthrough_executed.ipynb` (the notebook with every
 figure and value filled in) and `outputs/demo_reconstruction_results.csv` (the one
@@ -58,45 +59,39 @@ silently substitutes one for the other.
 ## Manual setup (equivalent to `run_demo.sh`)
 
 ```bash
-python3 -m venv .venv_tsicl_demo
-.venv_tsicl_demo/bin/pip install --upgrade pip
-.venv_tsicl_demo/bin/pip install tsicl jupyter nbconvert ipykernel
-.venv_tsicl_demo/bin/python3 -m ipykernel install --user --name tsicl-demo --display-name "TS-ICL demo (venv)"
+cd environments/tsicl && uv sync --locked && cd ../..
+environments/tsicl/.venv/bin/python -m ipykernel install --user --name tsicl-env \
+    --display-name "TS-ICL (environments/tsicl)"
 
 # headless execution:
-.venv_tsicl_demo/bin/python3 -m jupyter nbconvert --to notebook --execute \
+environments/tsicl/.venv/bin/python -m jupyter nbconvert --to notebook --execute \
     --output gap_reconstruction_walkthrough_executed.ipynb \
     demo/gap_reconstruction_walkthrough.ipynb
 
 # or interactively:
-.venv_tsicl_demo/bin/python3 -m jupyter lab demo/gap_reconstruction_walkthrough.ipynb
-# then select the "TS-ICL demo (venv)" kernel and Kernel -> Restart & Run All
+environments/tsicl/.venv/bin/python -m jupyter lab demo/gap_reconstruction_walkthrough.ipynb
+# then select the "TS-ICL (environments/tsicl)" kernel and Kernel -> Restart & Run All
 ```
 
-`tsicl` pins `torch>=2.5.1,<2.10`; installing it into an unrelated existing
-environment can force a torch downgrade there. Use a dedicated venv (as above), not
-your general-purpose Python environment.
+## Environment: `environments/tsicl/`, not a separate demo venv
 
-## Package versions this was tested with
+This demo uses the same genuinely locked environment
+(`environments/tsicl/pyproject.toml` + `uv.lock`) as the chlorophyll and
+oxygen TS-ICL benchmark drivers -- Python 3.13.3, `tsicl==0.2.1`,
+`torch==2.9.1`, and every transitive dependency pinned exactly, plus
+`jupyter`/`nbconvert`/`ipykernel` for notebook execution. This repository's
+own core package (`coastal_gap_reconstruction`) is installed into that same
+environment in editable mode (`environments/tsicl/pyproject.toml`'s
+`[tool.uv.sources]`), so `demo/src/methods.py`'s
+`from coastal_gap_reconstruction.tsicl_helpers import ...` resolves without
+a separate install step or `PYTHONPATH` convention.
 
-Python 3.13.3, `tsicl==0.2.1`, `torch==2.9.1`, `scikit-learn==1.9.0`,
-`pandas==3.0.5`, `numpy==2.5.1`, `matplotlib==3.11.1`. TS-ICL's own `pyproject.toml`
-is the authoritative dependency spec; the versions above are what `pip install tsicl`
-resolved to as of the last live-verified run of this demo (2026-07-29). This
-environment is deliberately separate from the core package's `uv.lock` -- see
-"Is the demo covered by `uv.lock`?" below.
-
-### Is the demo covered by `uv.lock`?
-
-No. The core package (`src/coastal_gap_reconstruction/`, notebooks 01-05/07-10,
-tests, lint) is reproducibly locked via `uv.lock` at the repository root -- see
-the root `README.md` and `CONTRIBUTING.md`. `tsicl` pins a narrow `torch` range
-that would force unrelated version constraints onto that shared lock, so the
-demo intentionally uses its own isolated environment (`.venv_tsicl_demo/`,
-git-ignored, built by `demo/run_demo.sh` via plain `pip install`) instead of
-being folded into `uv.lock`. That isolated environment is pinned informationally
-by the "Package versions this was tested with" list above, refreshed each time
-the live demo is re-verified, rather than by a committed lockfile.
+This is deliberately kept apart from the repository's core `uv.lock` at the
+root: `tsicl` pins a narrow `torch` range that would otherwise force
+unrelated version constraints onto the lightweight core environment every
+other notebook and test uses (see `docs/reproducibility.md`). See that same
+document for the full checkpoint/package provenance table and the standard
+and expensive reproduction commands that also use this environment.
 
 ## License note
 

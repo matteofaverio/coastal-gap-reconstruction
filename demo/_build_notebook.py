@@ -468,7 +468,7 @@ scale, minimum context, TS-ICL covariate shape).
 nb = {
     "cells": cells,
     "metadata": {
-        "kernelspec": {"display_name": "TS-ICL demo (venv)", "language": "python", "name": "tsicl-demo"},
+        "kernelspec": {"display_name": "TS-ICL (environments/tsicl)", "language": "python", "name": "tsicl-env"},
         "language_info": {"name": "python", "version": "3.13"},
     },
     "nbformat": 4,

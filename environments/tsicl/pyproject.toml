@@ -1,7 +1,7 @@
 [project]
 name = "coastal-gap-reconstruction-tsicl-env"
 version = "0.1.0"
-description = "Genuinely locked, isolated environment for running real TS-ICL inference against coastal-gap-reconstruction's TS-ICL drivers. Not part of the main project's dependency tree -- see ../../docs/methodology/tsicl_usage.md."
+description = "Genuinely locked, isolated environment for running real TS-ICL inference against coastal-gap-reconstruction's TS-ICL drivers. Not part of the main project's dependency tree -- see ../../docs/reproducibility.md."
 requires-python = "==3.13.3"
 dependencies = [
     "tsicl==0.2.1",
@@ -16,7 +16,17 @@ dependencies = [
     "python-dotenv==1.2.2",
     "matplotlib==3.11.1",
     "seaborn==0.13.2",
+    "jupyter==1.1.1",
+    "nbconvert==7.16.6",
+    "ipykernel==6.30.1",
+    "coastal-gap-reconstruction",
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+# The repository's own core package, installed editable so demo/notebook
+# code running in this environment can `import coastal_gap_reconstruction`
+# without a separate PYTHONPATH convention or a second install step.
+coastal-gap-reconstruction = { path = "../..", editable = true }

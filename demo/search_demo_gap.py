@@ -8,9 +8,9 @@ a diagnostic audit table, not a notebook artifact. Run from the repository root:
     python3 demo/search_demo_gap.py
 
 Requires the same environment as the live demo (tsicl, torch, scikit-learn) --
-run it with the `.venv_tsicl_demo` interpreter, e.g.:
+run it with the `environments/tsicl/` interpreter, e.g.:
 
-    .venv_tsicl_demo/bin/python3 demo/search_demo_gap.py
+    environments/tsicl/.venv/bin/python3 demo/search_demo_gap.py
 
 Writes demo/outputs/demo_gap_selection_audit.csv (top 10 candidates) and
 prints the selected gap.
@@ -54,8 +54,8 @@ def load_full_chlorophyll_record() -> pd.DataFrame:
     """Same source join as demo/build_demo_data.py, but for the whole record
     (no window slicing) -- date, chl_mean, chl_satellite_proxy_log10,
     wind_spd_ms, sst_primary_degC, target_eligible_default."""
-    target = pd.read_csv("data_public/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
-    feat = pd.read_csv("data_public/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"])
+    target = pd.read_csv("data/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
+    feat = pd.read_csv("data/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"])
     df = target[["date", "chl_mean", "target_eligible_default"]].merge(
         feat[["date", "chl_cons_log10", "wind_spd_ms", "sst_primary_degC"]].rename(
             columns={"chl_cons_log10": "chl_satellite_proxy_log10"}
