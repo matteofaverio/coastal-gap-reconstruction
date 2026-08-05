@@ -66,3 +66,21 @@ see `data_public/chlorophyll/chlorophyll_validation_gaps.csv` and
 `docs/methodology/validation_protocol.md`), not as a continuous envelope up to
 some maximum, so a real gap's length alone does not determine its validation
 status.
+
+## Reproducing this classification, deterministically
+
+`experiments/chlorophyll/real_gap_contract.py` (`REAL_GAP_ARTIFACTS`) is the
+tested, machine-readable version of the table above -- every published
+real-gap artifact's evidential role, generating method, target scale, and
+candidate-vs-observation status in one place. `real_gap_inventory.py`
+detects the real gaps from the daily target directly (reproduces the
+released 128-row inventory exactly); `select_real_gap_reconstruction.py`
+reproduces the length-routed method-selection rule ("Rule D") behind the
+`engineered_hybrid` candidate; `assemble_real_gap_candidates.py` joins the
+per-method candidate files with validation (see
+`notebooks/08_real_gap_candidate_reconstructions.ipynb` for a runnable
+walkthrough). None of this code runs TS-ICL or fits a model -- it is pure
+detection/lookup/joining over already-frozen inputs. The oxygen case study
+has an inventory-only equivalent (`experiments/oxygen/real_gap_inventory.py`)
+-- no reconstruction-candidate artifact exists for oxygen real gaps (see
+`experiments/oxygen/real_gap_contract.py`).
