@@ -1,8 +1,8 @@
 """External-only tabular reconstruction models for chlorophyll -- **Protocol A**
-("plain external-only") in the private project's two-protocol split.
+("plain external-only") in the original two-protocol split.
 
-**Two distinct external-tabular protocols exist in the private project and are
-kept apart on purpose (see `docs/methodology/model_families.md` "Two
+**Two distinct external-tabular protocols exist in the original implementation and are
+kept apart on purpose (see `docs/methods.md` "Two
 external-tabular protocols" section):**
 
 - **Protocol A (this module, "plain external-only")**: `ARM4_COLUMNS` only (46
@@ -13,7 +13,7 @@ external-tabular protocols" section):**
   `external_only_extratrees`/`external_only_hgb`. Ported from the private
   project's curated external-spatial model lineage. **This protocol is not the
   source of the frozen `ext_tabular_extratrees`/`ext_tabular_hgb` rows in
-  `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`**
+  `results/chlorophyll/chlorophyll_matched_support_method_metrics.csv`**
   -- it is a separate, plain-external diagnostic comparison, evaluated here
   for its own sake, not to reproduce a released number.
 - **Protocol B ("matched-reference")**: `ARM4_COLUMNS` plus 5 structural
@@ -107,7 +107,7 @@ def load_arm4_numeric_columns(features_df: pd.DataFrame) -> list[str]:
 
     Reproduces the released procedure exactly: `sst_primary_source` is a
     string column and is silently dropped here (not an error), matching the
-    private project's feature-arm loader's non-numeric exclusion.
+    original feature-arm loader's non-numeric exclusion.
     """
     numeric: list[str] = []
     for col in ARM4_COLUMNS:

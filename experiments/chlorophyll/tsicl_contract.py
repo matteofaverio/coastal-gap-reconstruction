@@ -22,15 +22,15 @@ Three supports coexist, deliberately, not by oversight:
   the same support the classical/probabilistic/gap-edge benchmark uses
   (L=1,3,7,14,30 only). `tsicl_target_only`/`tsicl_satellite_proxy` both
   have a released row on this support in
-  `results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`,
+  `results/chlorophyll/chlorophyll_matched_support_method_metrics.csv`,
   enabling a direct, shared-support comparison against the classical methods
   -- this is the support to use for any TS-ICL-vs-classical-ML comparison,
   not the full 681-gap support (which no classical method beyond
   interpolation/GP is scored on in this package).
 - **Real-gap support** (128 real missing intervals, including the
-  scenario-only 256-day gap): explicitly **out of scope for this phase**.
+  scenario-only 256-day gap): explicitly **out of scope for this package**.
   `chlorophyll_reconstruction_tsicl_satellite_proxy.csv` exists in
-  `results_public/` from an earlier phase, but this package does not port
+  `results/` from earlier work, but this package does not port
   the real-gap deployment driver, and nothing in this module should be read
   as implying otherwise.
 
@@ -76,8 +76,8 @@ __all__ = [
     "ARTIFACTS",
 ]
 
-DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "chlorophyll"
-RESULTS_PUBLIC_DIR = REPO_ROOT / "results_public" / "chlorophyll"
+DATA_PUBLIC_DIR = REPO_ROOT / "data" / "chlorophyll"
+RESULTS_PUBLIC_DIR = REPO_ROOT / "results" / "chlorophyll"
 
 # ── Supports ─────────────────────────────────────────────────────────────
 FULL_POOL_PATH = DATA_PUBLIC_DIR / "chlorophyll_validation_gaps.csv"
@@ -106,26 +106,26 @@ QUANTILE_LEVELS: list[float] = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
 
 # The two context-construction modes the released primary target-only/
 # covariate benchmark actually used (a third, "local_window", was skipped in
-# the private project's own primary run for runtime-budget reasons -- not
+# the original primary run for runtime-budget reasons -- not
 # reproduced here either, for the same reason).
 PRIMARY_CONTEXT_MODES: list[str] = ["full_series", "edge_balanced"]
 
 # ── The authoritative primary full benchmark grid ────────────────────────
 #
-# Resolved by direct inspection of the private project's primary TS-ICL
-# benchmark driver (not assumed/inferred from a
-# prior handoff's prose): the released primary target-only/covariate
-# benchmark is **681 gaps x 2 context modes x 6 primary arms** (private
-# codes A-F), `target_repr="raw"` only -- 8,172 calls total. This corrects
+# Resolved by direct inspection of the original primary TS-ICL
+# benchmark driver (not assumed/inferred from earlier, inconsistent
+# documentation): the released primary target-only/covariate
+# benchmark is **681 gaps x 2 context modes x 6 primary arms**,
+# `target_repr="raw"` only -- 8,172 calls total. This corrects
 # an earlier public driver that implemented only 2 of these 6 arms
 # (`target_only`=A, `satellite_proxy`=D) under the `target_only`-benchmark
 # label; the other 4 (calendar, physical-forcing, physical-forcing+proxy,
 # and a `wrong_lag` placebo control) were previously missing from
 # `run_tsicl_benchmark.py` entirely.
 #
-# Column lists are ported verbatim from the private project's shared
+# Column lists are ported verbatim from the original shared
 # call-shaping module's own physical-forcing/biological-proxy/calendar
-# column lists (the same private source `tsicl_covariate_registry.py`'s
+# column lists (the same original source `tsicl_covariate_registry.py`'s
 # 18-arm covariate-dissection column lists were ported from).
 PRIMARY_CALENDAR_COLUMNS: list[str] = ["doy_sin", "doy_cos"]
 PRIMARY_PHYSICAL_FORCING_COLUMNS: list[str] = [
@@ -134,10 +134,10 @@ PRIMARY_PHYSICAL_FORCING_COLUMNS: list[str] = [
 ]
 PRIMARY_BIOLOGICAL_PROXY_COLUMNS: list[str] = ["chl_cons_w3x3_mean", "chl_anom_log10_doy"]
 
-# arm_id (public, descriptive) -> (private code, columns, placebo transform).
+# arm_id (public, descriptive) -> (internal code, columns, placebo transform).
 # `target_only` (A) and `satellite_proxy` (D) are the two arms the earlier
-# driver already implemented; the remaining four complete the private
-# project's actual 6-arm primary grid.
+# driver already implemented; the remaining four complete the actual
+# 6-arm primary grid.
 PRIMARY_ARMS: dict[str, dict] = {
     "target_only": {"private_code": "A", "columns": [], "transform": "none"},
     "target_plus_calendar": {"private_code": "B", "columns": PRIMARY_CALENDAR_COLUMNS, "transform": "none"},
@@ -165,7 +165,7 @@ FULL_681_PRIMARY_TOTAL_CALLS = FULL_POOL_N_GAPS * len(PRIMARY_CONTEXT_MODES) * l
 # `tsicl_covariate_registry.COVARIATE_ARMS`) + 4 placebo transforms on each
 # of 6 eligible families (`PLACEBO_ELIGIBLE_ARMS`) = 18 + 24 = 42 variants,
 # `context_mode="full_series"` only -- resolved from
-# the private project's covariate-dissection run-plan builder (18 arms in
+# the original covariate-dissection run-plan builder (18 arms in
 # `minimum_required`+`remaining_c11`+`[C4,C7,C8]`, 6 placebo families x 4
 # transforms = 24), matching that module's own "28,602 calls" docstring
 # claim exactly (681 x 42 = 28,602) rather than trusting it uninspected.
@@ -185,8 +185,8 @@ class ArtifactSpec:
 
     `role` distinguishes artifacts this package can regenerate and compare
     against (`primary`), artifacts used only as supporting evidence for a
-    primary one (`supporting`), and artifacts explicitly out of scope this
-    phase (`out_of_scope`).
+    primary one (`supporting`), and artifacts explicitly out of scope for
+    this package (`out_of_scope`).
     """
 
     name: str
@@ -236,7 +236,7 @@ ARTIFACTS: dict[str, ArtifactSpec] = {
         "real_gap_satellite_proxy", "real_gap", "log10", "out_of_scope",
         RESULTS_PUBLIC_DIR / "chlorophyll_reconstruction_tsicl_satellite_proxy.csv",
         "Real-gap (128 gaps, including the scenario-only 256-day gap) reconstruction candidate "
-        "output. Exists in results_public/ from an earlier phase; this package does not port "
+        "output. Exists in results/ from earlier work; this package does not port "
         "the real-gap deployment driver and this artifact is not touched or reproduced here.",
     ),
 }

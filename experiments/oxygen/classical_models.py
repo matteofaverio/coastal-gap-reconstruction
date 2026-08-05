@@ -9,11 +9,11 @@ target-agnostic shared mechanics directly
 `coastal_gap_reconstruction.gaussian_process`) with no oxygen-specific code
 needed; the tabular and gap-edge models are oxygen-specific because their
 exact learner configurations were tuned/selected for oxygen's own frozen
-release (see `oxygen_classical_models_audit.md`) and must reproduce those
-exactly, not merely something structurally similar.
+release and must reproduce those exactly, not merely something
+structurally similar.
 
-Exact learner configurations (ported verbatim from the private
-the private project's final tabular/gap-edge model modules):
+Exact learner configurations (ported verbatim from the original final
+tabular/gap-edge model modules):
 Ridge(alpha=1.0), ElasticNet(alpha=0.05, l1_ratio=0.5, max_iter=5000),
 HistGradientBoostingRegressor(max_iter=300, max_leaf_nodes=31,
 learning_rate=0.01, l2_regularization=0.001), ExtraTreesRegressor
@@ -202,19 +202,18 @@ def run_tabular_loco_evaluation(
 # This package ports and live-validates the one genuinely reusable,
 # scientifically load-bearing result -- the GP (Matern, time-only) residual
 # comparator, which is the single classical/engineered arm that reaches a
-# statistical tie with interpolation (oxygen_classical_models_audit.md E.2)
-# -- using the real, shared, already-tested
+# statistical tie with interpolation -- using the real, shared, already-tested
 # `coastal_gap_reconstruction.gaussian_process` module, not a placeholder.
 #
 # The tree-ensemble gap-edge structural variants (direct_hindcast,
 # pre_only_forecast_safe, and the tree-ensemble learners under
-# residual_interp_hindcast) require the private project's own multi-gap
+# residual_interp_hindcast) require the original multi-gap
 # pooled edge-feature training design
-# (the private project's own `build_tier_c_feature_table`-
+# (the original `build_tier_c_feature_table`-
 # style pooled fit, analogous to chlorophyll's `gap_edge_models.py`) to
 # reproduce correctly -- porting a simplified/single-gap substitute would
 # silently misrepresent what those released numbers actually measure. Given
-# this phase's compute/effort boundary, these remain `frozen_result_only`
+# this package's compute/effort boundary, these remain `frozen_result_only`
 # (see `benchmark_contract.METHOD_STATUSES`) rather than being faked with a
 # shortcut; the frozen `oxygen_benchmark_by_length.csv` rows are the
 # authoritative source. Only the GP arm below is live-executable here.

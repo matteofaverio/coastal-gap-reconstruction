@@ -11,7 +11,7 @@ to the oxygen daily target's `eligible_ge_18` column instead of
 `target_eligible_default`.
 
 Only a **by-class aggregate** inventory is published for oxygen
-(`data_public/oxygen/oxygen_real_gap_inventory_by_class.csv`) -- no
+(`data/oxygen/oxygen_real_gap_inventory_by_class.csv`) -- no
 standalone per-gap CSV exists (private audit: `MISSING`). This module
 detects the per-gap inventory directly from the public daily target (for
 validation, written only to `build/`, never presented as an additional

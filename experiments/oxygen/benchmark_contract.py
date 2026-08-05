@@ -17,9 +17,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "oxygen"
-SHARED_DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "shared"
-RESULTS_PUBLIC_DIR = REPO_ROOT / "results_public" / "oxygen"
+DATA_PUBLIC_DIR = REPO_ROOT / "data" / "oxygen"
+SHARED_DATA_PUBLIC_DIR = REPO_ROOT / "data" / "shared"
+RESULTS_PUBLIC_DIR = REPO_ROOT / "results" / "oxygen"
 
 # ── Data paths ───────────────────────────────────────────────────────────
 DAILY_TARGET_PATH = DATA_PUBLIC_DIR / "oxygen_daily_target.csv"
@@ -31,7 +31,7 @@ REAL_GAP_INVENTORY_PATH = DATA_PUBLIC_DIR / "oxygen_real_gap_inventory_by_class.
 # external feature snapshot (base table + current/kinematic extension); see
 # `coastal_gap_reconstruction.feature_tables.load_full_feature_table`.
 CHLOROPHYLL_BASE_FEATURES_PATH = (
-    REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+    REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 )
 CURRENT_KINEMATIC_EXTENSION_PATH = SHARED_DATA_PUBLIC_DIR / "external_current_kinematic_extension.csv"
 
@@ -75,7 +75,7 @@ def support_role(gap_length: int) -> str:
 
 
 # ── Metrics contract ──────────────────────────────────────────────────────
-PRIMARY_METRIC = "mae_mgL"  # gap-weighted MAE in mg/L, the headline convention for every oxygen sprint
+PRIMARY_METRIC = "mae_mgL"  # gap-weighted MAE in mg/L, the headline convention throughout this package
 SECONDARY_METRICS = ["rmse_mgL", "bias_mgL", "correlation", "quantile_coverage", "mae_over_iqr", "mae_over_std"]
 WEIGHTING_PRIMARY = "gap_weighted"
 WEIGHTING_SECONDARY = "day_weighted"
@@ -94,7 +94,7 @@ LOCAL_BTG_TEMP_PRESSURE_ROLE = "diagnostic_arm_only"  # BTGTA/BTGPA -- same-stat
 # `external_all_available` exploratory-ablation arm only (never
 # `external_physical_core`/`external_physical_plus_currents`, which are
 # built from disjoint column families and never include them). Matches the
-# private project's own `oxygen_features.py::FORBIDDEN_SUBSTRINGS` exactly.
+# the original `oxygen_features.py::FORBIDDEN_SUBSTRINGS` exactly.
 FORBIDDEN_PREDICTOR_SUBSTRINGS: tuple[str, ...] = (
     "chl_mean", "BTGOXD", "BTGOXSATPC", "BTGSAL", "BTGTUR", "BTGCND",
 )
@@ -108,8 +108,7 @@ FORBIDDEN_PREDICTOR_SUBSTRINGS: tuple[str, ...] = (
 # oxygen analogue of chlorophyll's satellite-proxy arm exists), so every
 # satellite-chlorophyll column family is forbidden outright for TS-ICL
 # covariates specifically, unlike the classical `external_all_available` arm
-# above. Matches the private project's own
-# the private project's own oxygen TS-ICL covariate-safety check exactly.
+# above. Matches the original oxygen TS-ICL covariate-safety check exactly.
 TSICL_FORBIDDEN_COVARIATE_SUBSTRINGS: tuple[str, ...] = (
     "chl_mean", "chl_cons", "chl_perm", "chl_anom", "chl_log10", "chl_is_gapfree",
     "BTGOXD", "BTGOXSATPC", "BTGSAL", "BTGTUR", "BTGCND",
@@ -151,7 +150,7 @@ METHOD_STATUSES: dict[str, MethodStatus] = {
     "exploratory_ablation": MethodStatus(
         "exploratory_ablation",
         "A single-physical-family or otherwise narrower ablation arm, evidentiary tier below the "
-        "audited-original arms (e.g. the 4 Sprint-5 TS-ICL family-ablation arms).",
+        "audited-original arms (e.g. the 4 exploratory TS-ICL family-ablation arms).",
     ),
     "same_station_diagnostic": MethodStatus(
         "same_station_diagnostic",
@@ -166,8 +165,8 @@ METHOD_STATUSES: dict[str, MethodStatus] = {
 }
 
 # ── TS-ICL arm registry (headline/audited-original arms) ─────────────────
-# 5 audited-original arms x 2 context modes = 10 headline rows, per
-# oxygen_tsicl_audit.md F.1 -- exact arm names/columns in tsicl_models.py.
+# 5 audited-original arms x 2 context modes = 10 headline rows -- exact arm
+# names/columns in tsicl_models.py.
 TSICL_AUDITED_ORIGINAL_ARMS = [
     "target_only", "calendar_seasonal", "external_physical_core",
     "external_physical_plus_currents", "local_btg_temp_pressure_diagnostic",

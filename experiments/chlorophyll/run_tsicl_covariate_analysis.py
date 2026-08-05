@@ -3,7 +3,7 @@ pool: every retained arm in `tsicl_covariate_registry.COVARIATE_ARMS`
 (18 base arms), plus the placebo/negative-control battery
 (4 transforms x 6 eligible families = 24 variants) for the full authoritative
 grid -- 42 variants total, matching the private
-the private project's own covariate-dissection run-plan builder (681 gaps x 42
+the original covariate-dissection run-plan builder (681 gaps x 42
 = 28,602 calls for the full run) exactly, not approximately.
 
 Requires the optional `tsicl` extra. Uses `full_series` context only,
@@ -48,9 +48,9 @@ from . import tsicl_run_state as rs
 from .run_tsicl_benchmark import load_gap_specs, load_target_series
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-DEFAULT_FEATURES_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
-DEFAULT_EXTENSION_PATH = REPO_ROOT / "data_public" / "shared" / "external_current_kinematic_extension.csv"
+DEFAULT_TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+DEFAULT_FEATURES_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+DEFAULT_EXTENSION_PATH = REPO_ROOT / "data" / "shared" / "external_current_kinematic_extension.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "build" / "chlorophyll" / "tsicl_covariates"
 
 CHECKPOINT_EVERY = 25

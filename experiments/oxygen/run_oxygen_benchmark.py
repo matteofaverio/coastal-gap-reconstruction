@@ -23,9 +23,9 @@ Three modes:
   -- at most 60 live TS-ICL calls, validating checkpoint loading, raw mg/L
   I/O, tensor shapes, no-hidden-truth masking, finite/ordered output, and
   repeatability, never deriving a new headline performance number from it
-  (see `docs/methodology/oxygen_usage.md`).
+  (see `docs/methods.md`).
 
-Generated outputs go under `build/oxygen/`; `results_public/oxygen/` is
+Generated outputs go under `build/oxygen/`; `results/oxygen/` is
 never overwritten by this driver.
 """
 
@@ -297,7 +297,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.mode == "frozen":
-        print("Frozen-result inspection only -- see results_public/oxygen/. No computation performed.")
+        print("Frozen-result inspection only -- see results/oxygen/. No computation performed.")
         for path in (bc.BENCHMARK_BY_LENGTH_PATH, bc.PAIRED_DELTAS_VS_TSICL_PATH,
                      bc.TAIL_PERSISTENCE_METRICS_PATH, bc.TAIL_QUANTILE_BAND_METRICS_PATH):
             print(f"  {path.relative_to(REPO_ROOT)}: {len(pd.read_csv(path))} rows")

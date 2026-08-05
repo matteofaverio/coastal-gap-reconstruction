@@ -21,8 +21,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "chlorophyll"
-RESULTS_PUBLIC_DIR = REPO_ROOT / "results_public" / "chlorophyll"
+DATA_PUBLIC_DIR = REPO_ROOT / "data" / "chlorophyll"
+RESULTS_PUBLIC_DIR = REPO_ROOT / "results" / "chlorophyll"
 
 # ── Data paths ───────────────────────────────────────────────────────────
 DAILY_TARGET_PATH = DATA_PUBLIC_DIR / "chlorophyll_daily_target.csv"
@@ -88,7 +88,7 @@ ARTIFACT_STATUSES: dict[str, ArtifactStatus] = {
     ),
     "frozen_published_result": ArtifactStatus(
         "frozen_published_result",
-        "Already released in results_public/ or data_public/ -- authoritative, not regenerated "
+        "Already released in results/ or data/ -- authoritative, not regenerated "
         "or overwritten by this package's code by default.",
     ),
     "executable_deterministic_assembly": ArtifactStatus(
@@ -99,7 +99,7 @@ ARTIFACT_STATUSES: dict[str, ArtifactStatus] = {
     "expensive_model_generation_not_rerun": ArtifactStatus(
         "expensive_model_generation_not_rerun",
         "Would require new TS-ICL inference or model training to regenerate -- explicitly out of "
-        "scope for this phase's hard compute boundary; the frozen output remains authoritative.",
+        "scope for this package's compute boundary; the frozen output remains authoritative.",
     ),
 }
 

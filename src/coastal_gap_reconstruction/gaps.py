@@ -6,7 +6,7 @@ seeded non-overlapping sampling, target masking, and pre/post context-day counti
 Two independent, non-interchangeable sampling strategies are provided
 (`sample_nonoverlapping`, seeded per call with `random.Random`; and
 `sample_nonoverlapping_sequential`, advancing a shared `numpy.random.Generator`
-across calls) because the private project's own gap pools were built with both,
+across calls) because the original gap pools were built with both,
 at different times, for different length subsets -- see
 `experiments/chlorophyll/target_and_gap_pool.py` for which one reproduces which
 released rows.

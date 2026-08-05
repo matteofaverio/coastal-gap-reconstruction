@@ -1,6 +1,6 @@
 """Gap-clustered paired bootstrap comparisons, reusable across targets.
 
-Ported from the private project's canonical paired-bootstrap procedure (the
+Ported from the original canonical paired-bootstrap procedure (the
 one that produced the headline TS-ICL-vs-baseline confidence intervals cited
 throughout this project's results). The design choice this module encodes
 and never silently deviates from:
@@ -51,7 +51,7 @@ class PairedComparisonResult:
 
     def to_flat_dict(self) -> dict:
         """Flatten `metrics` into a single-row-friendly dict, matching the
-        private project's released `paired_bootstrap_ci_*.csv` column
+        original released `paired_bootstrap_ci_*.csv` column
         naming (`{metric}_a`, `{metric}_b`, `{metric}_delta`,
         `{metric}_ci_lo`, `{metric}_ci_hi`)."""
         row = {

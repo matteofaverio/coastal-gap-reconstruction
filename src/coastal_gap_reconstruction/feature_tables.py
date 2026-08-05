@@ -43,7 +43,7 @@ def load_full_feature_table(
     two published pieces.
 
     `chlorophyll_predictor_features_curated.csv` (126 columns) is the base table;
-    `data_public/shared/external_current_kinematic_extension.csv` (210 columns:
+    `data/shared/external_current_kinematic_extension.csv` (210 columns:
     date + 70 override columns + 139 new columns) is published separately, and
     shared between the chlorophyll and oxygen case studies, rather than as a
     second full copy of the base table -- this avoids duplicating the 55 columns

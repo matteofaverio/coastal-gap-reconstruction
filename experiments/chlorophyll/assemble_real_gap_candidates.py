@@ -1,7 +1,7 @@
 """Deterministic assembly of chlorophyll real-gap reconstruction candidates.
 
 Consumes the two already-released, frozen per-method candidate files
-(`results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv`,
+(`results/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv`,
 `chlorophyll_reconstruction_tsicl_satellite_proxy.csv`) and the real-gap
 inventory (`real_gap_inventory.py`), and joins them into gap-level and
 day-level assembled tables -- the deterministic candidate join the earlier
@@ -14,7 +14,7 @@ method -- a gap with no reconstruction from a given method is left absent
 for that method, reported explicitly in the assembly manifest, not filled.
 
 Default output: `build/chlorophyll/real_gap_candidates/` (never overwrites
-`results_public/` by default).
+`results/` by default).
 """
 
 from __future__ import annotations

@@ -1,16 +1,16 @@
 """Oxygen distribution-tail and sustained-event diagnostics.
 
-Ported from the private project's authoritative tail-diagnostic modules
+Ported from the original authoritative tail-diagnostic modules
 (`oxygen_tail_distribution_diagnostic.py` for the quantile-band definitions,
 `oxygen_tail_model_performance.py` for the per-day run-persistence
 classification that produced the released
-`results_public/oxygen/oxygen_tail_persistence_metrics.csv`/
+`results/oxygen/oxygen_tail_persistence_metrics.csv`/
 `oxygen_tail_quantile_band_metrics.csv`). Reproduces both definitions
 exactly, not a chlorophyll-derived guess -- oxygen has no event/high-value
 label analogous to chlorophyll's `is_high_chl_event`; every threshold here is
 an **empirical quantile of the eligible-day population**, not an ecological
-threshold (`oxygen_threshold_provenance_audit.md` explicitly rejects any
-locally-extractable ecological threshold).
+threshold -- no locally-extractable ecological threshold for oxygen exists
+to use instead.
 
 Quantile bands (6): below_p10, p10_to_p25, p25_to_p50, p50_to_p75, p75_to_p90,
 above_p90 -- edges are the p10/p25/p50/p75/p90 percentiles of
@@ -20,7 +20,7 @@ Run-persistence categories (3), computed separately for the below_p10 and
 above_p90 bands only: `isolated_tail_day` (a single calendar day, no
 adjacent tail day), `short_tail_run` (2-6 consecutive tail days),
 `sustained_tail_run` (>=7 consecutive tail days) -- a run is broken by any
-calendar-date gap, matching the private project's `_runs_from_boolean`
+calendar-date gap, matching the original `_runs_from_boolean`
 exactly.
 """
 

@@ -6,9 +6,9 @@ current-transport arms use
 (`coastal_gap_reconstruction.feature_tables.load_full_feature_table`) --
 oxygen and chlorophyll share the same site (Tongoy Balsa) and the same
 external physical/reanalysis products, so no oxygen-specific external
-feature table exists or is needed. This mirrors the private project's own
-`oxygen_features.py`, which reads chlorophyll's external feature table by
-column-family selection rather than re-deriving external products.
+feature table exists or is needed. This mirrors the original
+`oxygen_features.py` design, which reads chlorophyll's external feature
+table by column-family selection rather than re-deriving external products.
 
 Four arms, per `benchmark_contract.py`'s predictor policy:
 
@@ -22,7 +22,7 @@ Four arms, per `benchmark_contract.py`'s predictor policy:
   (`SATELLITE_CHLOROPHYLL_ROLE`).
 - `local_btg_temp_pressure_diagnostic`: core + the already-published local-BTG
   water-temperature/pressure diagnostic table
-  (`data_public/oxygen/oxygen_local_btg_diagnostic_features.csv`) --
+  (`data/oxygen/oxygen_local_btg_diagnostic_features.csv`) --
   diagnostic-only, never the primary external-only benchmark.
 
 Every column list is checked against `benchmark_contract.FORBIDDEN_PREDICTOR_SUBSTRINGS`

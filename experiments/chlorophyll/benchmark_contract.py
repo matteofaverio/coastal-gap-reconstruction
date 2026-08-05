@@ -14,16 +14,16 @@ Two supports coexist deliberately, not by oversight:
 - **Matched support** (449 gaps, `MATCHED_SUPPORT_GAP_LENGTHS` = 1,3,7,14,30): the
   exact gap set every headline non-TS-ICL comparator in this package (external
   tabular, gap-edge residual, Gaussian process, engineered hybrid) is evaluated on.
-  This is the private project's `tier_ch_deployed`-exact support (frozen
-  2026-07-08, see `docs/methodology/` for the full provenance note) -- it exists
+  This is the original `tier_ch_deployed`-exact support (frozen
+  2026-07-08, see `docs/methods.md` for the full provenance note) -- it exists
   because the gap-edge residual model's hindcast feature construction only ever
   ran on the five original ("core") gap lengths, so any fair comparison across
   methods must restrict to gaps that every method actually has a prediction for.
 
-The matched-support gap-ID list is frozen (`data_public/chlorophyll/
+The matched-support gap-ID list is frozen (`data/chlorophyll/
 chlorophyll_matched_support_449.csv`) rather than re-derived at import time: it is
-exactly the intersection described above, computed once against the private
-project's per-gap prediction tables, and re-deriving it here would require
+exactly the intersection described above, computed once against the
+original per-gap prediction tables, and re-deriving it here would require
 re-running every model first -- a chicken-and-egg the frozen file avoids. What this
 module *does* test is that the frozen 449 IDs are all members of the full 681-gap
 pool and that they cover exactly the five core lengths with the released per-length
@@ -33,7 +33,7 @@ counts (`test_benchmark_contract.py`).
 flag.** The matched-support manifest's event column is the same boolean as the full
 pool's `is_high_chl_event` (True iff any hidden day's chl_mean exceeds the 90th
 percentile of eligible days, recomputed fresh at pool-build time -- see
-`docs/methodology/validation_protocol.md`). An earlier private aggregation step renamed
+`docs/methods.md`). An earlier private aggregation step renamed
 this same p90-based column to `event_p85` while attaching it to the matched-support
 gap-ID table -- a naming artifact in that one step, not a distinct p85-threshold
 computation; no second, differently-thresholded event flag exists anywhere in the
@@ -42,7 +42,7 @@ column was **not** used to select the 449 matched-support gaps (selection is pur
 the cross-method gap-ID intersection above); it is carried along only for
 event/non-event stratified reporting. This package's matched-support file uses the
 correct name `is_high_chl_event` throughout (the public CSV header was corrected from
-the private script's `event_p85` to match).
+an earlier `event_p85` naming artifact to match).
 """
 
 from __future__ import annotations
@@ -78,8 +78,8 @@ __all__ = [
     "load_matched_support_pool",
 ]
 
-DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "chlorophyll"
-RESULTS_PUBLIC_DIR = REPO_ROOT / "results_public" / "chlorophyll"
+DATA_PUBLIC_DIR = REPO_ROOT / "data" / "chlorophyll"
+RESULTS_PUBLIC_DIR = REPO_ROOT / "results" / "chlorophyll"
 
 FULL_POOL_PATH = DATA_PUBLIC_DIR / "chlorophyll_validation_gaps.csv"
 MATCHED_SUPPORT_PATH = DATA_PUBLIC_DIR / "chlorophyll_matched_support_449.csv"
@@ -118,7 +118,7 @@ class MethodSpec:
 
     `support_status` states, precisely, this method's relationship to the
     frozen released matched-support table
-    (`results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`):
+    (`results/chlorophyll/chlorophyll_matched_support_method_metrics.csv`):
 
     - `"frozen_matched_449"`: this `method_id` has a row in that table, and
       this package's implementation is expected to reproduce it (within the

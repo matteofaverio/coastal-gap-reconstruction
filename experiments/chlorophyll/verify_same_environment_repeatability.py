@@ -35,8 +35,8 @@ from .run_tsicl_benchmark import load_gap_specs, load_target_series
 from .tsicl_covariate_registry import COVARIATE_ARMS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-DEFAULT_FEATURES_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+DEFAULT_TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+DEFAULT_FEATURES_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 N_SAMPLE_GAPS = 10
 
 

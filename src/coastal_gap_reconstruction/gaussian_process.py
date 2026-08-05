@@ -1,7 +1,7 @@
 """Local-context Gaussian process reconstruction (GP M1 in the model ladder).
 
 Reusable across targets: this is the reusable half of what was one file
-(`probabilistic_sequence_pilot.py`) in the private project. The Kalman
+(`probabilistic_sequence_pilot.py`) in the original implementation. The Kalman
 local-level smoother (M4) is target-specific and stays in
 `experiments/chlorophyll/probabilistic_models.py` -- it is fit on the raw
 target series with no external features, but its degeneracy finding is

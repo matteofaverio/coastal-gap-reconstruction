@@ -19,7 +19,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-DATA_PUBLIC_DIR = REPO_ROOT / "data_public" / "oxygen"
+DATA_PUBLIC_DIR = REPO_ROOT / "data" / "oxygen"
 DAILY_TARGET_PATH = DATA_PUBLIC_DIR / "oxygen_daily_target.csv"
 REAL_GAP_INVENTORY_BY_CLASS_PATH = DATA_PUBLIC_DIR / "oxygen_real_gap_inventory_by_class.csv"
 

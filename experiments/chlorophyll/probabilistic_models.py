@@ -1,10 +1,8 @@
-"""Chlorophyll Kalman local-level smoother (M4 in the private project's model
+"""Chlorophyll Kalman local-level smoother (M4 in the original model
 ladder) and the engineered hybrid's length-routed assignment support.
 
-**Known degeneracy, stated up front, not buried in a separate document.** The
-private project's own root-cause audit
-(`docs/reports/05_chlorophyll_canonical_pipeline_stages/
-stage_a_m4_kalman_root_cause_audit.md`) found that the maximum-likelihood fit
+**Known degeneracy, stated up front, not buried in a separate document.** A
+root-cause investigation found that the maximum-likelihood fit
 of this local-level model on the chlorophyll series is degenerate:
 `sigma_r` (the observation-noise standard deviation) converges to
 approximately `2.9e-15` -- i.e. essentially zero observation noise. A
@@ -14,7 +12,7 @@ between the flanking observations. Direct comparison against the released
 681-gap pool found this model's predictions bit-identical to linear
 interpolation (to floating-point precision) in 632/681 gaps (93%).
 
-**Consequence for how this module is used**: the private project's engineered
+**Consequence for how this module is used**: the original engineered
 hybrid pipeline (`engineered_hybrid.py`) historically assigned this model to
 the L=4-29 gap-length segment under the rationale "Kalman smoothing for
 medium gaps" -- that rationale is not currently evidenced; the segment

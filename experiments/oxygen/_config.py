@@ -44,7 +44,7 @@ def support_role(gap_length: int) -> str:
     """Public benchmark-reporting label: which gap lengths form the primary
     reported benchmark vs. which are exploratory extensions.
 
-    This label does not exist anywhere in the private project's own generator --
+    This label does not exist anywhere in the original generator --
     it was assigned only when preparing the public release, independently of the
     `is_mandatory` flag the private generator does produce (`is_mandatory` is True
     for every length in MANDATORY_GAP_LENGTHS, including 45 and 60; `support_role`

@@ -46,14 +46,14 @@ EXACT_COUNT_FIELDS = {"n_gaps", "n_rows"}
 
 # Empirical reporting band, not an independently pre-specified reproduction
 # threshold -- matches the order of magnitude of the classical benchmark's
-# own evidence-based bands (docs/methodology/validation_protocol.md) and
+# own evidence-based bands (docs/methods.md) and
 # this project's own prior live-run diffs (0.0025-0.0031, different
-# environment from the original run; see docs/methodology/tsicl_usage.md).
+# environment from the original run; see docs/reproducibility.md).
 TSICL_METRIC_TOLERANCE = 0.01
 TSICL_DELTA_CI_TOLERANCE = 0.01
 
 # TS-ICL public-name mapping used in the released comparison tables
-# (results_public/chlorophyll/chlorophyll_benchmark_summary.csv).
+# (results/chlorophyll/chlorophyll_benchmark_summary.csv).
 ARM_PUBLIC_NAME = {
     "target_only": "TS-ICL (target-only, no covariates)",
     "satellite_proxy": "TS-ICL (satellite chlorophyll proxy covariate)",
@@ -269,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--target", type=Path,
-                         default=REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv")
+                         default=REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv")
     args = parser.parse_args(argv)
     return run_scoring(args.run_dir, args.target)
 

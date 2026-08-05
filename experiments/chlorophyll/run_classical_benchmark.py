@@ -3,8 +3,8 @@
 
 Usage:
     python -m experiments.chlorophyll.run_classical_benchmark \\
-        --target data_public/chlorophyll/chlorophyll_daily_target.csv \\
-        --features data_public/chlorophyll/chlorophyll_predictor_features_curated.csv \\
+        --target data/chlorophyll/chlorophyll_daily_target.csv \\
+        --features data/chlorophyll/chlorophyll_predictor_features_curated.csv \\
         --out build/chlorophyll/classical_benchmark \\
         [--methods gp_m1,ext_tabular_extratrees,...] [--gap-lengths 1,3] [--verify]
 
@@ -14,7 +14,7 @@ point at the already-public files) so this can run against a different
 checkout or a build directory outside version control.
 
 Default output directory is a gitignored `build/` path -- this driver never
-overwrites the frozen `results_public/` tables by default. Progress is
+overwrites the frozen `results/` tables by default. Progress is
 checkpointed per method: a completed method's predictions are written
 immediately together with a metadata sidecar
 (`predictions_<method>.meta.json`) recording exactly what produced them
@@ -25,7 +25,7 @@ file, different code/config) forces a recompute instead of silently reusing
 a stale cache.
 
 `--verify` compares freshly generated predictions against the frozen
-`results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv`
+`results/chlorophyll/chlorophyll_matched_support_method_metrics.csv`
 and `chlorophyll_matched_support_by_length.csv`, and writes a structured,
 per-metric verification report (`verification_report.csv`,
 `verification_summary.json`) instead of a single pass/fail aggregate
@@ -54,8 +54,8 @@ from . import interpolation_baselines as interp
 from . import tabular_models as tm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-DEFAULT_FEATURES_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+DEFAULT_TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+DEFAULT_FEATURES_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "build" / "chlorophyll" / "classical_benchmark"
 
 ALL_METHODS = [
@@ -71,7 +71,7 @@ ALL_METHODS = [
 # are NOT a single global fudge factor, and they are NOT pre-specified or
 # independently validated reproduction thresholds -- each is read directly
 # off one clean, non-cached 449-gap run's own observed diffs (see
-# `docs/methodology/validation_protocol.md` "Reproduction comparison bands"),
+# `docs/methods.md` "Reproduction comparison bands"),
 # with headroom, after the fact:
 #
 # - `canonical_interpolation`: a closed-form deterministic formula. The clean
@@ -83,7 +83,7 @@ ALL_METHODS = [
 #   aggregate diffs: gp_m1 up to 1.05e-3 (rmse), ext_tabular_extratrees up to
 #   1.23e-3 (rmse), tier_ch_deployed up to 6.6e-4 (bias), ext_tabular_hgb up
 #   to 3.53e-3 (p90, the largest). **The exact numerical source of these
-#   residual differences was not fully isolated in this phase**: all four fit
+#   residual differences was not fully isolated**: all four fit
 #   a scikit-learn estimator, which is one plausible source of environment/
 #   version sensitivity (e.g. parallel floating-point summation order under
 #   `n_jobs=-1`, or GP's hyperparameter optimizer reaching a different local
@@ -477,7 +477,7 @@ def run_verification(out_dir: Path, return_status: bool = False) -> int | tuple[
       matching metrics and at least one `mismatched` metric -- the expected
       state for the classical/probabilistic methods in this package: they
       reproduce the frozen aggregate closely but retain some documented
-      per-metric differences (see `docs/methodology/validation_protocol.md`
+      per-metric differences (see `docs/methods.md`
       "Reproduction tolerance evidence"). This is not a failure state.
     - `VERIFICATION_MISMATCH`: at least one frozen method has *zero*
       matching metrics (every one of its metrics is `mismatched`) --

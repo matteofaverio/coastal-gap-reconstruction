@@ -1,18 +1,18 @@
 """The TS-ICL covariate-arm registry for chlorophyll: descriptive public
 identities mapped to exact column membership, source, and scientific role.
 
-The private project identified these arms by internal short codes (`C0`-
+The original implementation identified these arms by internal short codes (`C0`-
 `C13`, plus `arm D` for the satellite-proxy target-only benchmark arm) in
 both code and most internal documentation. This registry is the single
 place those internal codes are translated to the **descriptive public
 names already used in the released
-`results_public/chlorophyll/chlorophyll_covariate_mechanism_summary.csv`**
+`results/chlorophyll/chlorophyll_covariate_mechanism_summary.csv`**
 (`covariate_public_name` column) -- reusing that existing public mapping as
 the naming source, not inventing new names. Every arm actually run by
 `run_tsicl_covariate_analysis.py` is looked up here; nothing downstream
 carries the internal C-codes as its primary identity.
 
-Column lists are ported verbatim from the private project's covariate-
+Column lists are ported verbatim from the original covariate-
 dissection module (feature-family definitions only -- the arm-iteration and
 placebo-generation code is ported separately into
 `coastal_gap_reconstruction.tsicl_helpers`).
@@ -40,7 +40,7 @@ __all__ = [
     "PLACEBO_ELIGIBLE_ARMS",
 ]
 
-# ── Feature-family column lists (verbatim from the private project's
+# ── Feature-family column lists (verbatim from the original
 # covariate-dissection module) ──────────────────────────────────────────
 SATELLITE_PROXY_COLUMNS: list[str] = ["chl_cons_w3x3_mean", "chl_anom_log10_doy"]
 
@@ -81,7 +81,7 @@ PLV_MET_COLUMNS: list[str] = [
 ]
 # Current/transport columns require the full 265-column feature snapshot
 # (`coastal_gap_reconstruction.feature_tables.load_full_feature_table`,
-# joining `data_public/shared/external_current_kinematic_extension.csv` onto
+# joining `data/shared/external_current_kinematic_extension.csv` onto
 # the base 126-column table -- this repository's shared extension loader), not the
 # base table alone -- see `requires_extended_table` below.
 CURRENT_TRANSPORT_COLUMNS: list[str] = [
@@ -217,8 +217,8 @@ COVARIATE_ARMS: dict[str, CovariateArmSpec] = {
 # columns, not a separate arm identity) ─────────────────────────────────
 PLACEBO_TRANSFORMS: list[str] = ["wrong_lag", "season_shuffled", "year_shifted", "permuted"]
 
-# Which primary arms the placebo battery is run against. Corrected this
-# sprint: the private covariate-dissection module's own placebo-family registry covers
+# Which primary arms the placebo battery is run against. Corrected to
+# match the original covariate-dissection module's placebo-family registry: it covers
 # exactly 6 families (C1 solar, C2 wind/upwelling, C3 SST thermal,
 # C5 current/transport, C6 availability, C9 curated physical) x 4 transforms
 # = 24 placebo variants -- `availability_proxy_only` (C6) was missing from
@@ -243,7 +243,7 @@ def build_engineered_products(features_df):
 
 def apply_placebo_transform(covariate_block, dates, transform: str, seed: int = 0):
     """Apply one of `PLACEBO_TRANSFORMS` to a `(T, C)` covariate block,
-    exactly reproducing the private project's four placebo definitions.
+    exactly reproducing the original four placebo definitions.
 
     - `"wrong_lag"`: shift the whole block 90 days (destroys the correct
       timing while preserving the covariate's own autocorrelation

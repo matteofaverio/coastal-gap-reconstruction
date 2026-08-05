@@ -7,15 +7,15 @@ identical: oxygen's candidate search requires context (pre/post eligible days)
 as a hard candidacy filter (`gaps.find_context_qualified_positions`), while
 chlorophyll's only labels context availability after selection
 (`gaps.find_candidate_positions` + `gaps.count_context_days`) -- this mirrors a
-genuine, intentional design difference in the private project, not an
+genuine, intentional design difference in the original implementation, not an
 inconsistency to "fix" into agreement.
 
 Reproducibility boundary: the released pool
-(`data_public/oxygen/oxygen_validation_gaps.csv`, 412 rows) is exactly
+(`data/oxygen/oxygen_validation_gaps.csv`, 412 rows) is exactly
 regenerable from the public daily oxygen target table with the algorithm in this
 module -- `build_gap_pool` reproduces all 412 rows and their `is_mandatory`
 column byte-for-byte, verified against the released CSV. The `support_role`
-column does not exist in the private project's own generator at all; it was
+column does not exist in the original generator at all; it was
 assigned only when preparing the public release (primary for L<=30, exploratory
 for L>=45 -- a different split from `is_mandatory`, which is True through L=60).
 `add_support_role` reproduces it exactly as a documented post-processing step.

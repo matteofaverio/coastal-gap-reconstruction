@@ -1,6 +1,6 @@
 """Deterministic real-gap inventory detection for chlorophyll.
 
-Ported from the private project's real-gap inventory generator: identifies
+Ported from the original real-gap inventory generator: identifies
 every contiguous run of non-eligible days in the released daily target,
 computes gap metadata (class, seasons spanned, edge availability,
 admissibility, distance from the validated artificial-gap length grid), and
@@ -9,7 +9,7 @@ target series -- **it never inspects any candidate prediction file** to
 decide where the real gaps are; the gap boundaries come only from
 `target_eligible_default`.
 
-Reproduces the released `data_public/chlorophyll/chlorophyll_real_gap_inventory.csv`
+Reproduces the released `data/chlorophyll/chlorophyll_real_gap_inventory.csv`
 (128 rows) exactly when run against the same public daily target table.
 """
 

@@ -18,7 +18,7 @@ DATE_COL = "date"
 GAP_LENGTHS: list[int] = [1, 3, 7, 10, 14, 21, 30, 45, 60]
 
 # GAP_LENGTHS splits into two subsets, built by two different, non-interchangeable
-# procedures in the private project's own history (see target_and_gap_pool.py's
+# procedures over the course of this project's development (see target_and_gap_pool.py's
 # module docstring for the full story and verification evidence):
 #
 # - CORE_GAP_LENGTHS: the original lengths, sampled independently per length with
@@ -46,7 +46,7 @@ EXTENDED_VALUE_FLOOR = 1e-4
 # exact order (10, 21, 45, 60) -- order matters, it is not merely a lookup table.
 EXTENDED_MAX_CANDIDATES: dict[int, int] = {10: 100, 21: 102, 45: 37, 60: 25}
 
-# is_sustained_event threshold, mg/m^3. Reused verbatim from the private project's
+# is_sustained_event threshold, mg/m^3. Reused verbatim from the original
 # gap-edge feature construction; not re-derived here.
 SUSTAINED_MEAN_THRESHOLD = 9.9022
 

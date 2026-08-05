@@ -2,7 +2,7 @@
 "Gap-edge residual model" / private "Tier C-H", `tier_ch_deployed` in
 `benchmark_contract.METHODS`).
 
-Ported from the private project's gap-edge feature-construction module
+Ported from the original gap-edge feature-construction module
 (published here near-verbatim -- it is already self-contained and
 target/candidate-only, no private paths) and the fitting/leakage-control
 core of its evaluation driver (merged with a later extension covering the
@@ -22,7 +22,7 @@ external model; this module is deliberately the retrospective specialist.
 by an `ExtraTreesRegressor` over `external + meta + pre + post + edge +
 interp` columns, then added back to the linear-interpolation baseline to
 recover the final log10 prediction (the residual-over-interpolation arm in
-the private project's own results register, scored in `results_public/chlorophyll/
+the original results register, scored in `results/chlorophyll/
 chlorophyll_matched_support_method_metrics.csv` as `tier_ch_deployed`).
 Predicting the *residual* rather than the raw log value, then adding back
 the (leakage-safe) interpolation baseline, is why this arm needs the
@@ -438,14 +438,14 @@ def run_loco_evaluation(
         observations). Required whenever `groups` includes `post`/`edge`/
         `interp` features.
       - `"pre"`: use the pre-only dependency window (`dep_min_pre`/
-        `dep_max_pre`). Matches the private project's `tier_a_arm4_reference`
+        `dep_max_pre`). Matches the original `tier_a_arm4_reference`
         arm, which uses no post-gap feature but is still evaluated with the
         stricter dependency-window LOCO (not a plain train/test split) --
         reproduced here exactly, not approximated by dropping the window
         check.
 
     `model_name`: `"extratrees"` (mean-imputed) or `"hgb"` (native NaN
-    handling, no imputer -- matches the private project's `fit_predict`
+    handling, no imputer -- matches the original `fit_predict`
     dispatch for these two learners).
 
     `candidates` supplies the full training-context pool (every row's
@@ -555,9 +555,9 @@ def run_reference_arm_loco_evaluation(
     -- **not** hidden target values), predicting `true_log10` directly under
     leave-one-gap-out with the pre-only dependency window. This is the
     protocol that actually produced the frozen `ext_tabular_extratrees`/
-    `ext_tabular_hgb` rows in `results_public/chlorophyll/
+    `ext_tabular_hgb` rows in `results/chlorophyll/
     chlorophyll_matched_support_method_metrics.csv` -- confirmed directly
-    against the private project's own per-gap prediction records for these
+    against the original per-gap prediction records for these
     two method IDs, not inferred from a label.
 
     Because it conditions on `gap_length`/`day_index_within_gap`/

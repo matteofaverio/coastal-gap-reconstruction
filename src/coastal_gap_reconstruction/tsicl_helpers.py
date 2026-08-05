@@ -12,7 +12,7 @@ variable), and the model produces a point estimate plus quantile predictions
 for the missing region without any task-specific fine-tuning.
 
 This module does not vendor TS-ICL itself -- it is an optional dependency
-(the `tsicl` extra; see `docs/methodology/tsicl_usage.md` for the exact
+(the `tsicl` extra; see `docs/reproducibility.md` for the exact
 installation commands and environment notes) governed by its own separate
 license, distinct from this repository's license: **TS-ICL Non-Commercial
 License v1.0, (c) EDF SA 2026** -- review it before using TS-ICL in your own
@@ -50,9 +50,9 @@ import numpy as np
 DEFAULT_QUANTILE_LEVELS = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
 
 # ── Pinned checkpoint/package provenance ────────────────────────────────
-# Recovered by direct inspection of the private project's installed TS-ICL
+# Recovered by direct inspection of the original installed TS-ICL
 # environment and its Hugging Face cache (not carried forward from an
-# undocumented summary) -- see docs/methodology/tsicl_usage.md for the full
+# undocumented summary) -- see docs/reproducibility.md for the full
 # provenance report.
 CHECKPOINT_REPO_ID = "taharnbl/TS-ICL"
 CHECKPOINT_REVISION = "f01f3869a735694691401cd67a5e19c17e94e220"
@@ -264,7 +264,7 @@ def load_tsicl_strict() -> tuple[object, dict]:
     except ImportError as e:
         raise TSICLDependencyError(
             f"tsicl/torch not importable: {e}. Install the optional 'tsicl' extra "
-            f"(see docs/methodology/tsicl_usage.md) before running a live benchmark."
+            f"(see docs/reproducibility.md) before running a live benchmark."
         ) from e
 
     try:
@@ -369,7 +369,7 @@ def build_covariate_block(covariate_array: np.ndarray) -> np.ndarray:
 
 
 # ── Gap/context orchestration (the arm-dispatch/context-mode-slicing layer
-# previously withheld from publication -- see docs/methodology/tsicl_usage.md
+# previously withheld from publication -- see docs/reproducibility.md
 # for why it is now published as original wrapper code) ────────────────────
 
 CONTEXT_MODES = ["full_series", "local_window", "edge_balanced"]
@@ -412,7 +412,7 @@ def slice_context(
     - `"full_series"`: the entire available series.
     - `"local_window"`/`"edge_balanced"`: `window_days` total, split evenly
       before/after the gap (both modes currently compute the same window;
-      kept as two names because the private project's released benchmark
+      kept as two names because the original released benchmark
       distinguishes them in its arm/context bookkeeping even though the
       slicing itself coincides for this series).
 
@@ -516,7 +516,7 @@ def run_gap_inference(
         Optional `(T, C)` covariate array aligned to `dates`/`target_log10`.
         May contain NaN (e.g. cloud-masked satellite-proxy days) -- TS-ICL's
         own `impute()` call handles this internally, matching the
-        authoritative private benchmark's behavior over the same real,
+        authoritative benchmark's behavior over the same real,
         sparsely-missing covariate columns. Shape/alignment mismatches are
         still rejected (`TSICLInputError`).
     window_days:
@@ -567,7 +567,7 @@ def run_gap_inference(
     if covariate_array is not None:
         covars_window = np.asarray(covariate_array, dtype=np.float32)[lo:hi].copy()
         # NaN covariate values (e.g. cloud-masked satellite-proxy days) are
-        # NOT rejected here -- the authoritative private benchmark ran its
+        # NOT rejected here -- the authoritative benchmark ran its
         # satellite-proxy arm over the same real, sparsely-missing covariate
         # columns with 0 call failures, so TS-ICL's own `impute()` evidently
         # handles NaN covariate positions internally. Rejecting them here

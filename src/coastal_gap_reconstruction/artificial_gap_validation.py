@@ -27,8 +27,8 @@ table for any sensor/variable -- see `data_loading.TARGET_COL` /
 
 Scope note: `generate_gap_candidates` here is an illustrative candidate
 generator, not a reproduction of the exact released validation pools. The
-released pools (`data_public/chlorophyll/chlorophyll_validation_gaps.csv`,
-`data_public/oxygen/oxygen_validation_gaps.csv`) carry extra columns
+released pools (`data/chlorophyll/chlorophyll_validation_gaps.csv`,
+`data/oxygen/oxygen_validation_gaps.csv`) carry extra columns
 (event/regime flags, support-role labels, context-availability checks,
 checksums) produced by additional private research code that is not part of
 this public module. Treat the released CSVs as the authoritative pool
@@ -50,7 +50,7 @@ from .gap_detection import find_eligible_runs
 
 # Default gap lengths for this module's illustrative sampler. This matches
 # the chlorophyll released pool's length set (see
-# data_public/chlorophyll/chlorophyll_validation_gaps.csv) but, per the
+# data/chlorophyll/chlorophyll_validation_gaps.csv) but, per the
 # module docstring, does NOT reproduce that pool's exact gap instances or
 # extra metadata columns -- generate_gap_candidates(target_df, gap_lengths=...)
 # re-samples independently. The oxygen released pool uses a different length

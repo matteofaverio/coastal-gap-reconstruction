@@ -6,9 +6,9 @@ project's chlorophyll benchmark, on top of the target-neutral mechanics in
 
 Reproducibility: full and exact, but via two different procedures.
 
-The released pool (`data_public/chlorophyll/chlorophyll_validation_gaps.csv`, 681
+The released pool (`data/chlorophyll/chlorophyll_validation_gaps.csv`, 681
 rows) supports nine gap lengths: 1, 3, 7, 10, 14, 21, 30, 45, 60 days. These split
-into two subsets, built at different times in the private project's history by two
+into two subsets, built at different times in the original history by two
 different, non-interchangeable sampling procedures:
 
 - Core lengths (1, 3, 7, 14, 30 -- 450 rows): each length sampled independently
@@ -63,7 +63,7 @@ Regenerating from the public daily target table reproduces:
   per-length generation order), which this module's `pd.concat`-based assembly
   does not reproduce either.
 
-The extended-length procedure was recovered by reading the private project's
+The extended-length procedure was recovered by reading the original
 extended-gap-edge evaluation script's own gap-generation functions directly
 (a script that generates its own extended-length candidate pool inline
 rather than through the core `artificial_gaps.py` module) -- not guessed or

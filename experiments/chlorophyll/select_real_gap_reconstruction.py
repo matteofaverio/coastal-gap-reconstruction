@@ -5,18 +5,17 @@ gap.
 
 **This is a lookup over an already-frozen output, not a new model.** No GP,
 Kalman, or ExtraTrees model is fit here -- `method_for_length` reproduces
-the *routing decision* the private project's engineered-hybrid pipeline
+the *routing decision* the original engineered-hybrid pipeline
 made, so a caller can explain and verify (not regenerate) which method
-produced each real gap's `results_public/chlorophyll/
+produced each real gap's `results/chlorophyll/
 chlorophyll_reconstruction_engineered_hybrid.csv` row.
 
-**Component methods** (validated on the canonical artificial-gap pool,
-per `docs/status/CANONICAL_RESULTS.md`):
+**Component methods** (validated on the canonical artificial-gap pool):
 - L=1-3: GP M1 (Matern, time-only) -- validated significantly better than
   interpolation at these lengths specifically.
 - L=4-29: state-space Kalman smoother -- root-caused as numerically
-  degenerate (behaves like interpolation in 93% of artificial-pool gaps,
-  `stage_a_m4_kalman_root_cause_audit.md`) -- included here because it is
+  degenerate (behaves like interpolation in 93% of artificial-pool gaps;
+  see `probabilistic_models.py`) -- included here because it is
   what the released file actually used, not because its own rationale is
   fully evidenced; this module states that plainly rather than silently
   presenting the routing as if every segment were equally well-supported.
@@ -53,8 +52,8 @@ import pandas as pd
 __all__ = ["RULE_D", "RULE_C", "method_for_length", "route_real_gaps"]
 
 # Public method-name strings, matching the values actually present in
-# results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv's
-# own `method` column -- not the private project's internal short codes
+# results/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv's
+# own `method` column -- not the original internal short codes
 # (gp_m1/m4_kalman/tier_ch).
 METHOD_GP = "gaussian_process"
 METHOD_KALMAN = "state_space_kalman"

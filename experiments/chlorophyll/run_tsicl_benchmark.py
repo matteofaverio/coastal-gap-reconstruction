@@ -1,11 +1,11 @@
 """Run the authoritative primary TS-ICL benchmark on the chlorophyll
 artificial-gap pool: 681 gaps x 2 context modes x 6 primary arms
 (`tsicl_contract.PRIMARY_ARM_ORDER`), `target_repr="raw"` -- resolved by
-direct inspection of the private project's primary TS-ICL benchmark driver
+direct inspection of the original primary TS-ICL benchmark driver
 and shared call-shaping module (see `tsicl_contract.py`'s "authoritative
 primary full benchmark grid" section), not assumed.
 
-Requires the optional `tsicl` extra (see `docs/methodology/tsicl_usage.md`).
+Requires the optional `tsicl` extra (see `docs/reproducibility.md`).
 Uses `coastal_gap_reconstruction.tsicl_helpers.load_tsicl_strict` -- fails
 loudly on any provenance mismatch rather than silently proceeding.
 
@@ -24,12 +24,12 @@ valid successful record with zero unresolved failures. The output directory
 is configuration-bound (`tsicl_run_manifest.py`): resuming with a different
 support/arm-list/context-mode/checkpoint/input-file configuration raises
 rather than silently mixing incompatible predictions. Never overwrites
-`results_public/` by default; output lives under a gitignored `build/`
+`results/` by default; output lives under a gitignored `build/`
 directory.
 
 A gap's own failure (provenance/input/output error) is recorded in
 `failures.jsonl` and the run continues (explicit resumable batch mode, per
-`docs/methodology/tsicl_usage.md`'s publication-boundary requirements) --
+`docs/reproducibility.md`'s publication-boundary requirements) --
 never silently skipped or replaced with a cached/interpolated value.
 """
 
@@ -54,8 +54,8 @@ from . import tsicl_run_manifest as rm
 from . import tsicl_run_state as rs
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-DEFAULT_FEATURES_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+DEFAULT_TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+DEFAULT_FEATURES_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 DEFAULT_OUT_DIR = REPO_ROOT / "build" / "chlorophyll" / "tsicl_benchmark"
 
 CHECKPOINT_EVERY = 25
