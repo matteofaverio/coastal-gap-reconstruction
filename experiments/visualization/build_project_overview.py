@@ -64,7 +64,7 @@ def panel1_target_and_gaps(ax):
         ax.axvspan(g["start_date"], g["end_date"], color=COLOR_GAP, alpha=0.35, lw=0)
 
     ax.set_ylabel("Chlorophyll-a (mg m$^{-3}$)")
-    ax.set_title("Observed record, with real gaps")
+    ax.set_title("Observed chlorophyll record and real gaps")
     ax.set_ylim(0, target["chl_mean"].quantile(0.995))
     ax.xaxis.set_major_locator(mticker.MaxNLocator(4))
 
@@ -123,7 +123,7 @@ def panel3_benchmark_message(ax):
     ax.invert_yaxis()
     ax.axvline(0, color="black", lw=0.8)
     ax.set_xlabel("% MAE improvement over linear interpolation")
-    ax.set_title("Validation-grade result vs. interpolation")
+    ax.set_title("Artificial-gap benchmark")
     for y, v in zip(y_pos, values):
         ax.text(v + (0.3 if v >= 0 else -0.3), y, f"{v:+.1f}%", va="center",
                 ha="left" if v >= 0 else "right", fontsize=8.5)

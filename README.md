@@ -33,8 +33,11 @@ goal is filling in history, not predicting the future.
   interpolation baselines, external-predictor tabular models, a Gaussian
   process and a state-space model, and **TS-ICL**, a zero-shot time-series
   foundation model, evaluated with and without external covariates.
-- Applied the validated methods to the real gaps in both records, keeping
-  those outputs clearly labeled as candidates, not as validated numbers.
+- Applied validated methods to the real gaps in the chlorophyll record,
+  publishing two independent, method-specific candidate reconstructions,
+  clearly labeled as candidates, not as validated numbers. Oxygen
+  currently has a real-gap inventory and classification only — no
+  oxygen reconstruction candidate is published.
 - Wrote up both case studies in a report, two presentations, and a poster.
 
 ## Main findings
@@ -51,9 +54,10 @@ goal is filling in history, not predicting the future.
   wind, solar, currents — the first comparator to beat interpolation on
   oxygen at all, 95% CI [4.5%, 11.4%]).
 - Covariate effects were selective, not universally beneficial: some
-  covariate configurations hurt performance, and a placebo/negative-control
-  test confirmed the winning covariate's effect is a real mechanism, not an
-  artifact of extra input channels.
+  covariate configurations hurt performance. A negative-control experiment
+  supported that temporal alignment and covariate information mattered,
+  rather than performance improving merely because extra input channels
+  were added.
 - Every method under-predicts high-chlorophyll event days, and TS-ICL's
   oxygen improvement does not hold uniformly across the distribution (it
   loses to interpolation in the high tail). Neither limitation is solved.
@@ -82,7 +86,7 @@ known limitations before citing any number from this repository.
 ```bash
 git clone https://github.com/matteofaverio/coastal-gap-reconstruction
 cd coastal-gap-reconstruction
-uv sync --extra notebooks --extra test
+uv sync --extra notebooks --extra test --locked
 uv run pytest tests/
 uv run jupyter lab notebooks/01_data_and_gap_audit.ipynb
 ```

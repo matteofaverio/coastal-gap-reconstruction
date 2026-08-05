@@ -60,8 +60,8 @@ ARTIFACT_STATUSES: dict[str, ArtifactStatus] = {
     "artificial_validation_gap": ArtifactStatus(
         "artificial_validation_gap",
         "A withheld-and-known-true-value gap from the canonical validation pool "
-        "(experiments.chlorophyll.benchmark_contract) -- the only validation-grade evidence source "
-        "in this project. Not what this module is about, but the category everything else here "
+        "(experiments.chlorophyll.benchmark_contract) -- the only evidence in this project scored "
+        "against withheld observations. Not what this module is about, but the category everything else here "
         "is explicitly NOT.",
     ),
     "observed_real_missing_interval": ArtifactStatus(

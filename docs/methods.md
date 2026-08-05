@@ -29,7 +29,7 @@ pool has 681 gaps at lengths 1, 3, 7, 10, 14, 21, 30, 45, and 60 days;
 oxygen's has 406 primary gaps at lengths 1, 3, 7, 10, 14, 21, 30 days plus
 a small exploratory-extended tier at 45, 60, 90, 120 days (never used in
 headline numbers). See `docs/evidence_and_limitations.md`
-for why this is the only validation-grade evidence tier, and
+for why this is the only evidence tier scored against withheld observations, and
 `experiments/chlorophyll/target_and_gap_pool.py` /
 `experiments/oxygen/target_and_gap_pool.py` for the exact, tested pool
 construction.
@@ -54,7 +54,11 @@ excluding the hidden days currently being scored. See
   lengths and is not forecast-safe (it needs a post-gap observation).
 - **Classical tabular models**: Ridge/ElasticNet/ExtraTrees/HistGradientBoosting
   trained on external-only feature rows (calendar, meteorology, satellite/
-  reanalysis products, no target history) -- safe for any gap length.
+  reanalysis products, no target history) -- they do not require any
+  target-history observation inside or around the gap, so they can
+  produce a prediction wherever the external predictors are available;
+  their accuracy beyond the validated gap-length support (up to 60 days
+  for chlorophyll, 30 days primary for oxygen) remains unverified.
   `experiments/chlorophyll/tabular_models.py`,
   `experiments/oxygen/classical_models.py`.
 - **Gap-edge residual models**: predict a correction over linear
@@ -91,8 +95,8 @@ gap-position information) and a matched-reference fit (external features
 plus 5 structural meta-features describing gap length/position, never a
 hidden target value). Only the matched-reference protocol has a released
 row in the benchmark tables. Both are published as separate method IDs; see
-`docs/methodology` cross-references in `experiments/chlorophyll/gap_edge_models.py`
-and `tabular_models.py` module docstrings for the exact feature sets.
+the `experiments/chlorophyll/gap_edge_models.py` and `tabular_models.py`
+module docstrings for the exact feature sets.
 
 ## Oxygen adaptation
 
@@ -100,7 +104,7 @@ The oxygen case study (Case Study 2) reuses every generic mechanic
 (masking, baseline imputation, Gaussian process, TS-ICL calling layer, run
 state/manifest bookkeeping) from `src/coastal_gap_reconstruction/` and
 `experiments/chlorophyll/tsicl_run_state.py`/`tsicl_run_manifest.py`
-unmodified -- evidence that genericizing the shared package paid off.
+unmodified -- none of that shared code needed any oxygen-specific change.
 Oxygen-specific decisions (raw-mg/L scoring, predictor admissibility,
 support size, tail diagnostics) live in `experiments/oxygen/benchmark_contract.py`.
 See `docs/reproducibility.md` and `notebooks/06_oxygen_case_study.ipynb` for

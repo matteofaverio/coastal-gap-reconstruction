@@ -6,7 +6,7 @@ drawing a stronger conclusion than the evidence supports.
 
 ## Evidence hierarchy
 
-### 1. Validation-grade: artificial-gap results
+### 1. Results scored against withheld observations: artificial-gap results
 
 Results computed against the canonical artificial-gap pool -- chlorophyll:
 681 gaps, 9 lengths, 1-60 days; oxygen: 406 primary gaps, 7 lengths, 1-30

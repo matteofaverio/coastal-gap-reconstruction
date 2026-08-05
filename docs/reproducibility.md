@@ -8,7 +8,7 @@ readers only need QUICK.
 ```bash
 git clone https://github.com/matteofaverio/coastal-gap-reconstruction
 cd coastal-gap-reconstruction
-uv sync --extra notebooks --extra test   # locked core environment (uv.lock)
+uv sync --extra notebooks --extra test --locked   # locked core environment (uv.lock)
 uv run pytest tests/
 uv run jupyter lab notebooks/01_data_and_gap_audit.ipynb
 ```
@@ -28,7 +28,7 @@ ruff check .        # lint
 uv run pytest tests/test_notebooks_smoke.py -v   # every notebook, executed
 ```
 
-## STANDARD -- bounded live runs (tens of minutes)
+## STANDARD -- bounded and matched-support runs (minutes to a few hours)
 
 Reruns a scientifically representative subset live, on your machine, for
 both case studies:
@@ -72,11 +72,24 @@ documented per method rather than papered over with a looser tolerance.
 ## EXPENSIVE, optional -- full grids (hours to a day+, never required)
 
 Not required to use, inspect, or trust this repository. The frozen tables
-under `results/` are the authoritative complete results; the code below
-regenerates the equivalent and is published, tested, and restart-safe, but
-was intentionally not run to completion as part of preparing this
-repository, because the compute cost is disproportionate to what a public
-reproducibility artifact needs.
+under `results/` are the authoritative complete results in every case
+below. Actual completion status of each grid, as prepared for this
+repository:
+
+- The full chlorophyll primary TS-ICL benchmark (681 gaps x 2 context
+  modes x 6 arms = 8,172 calls) **was run to completion** -- 0 failures,
+  ~3h wall clock.
+- The full chlorophyll covariate dissection (681 gaps x 42 arm/placebo
+  variants = 28,602 calls) was **deliberately stopped** after 2,150
+  successful calls (0 failures) -- a compute-bounded decision, not a
+  failure; the driver is restart-safe and resumable.
+- The full oxygen TS-ICL grid (5 audited-original arms x 2 context modes +
+  4 exploratory arms, all 406 primary gaps) **was not rerun** for this
+  repository.
+
+The code below regenerates the equivalent of each and is published,
+tested, and restart-safe; running any of it to completion is optional and
+was not required to prepare or trust this repository.
 
 ```bash
 # Full chlorophyll TS-ICL target benchmark: 681 gaps x 2 context modes x 6
@@ -139,12 +152,12 @@ from this repository's MIT license, prohibits commercial/production use.
 Review the license in the authors' repository before using TS-ICL in your
 own work.
 
-**Determinism**: same-process, same-environment repeatability is directly
-verified (`experiments/chlorophyll/verify_same_environment_repeatability.py`
--- bitwise-identical predictions across two independent process
-invocations). Bit-exact reproduction across different machines/torch
-versions/CPU vs. GPU is **not** independently verified -- do not assume it
-beyond a fixed environment.
+**Determinism**: same-environment repeatability across two independent
+process invocations is directly verified
+(`experiments/chlorophyll/verify_same_environment_repeatability.py` --
+bitwise-identical predictions). Bit-exact reproduction across different
+machines/torch versions/CPU vs. GPU is **not** independently verified --
+do not assume it beyond a fixed environment.
 
 ## What's frozen vs. regenerable
 
@@ -154,7 +167,8 @@ or EXPENSIVE commands above will not produce a bit-identical file (ML
 estimator fits and TS-ICL inference are environment-sensitive, as noted
 above); `--verify`/`score_*.py` report a structured comparison rather than
 requiring exact equality. See `docs/evidence_and_limitations.md` for which
-results carry validation-grade weight in the first place.
+results are actually scored against withheld observations in the first
+place.
 
 ## Documents
 

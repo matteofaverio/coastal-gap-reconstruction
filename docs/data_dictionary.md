@@ -288,7 +288,7 @@ with a `_chl_mg_m3` column in the same computation.
 | q05_log10_chl, q10_log10_chl, q25_log10_chl, q50_log10_chl, q75_log10_chl, q90_log10_chl, q95_log10_chl | Quantile predictions, log10 scale, forming an uncertainty band |
 | pred_chl_mg_m3 | Point prediction, back-transformed to chlorophyll units (mg/m³) |
 | q05_chl_mg_m3, q10_chl_mg_m3, q25_chl_mg_m3, q50_chl_mg_m3, q75_chl_mg_m3, q90_chl_mg_m3, q95_chl_mg_m3 | Same quantiles, back-transformed to mg/m³ (`10 ** q*_log10_chl`) |
-| artificial_validation_supported | True if this gap length/configuration has validation-grade support from the artificial-gap pool |
+| artificial_validation_supported | True if this gap length/configuration has validated artificial-gap support |
 | event_caveat | Free-text note on event-day handling; no event-specific bias correction is applied in this output |
 | quantile_calibrated | Whether the quantile outputs have been calibration-checked |
 | scenario_only_256day | Legacy field name -- despite "scenario," this flags rows that are **real, observed** gap positions falling outside the validated artificial-gap length envelope (currently just the one 256-day gap), not a synthetic/constructed scenario. See `docs/evidence_and_limitations.md`. |
@@ -446,7 +446,7 @@ both candidate methods is needed, e.g. for plotting a continuous series.
 | tsicl_gap_id | Real-gap identifier this day belongs to, as labeled in the TS-ICL output (NaN if outside any real gap) |
 | tsicl_satellite_proxy_pred_chl | TS-ICL satellite-proxy candidate prediction, chlorophyll units (NaN if not predicted for this day) |
 | tsicl_satellite_proxy_pred_log10_chl | Same prediction, log10 scale |
-| tsicl_artificial_validation_supported | True if this gap length/configuration has validation-grade support from the artificial-gap pool |
+| tsicl_artificial_validation_supported | True if this gap length/configuration has validated artificial-gap support |
 | tsicl_scenario_only_256day | True if this row's TS-ICL prediction belongs to the 256-day scenario-only gap |
 | hybrid_gap_id | Real-gap identifier this day belongs to, as labeled in the engineered hybrid output |
 | hybrid_gap_length | Length (days) of the real gap this day belongs to, per the engineered hybrid output |
