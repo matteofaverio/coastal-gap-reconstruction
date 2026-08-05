@@ -1,6 +1,5 @@
 """Tests for `experiments.oxygen.tail_diagnostics`, pinned against the real
-released band edges/eligible-day count documented in
-`oxygen_tail_diagnostics_audit.md` (p10=3.776, p25=5.099, p50=6.429,
+released band edges/eligible-day count (p10=3.776, p25=5.099, p50=6.429,
 p75=7.436, p90=8.303, n_eligible=2880)."""
 
 from __future__ import annotations

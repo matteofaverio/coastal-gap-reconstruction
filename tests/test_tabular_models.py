@@ -12,8 +12,8 @@ from experiments.chlorophyll import _config
 from experiments.chlorophyll import tabular_models as tm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-FEATURES_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+FEATURES_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
 
 
 @pytest.fixture(scope="module")

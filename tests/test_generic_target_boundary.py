@@ -14,8 +14,8 @@ from experiments.oxygen import _config as ox_config
 from experiments.oxygen import target_and_gap_pool as ox_tgp
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHL_TARGET = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-OX_TARGET = REPO_ROOT / "data_public" / "oxygen" / "oxygen_daily_target.csv"
+CHL_TARGET = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+OX_TARGET = REPO_ROOT / "data" / "oxygen" / "oxygen_daily_target.csv"
 
 CHLOROPHYLL_ONLY_FIELDS = {
     "is_high_chl_event", "is_sustained_event", "is_background", "chl_90th_threshold",

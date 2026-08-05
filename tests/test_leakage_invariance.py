@@ -21,7 +21,7 @@ from coastal_gap_reconstruction.baseline_imputation import (
 from coastal_gap_reconstruction.gaps import apply_artificial_gap
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHL_TARGET = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
+CHL_TARGET = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
 TARGET_COL = "chl_mean"
 ELIGIBLE_COL = "target_eligible_default"
 

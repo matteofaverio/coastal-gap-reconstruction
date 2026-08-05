@@ -66,7 +66,7 @@ def test_context_modes_and_quantile_levels_are_nonempty():
 
 
 def test_primary_arms_has_exactly_six_arms_matching_the_private_grid():
-    """Resolved from the private project's primary TS-ICL benchmark driver's
+    """Resolved from the original primary TS-ICL benchmark driver's
     PRIMARY_ARMS = ["A","B","C","D","E","F"] -- not assumed."""
     assert len(tc.PRIMARY_ARMS) == 6
     assert set(tc.PRIMARY_ARMS) == set(tc.PRIMARY_ARM_ORDER)
@@ -90,7 +90,7 @@ def test_wrong_lag_arm_is_a_placebo_transform_of_the_physical_forcing_columns():
 
 
 def test_full_681_primary_total_calls_matches_the_private_grid_exactly():
-    """681 gaps x 2 context modes x 6 arms = 8172 -- the private project's
+    """681 gaps x 2 context modes x 6 arms = 8172 -- the original
     own primary full-benchmark call count."""
     assert tc.FULL_681_PRIMARY_TOTAL_CALLS == 681 * 2 * 6 == 8172
 

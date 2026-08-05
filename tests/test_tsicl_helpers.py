@@ -288,7 +288,7 @@ def test_run_gap_inference_rejects_covariate_length_mismatch():
 @requires_torch
 def test_run_gap_inference_allows_nan_covariate_values():
     """NaN covariate values (e.g. cloud-masked satellite-proxy days) must
-    not be rejected -- the authoritative private benchmark ran successfully
+    not be rejected -- the authoritative benchmark ran successfully
     over real, sparsely-missing covariate columns."""
     dates = _daily_dates(40)
     target = np.arange(40, dtype=np.float32)

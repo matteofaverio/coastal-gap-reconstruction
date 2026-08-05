@@ -22,8 +22,8 @@ import pytest
 from coastal_gap_reconstruction.feature_tables import load_feature_table, load_full_feature_table
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-BASE_TABLE = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
-EXTENSION_TABLE = REPO_ROOT / "data_public" / "shared" / "external_current_kinematic_extension.csv"
+BASE_TABLE = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_predictor_features_curated.csv"
+EXTENSION_TABLE = REPO_ROOT / "data" / "shared" / "external_current_kinematic_extension.csv"
 
 # The full, exact override set: every column present in both files whose value
 # differs by any nonzero amount (bitwise), not only the 22 whose difference

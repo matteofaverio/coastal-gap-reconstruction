@@ -21,7 +21,7 @@ from experiments.chlorophyll import gap_edge_models as gem
 from experiments.chlorophyll import interpolation_baselines as interp
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
+TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
 
 
 @pytest.fixture(scope="module")
@@ -83,7 +83,7 @@ def test_log_space_and_physical_space_formulas_agree_at_bracket_edges():
 
 def test_no_bracket_returns_nan_rows_not_dropped_gap():
     """A gap with no observation on one side must still produce one NaN row
-    per hidden day (matching the private source's row-preserving behavior),
+    per hidden day (matching the original source's row-preserving behavior),
     not silently disappear from the output."""
     target_df = _synthetic_target(10)
     target_df[gem.ELIGIBLE_COL] = False  # no eligible observations anywhere

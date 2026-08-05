@@ -96,7 +96,7 @@ def test_load_tsicl_strict_raises_dependency_error_when_tsicl_missing(monkeypatc
 # Gated behind an explicit env var: never run in normal CI (would require
 # the ~209 MB checkpoint and the isolated .venv_tsicl environment). Run
 # with: RUN_TSICL_LIVE_TESTS=1 .venv_tsicl/bin/python -m pytest
-# tests/test_tsicl_provenance.py -v (see docs/methodology/tsicl_usage.md).
+# tests/test_tsicl_provenance.py -v (see docs/reproducibility.md).
 requires_live_tsicl = pytest.mark.skipif(
     os.environ.get("RUN_TSICL_LIVE_TESTS") != "1",
     reason="set RUN_TSICL_LIVE_TESTS=1 and run under .venv_tsicl to exercise the real checkpoint",
@@ -118,7 +118,7 @@ def test_live_run_gap_inference_never_leaks_hidden_truth():
     import pandas as pd
 
     model, _ = th.load_tsicl_strict()
-    target_path = "data_public/chlorophyll/chlorophyll_daily_target.csv"
+    target_path = "data/chlorophyll/chlorophyll_daily_target.csv"
     df = pd.read_csv(target_path, parse_dates=["date"]).set_index("date").sort_index()
     eligible = df["target_eligible_default"].fillna(False).astype(bool)
     y = df["chl_mean"].where(eligible & (df["chl_mean"] > 1e-4))

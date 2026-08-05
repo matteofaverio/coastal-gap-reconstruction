@@ -12,7 +12,7 @@ import pandas as pd
 from experiments.chlorophyll import probabilistic_models as pm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TARGET_PATH = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
+TARGET_PATH = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
 
 
 def test_filter_smoother_deterministic_and_finite():

@@ -10,7 +10,7 @@ import pytest
 
 from experiments.chlorophyll import tsicl_covariate_registry as reg
 
-REPO_ROOT_RESULTS = "results_public/chlorophyll/chlorophyll_covariate_mechanism_summary.csv"
+REPO_ROOT_RESULTS = "results/chlorophyll/chlorophyll_covariate_mechanism_summary.csv"
 
 
 def test_registry_uses_only_descriptive_names_not_internal_codes():

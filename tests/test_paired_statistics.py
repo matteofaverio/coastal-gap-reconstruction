@@ -124,7 +124,7 @@ def test_bootstrap_uses_gap_level_resampling_not_day_level():
     assert r1.metrics["day_weighted_mae"]["delta"] == pytest.approx(r2.metrics["day_weighted_mae"]["delta"])
 
 
-# ── Exact day-level pairing (Phase 2B2 full-support-closure fix) ──────────
+# ── Exact day-level pairing ────────────────────────────────────────────
 
 def _two_gap_frame(dates_a: dict[str, list[str]], dates_b: dict[str, list[str]]) -> pd.DataFrame:
     """Build a minimal two-method day-level frame from {gap_id: [dates]} maps."""

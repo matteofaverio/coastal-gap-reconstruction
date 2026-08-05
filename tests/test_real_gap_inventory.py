@@ -51,7 +51,7 @@ def test_256_day_gap_is_detected_with_correct_notes(target_df):
     assert len(row) == 1
     assert "2020" in row.iloc[0]["notes"]
     # Verified against the actual released inventory row (gap_id
-    # REAL_L091_20200211) -- not CLAUDE.md's rounded "2020-02-12" framing.
+    # REAL_L091_20200211) -- not an earlier, imprecise "2020-02-12" rounding.
     assert str(row.iloc[0]["start_date"]) == "2020-02-11"
     assert str(row.iloc[0]["end_date"]) == "2020-10-23"
 

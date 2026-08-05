@@ -24,10 +24,10 @@ from experiments.chlorophyll import target_and_gap_pool as chl_tgp
 from experiments.oxygen import target_and_gap_pool as ox_tgp
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHL_TARGET = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_daily_target.csv"
-CHL_POOL = REPO_ROOT / "data_public" / "chlorophyll" / "chlorophyll_validation_gaps.csv"
-OX_TARGET = REPO_ROOT / "data_public" / "oxygen" / "oxygen_daily_target.csv"
-OX_POOL = REPO_ROOT / "data_public" / "oxygen" / "oxygen_validation_gaps.csv"
+CHL_TARGET = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_daily_target.csv"
+CHL_POOL = REPO_ROOT / "data" / "chlorophyll" / "chlorophyll_validation_gaps.csv"
+OX_TARGET = REPO_ROOT / "data" / "oxygen" / "oxygen_daily_target.csv"
+OX_POOL = REPO_ROOT / "data" / "oxygen" / "oxygen_validation_gaps.csv"
 
 METADATA_COLUMNS = [
     "gap_length", "start_date", "end_date", "n_hidden_days", "season", "year",

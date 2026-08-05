@@ -15,8 +15,8 @@ from experiments.oxygen.local_btg_diagnostic_features import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-RELEASED_TABLE = REPO_ROOT / "data_public" / "oxygen" / "oxygen_local_btg_diagnostic_features.csv"
-OXYGEN_TARGET = REPO_ROOT / "data_public" / "oxygen" / "oxygen_daily_target.csv"
+RELEASED_TABLE = REPO_ROOT / "data" / "oxygen" / "oxygen_local_btg_diagnostic_features.csv"
+OXYGEN_TARGET = REPO_ROOT / "data" / "oxygen" / "oxygen_daily_target.csv"
 
 EXPECTED_COLUMNS = [
     "date",

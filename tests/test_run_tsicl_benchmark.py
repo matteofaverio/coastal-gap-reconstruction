@@ -103,7 +103,7 @@ def test_run_complete_is_never_reported_while_a_key_is_permanently_failed(tmp_pa
     assert rc == 1
     assert (out_dir / "RUN_STATUS").read_text().startswith("RUN_PARTIAL")
     # g2's failure count must have accumulated across all 3 invocations, not
-    # reset to 0/1 each time (the exact bug this sprint fixed).
+    # reset to 0/1 each time (the exact resume-state bug this module fixes).
     fail_lines = (out_dir / "failures.jsonl").read_text().strip().splitlines()
     g2_failures = [line for line in fail_lines if json.loads(line)["gap_id"] == "g2"]
     assert len(g2_failures) == 3

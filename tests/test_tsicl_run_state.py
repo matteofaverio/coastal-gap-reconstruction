@@ -1,8 +1,8 @@
 """Tests for the failure-safe TS-ICL run-state accounting
 (`experiments.chlorophyll.tsicl_run_state`).
 
-These reproduce the exact bug found by the Phase 2B2 full-support-closure
-review: the earlier per-driver `done_keys.json` design added a call's key to
+These reproduce a real historical bug: the earlier per-driver `done_keys.json`
+design added a call's key to
 the done set even when the call failed, so a resume silently skipped a
 permanently-failed call and a run could report RUN_COMPLETE despite a real,
 never-retried failure.

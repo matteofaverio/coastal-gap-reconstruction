@@ -5,9 +5,9 @@ been run (`demo/gap_reconstruction_walkthrough_executed.ipynb` exists, e.g.
 because `bash demo/run_demo.sh` was run manually), that it contains no
 error-type cell outputs and that TS-ICL ran live (not the cached fallback).
 
-To actually (re-)run the full demo -- creating `.venv_tsicl_demo/`,
-installing `tsicl`/`torch`, downloading the TS-ICL checkpoint on first use,
-and executing the notebook -- set `RUN_DEMO_SMOKE=1`. This is opt-in
+To actually (re-)run the full demo -- setting up `environments/tsicl/`,
+downloading the TS-ICL checkpoint on first use, and executing the notebook
+-- set `RUN_DEMO_SMOKE=1`. This is opt-in
 because it needs internet access on first run and takes noticeably longer
 than the rest of this test suite (see demo/README.md for tested timings).
 

@@ -128,7 +128,7 @@ def test_method_public_names_match_frozen_released_table():
     would key on, so drift here is a silent mislabeling risk, not just cosmetic.
 
     `engineered_hybrid` is not scored on the 449-gap matched support in the
-    private project's own released tables (its Kalman-routed L=4-29 segment was
+    released tables (its Kalman-routed L=4-29 segment was
     only ever evaluated against the full 681-gap pool) -- checked against
     `chlorophyll_benchmark_summary.csv` instead, the table it actually appears
     in.
