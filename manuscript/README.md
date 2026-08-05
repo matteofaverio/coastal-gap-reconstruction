@@ -56,7 +56,7 @@ Each `main.tex` uses only standard packages (`article`/`beamer`, `graphicx`,
 ## Relationship to the rest of this repository
 
 The manuscript is the narrative synthesis of the results in
-`results_public/` and `data_public/` — see `docs/evidence_hierarchy.md` for
+`results/` and `data/` — see `docs/evidence_and_limitations.md` for
 how to weigh claims made in the text against the underlying validation
 tables. The manuscript is the authoritative source for terminology; where
 prose in this `docs/` folder differs, the manuscript prevails.
