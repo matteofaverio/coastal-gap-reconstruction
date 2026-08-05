@@ -66,7 +66,7 @@ def test_context_modes_and_quantile_levels_are_nonempty():
 
 
 def test_primary_arms_has_exactly_six_arms_matching_the_private_grid():
-    """Resolved from src/tongoy_chl/tsicl/run_full_benchmark.py's
+    """Resolved from the private project's primary TS-ICL benchmark driver's
     PRIMARY_ARMS = ["A","B","C","D","E","F"] -- not assumed."""
     assert len(tc.PRIMARY_ARMS) == 6
     assert set(tc.PRIMARY_ARMS) == set(tc.PRIMARY_ARM_ORDER)

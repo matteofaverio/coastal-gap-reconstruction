@@ -125,12 +125,31 @@ def run_classical(pool: pd.DataFrame, out_dir: Path, n_gaps: int | None) -> int:
 
 # ── TS-ICL bounded mode ────────────────────────────────────────────────────
 
+def _arm_registry_config_sha256(arms: list[str]) -> str:
+    """Hash of the exact selected columns per requested arm -- changing any
+    arm's column list (or which arms are requested) changes this hash."""
+    config = {arm: tm.ALL_ARM_COLUMNS[arm] for arm in sorted(arms)}
+    canonical = json.dumps(config, sort_keys=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _gap_ids_sha256(gap_ids) -> str:
+    """Hash of the exact selected gap-ID list's canonical (sorted) serialization."""
+    canonical = "|".join(sorted(gap_ids))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def run_tsicl_bounded(
     pool: pd.DataFrame, arms: list[str], context_modes: list[str], n_gaps: int, out_dir: Path,
     max_calls: int = 60,
 ) -> int:
+    # Compute the actual selected support FIRST -- the deterministic stratified
+    # selection can return fewer than the requested n_gaps (e.g. capped by the
+    # smallest per-length pool), so the run's identity/support label must
+    # reflect what was actually selected, not what was requested.
     subset = select_deterministic_tsicl_subset(pool, n_gaps)
-    n_total = len(subset) * len(arms) * len(context_modes)
+    actual_n_gaps = len(subset)
+    n_total = actual_n_gaps * len(arms) * len(context_modes)
     if n_total > max_calls:
         print(
             f"FATAL: requested subset would need {n_total} calls, exceeding the "
@@ -147,11 +166,27 @@ def run_tsicl_bounded(
         return 1
     print(f"loaded TS-ICL: {provenance}", flush=True)
 
+    # Exact-input identity: every file actually read by this run is hashed,
+    # plus the exact selected gap-ID list and the exact per-arm column
+    # configuration -- a resumed run must invalidate (RunConfigMismatchError)
+    # if any of these changed, not just the target table. No placeholder
+    # strings (a prior version used features_sha256="n/a_multiple_arms",
+    # which protected nothing).
     target_sha256 = _sha256_file(bc.DAILY_TARGET_PATH)
+    base_features_sha256 = _sha256_file(bc.CHLOROPHYLL_BASE_FEATURES_PATH)
+    extension_sha256 = _sha256_file(bc.CURRENT_KINEMATIC_EXTENSION_PATH)
+    local_btg_sha256 = _sha256_file(bc.LOCAL_BTG_DIAGNOSTIC_FEATURES_PATH)
+    gap_pool_sha256 = _sha256_file(bc.VALIDATION_GAPS_PATH)
     identity = rm.build_run_identity(
-        driver="run_oxygen_benchmark_tsicl_bounded", support=f"bounded_{n_gaps}_gaps", arms=arms,
-        context_modes=context_modes, placebo_config={}, target_sha256=target_sha256,
-        features_sha256="n/a_multiple_arms", gap_pool_sha256=_sha256_file(bc.VALIDATION_GAPS_PATH),
+        driver="run_oxygen_benchmark_tsicl_bounded", support=f"bounded_{actual_n_gaps}_gaps", arms=arms,
+        context_modes=context_modes,
+        placebo_config={
+            "local_btg_diagnostic_sha256": local_btg_sha256,
+            "selected_gap_ids_sha256": _gap_ids_sha256(subset["gap_id"]),
+            "arm_registry_config_sha256": _arm_registry_config_sha256(arms),
+        },
+        target_sha256=target_sha256, features_sha256=base_features_sha256,
+        extension_sha256=extension_sha256, gap_pool_sha256=gap_pool_sha256,
         provenance=provenance, target_transform=bc.TARGET_TRANSFORM,
         context_window_settings={"window_days": tm.WINDOW_DAYS, "max_context_length": 4096},
         quantile_levels=th.DEFAULT_QUANTILE_LEVELS,
@@ -239,8 +274,9 @@ def run_tsicl_bounded(
     elapsed = time.time() - t_start
     (out_dir / "RUN_STATUS").write_text(f"{run_status}: {json.dumps(detail)}\n")
     (out_dir / "run_metadata.json").write_text(json.dumps({
-        "support": f"bounded_{n_gaps}_gaps", "arms": arms, "context_modes": context_modes,
-        "n_gaps": len(subset), "n_expected_calls": len(expected_keys), "elapsed_s": elapsed,
+        "support": f"bounded_{actual_n_gaps}_gaps", "arms": arms, "context_modes": context_modes,
+        "requested_max_n_gaps": n_gaps, "actual_selected_n_gaps": actual_n_gaps,
+        "n_expected_calls": len(expected_keys), "elapsed_s": elapsed,
         "run_status_detail": detail, "provenance": provenance,
         "timestamp_utc": pd.Timestamp.now("UTC").isoformat(), "command_args": sys.argv[1:],
     }, indent=2))

@@ -1,9 +1,9 @@
 """Run the authoritative primary TS-ICL benchmark on the chlorophyll
 artificial-gap pool: 681 gaps x 2 context modes x 6 primary arms
 (`tsicl_contract.PRIMARY_ARM_ORDER`), `target_repr="raw"` -- resolved by
-direct inspection of the private `run_full_benchmark.py`/`pilot_pipeline.py`
-(see `tsicl_contract.py`'s "authoritative primary full benchmark grid"
-section), not assumed.
+direct inspection of the private project's primary TS-ICL benchmark driver
+and shared call-shaping module (see `tsicl_contract.py`'s "authoritative
+primary full benchmark grid" section), not assumed.
 
 Requires the optional `tsicl` extra (see `docs/methodology/tsicl_usage.md`).
 Uses `coastal_gap_reconstruction.tsicl_helpers.load_tsicl_strict` -- fails

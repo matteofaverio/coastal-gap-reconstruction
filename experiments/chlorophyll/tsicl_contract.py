@@ -110,11 +110,10 @@ QUANTILE_LEVELS: list[float] = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
 # reproduced here either, for the same reason).
 PRIMARY_CONTEXT_MODES: list[str] = ["full_series", "edge_balanced"]
 
-# ── The authoritative primary full benchmark grid (Phase 2B2 full-support
-# closure) ───────────────────────────────────────────────────────────────
+# ── The authoritative primary full benchmark grid ────────────────────────
 #
-# Resolved by direct inspection of the private
-# `src/tongoy_chl/tsicl/run_full_benchmark.py` (not assumed/inferred from a
+# Resolved by direct inspection of the private project's primary TS-ICL
+# benchmark driver (not assumed/inferred from a
 # prior handoff's prose): the released primary target-only/covariate
 # benchmark is **681 gaps x 2 context modes x 6 primary arms** (private
 # codes A-F), `target_repr="raw"` only -- 8,172 calls total. This corrects
@@ -124,9 +123,9 @@ PRIMARY_CONTEXT_MODES: list[str] = ["full_series", "edge_balanced"]
 # and a `wrong_lag` placebo control) were previously missing from
 # `run_tsicl_benchmark.py` entirely.
 #
-# Column lists are ported verbatim from the private
-# `pilot_pipeline.py::PHYSICAL_FORCING_COLS`/`BIOLOGICAL_PROXY_COLS`/
-# `CALENDAR_COLS` (the same private source `tsicl_covariate_registry.py`'s
+# Column lists are ported verbatim from the private project's shared
+# call-shaping module's own physical-forcing/biological-proxy/calendar
+# column lists (the same private source `tsicl_covariate_registry.py`'s
 # 18-arm covariate-dissection column lists were ported from).
 PRIMARY_CALENDAR_COLUMNS: list[str] = ["doy_sin", "doy_cos"]
 PRIMARY_PHYSICAL_FORCING_COLUMNS: list[str] = [

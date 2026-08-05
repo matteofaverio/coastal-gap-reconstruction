@@ -199,7 +199,7 @@ definitions. In short:
   (`chlorophyll_benchmark_summary.csv`) and the 18-arm covariate ranking
   (`chlorophyll_covariate_mechanism_summary.csv`). The authoritative
   primary target benchmark grid, resolved by direct inspection of the
-  private `run_full_benchmark.py` (not assumed): **681 gaps x 2 context
+  private project's primary TS-ICL benchmark driver (not assumed): **681 gaps x 2 context
   modes (`full_series`, `edge_balanced`) x 6 primary arms** --
   `target_only`, `target_plus_calendar`, `target_plus_physical_forcing`,
   `satellite_proxy`, `target_plus_physical_forcing_plus_proxy`, and a

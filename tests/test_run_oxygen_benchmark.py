@@ -116,3 +116,133 @@ def test_tsicl_bounded_resume_with_different_arms_raises_config_mismatch(monkeyp
     rc2 = mod.run_tsicl_bounded(_POOL, arms=["calendar_seasonal"], context_modes=["full_series"],
                                  n_gaps=9, out_dir=tmp_path, max_calls=60)
     assert rc2 == 1  # rejected, not silently mixed
+
+
+# ── Section 1C/1D integrity fixes: exact-input identity binding, accurate
+# support labeling (regression tests for the bounded-run manifest bug) ─────
+
+def _distinct_pool(n=9):
+    """A pool with genuinely distinct gap_ids (the module-level _POOL fixture
+    above has two accidental gap_id collisions from its zero-padded-length
+    naming scheme -- irrelevant to those tests, but these tests need real
+    per-gap distinctness)."""
+    lengths = [1, 3, 7, 10, 14, 21, 30]
+    rows = []
+    for i, L in enumerate(lengths):
+        rows.append({
+            "gap_id": f"OX_L{L:03d}_test{i}", "gap_length": L,
+            "start_date": pd.Timestamp("2018-01-01") + pd.Timedelta(days=30 * i),
+            "end_date": pd.Timestamp("2018-01-01") + pd.Timedelta(days=30 * i + L - 1),
+            "support_role": "primary",
+        })
+    return pd.DataFrame(rows)
+
+
+def _patch_common_tsicl_bounded(monkeypatch):
+    monkeypatch.setattr(th, "load_tsicl_strict", lambda: (object(), _fake_provenance()))
+    monkeypatch.setattr(
+        th, "run_gap_inference",
+        lambda model, dates, target, gap, context_mode, covariate_array=None, quantile_levels=None, window_days=730, strict=True: _ok_result(gap, context_mode),
+    )
+    monkeypatch.setattr(
+        mod.tm, "load_target_series",
+        lambda: (np.arange(np.datetime64("2018-01-01"), np.datetime64("2019-06-01")),
+                  np.full(516, 7.0, dtype=np.float32)),
+    )
+
+
+def test_no_placeholder_string_in_bounded_run_manifest(monkeypatch, tmp_path):
+    _patch_common_tsicl_bounded(monkeypatch)
+    import experiments.oxygen.feature_registry as fr
+    idx = pd.date_range("2018-01-01", periods=516)
+    plus_currents_df = pd.DataFrame({"plv_solar_wm2": [0.0] * 516}, index=idx)
+    local_btg_df = pd.DataFrame({"btg_water_temp_daily_mean": [0.0] * 516, "btg_pressure_daily_mean": [0.0] * 516}, index=idx)
+    monkeypatch.setattr(fr, "get_feature_arm",
+                         lambda arm, **kw: local_btg_df if arm == "local_btg_temp_pressure_diagnostic" else plus_currents_df)
+
+    mod.run_tsicl_bounded(_distinct_pool(), arms=["target_only"], context_modes=["full_series"],
+                           n_gaps=7, out_dir=tmp_path, max_calls=60)
+    manifest_text = (tmp_path / "run_manifest.json").read_text()
+    assert "n/a_multiple_arms" not in manifest_text
+    assert "n/a" not in manifest_text.lower()
+
+
+def test_support_label_uses_actual_selected_count_not_requested_maximum(monkeypatch, tmp_path):
+    _patch_common_tsicl_bounded(monkeypatch)
+    import experiments.oxygen.feature_registry as fr
+    idx = pd.date_range("2018-01-01", periods=516)
+    plus_currents_df = pd.DataFrame({"plv_solar_wm2": [0.0] * 516}, index=idx)
+    local_btg_df = pd.DataFrame({"btg_water_temp_daily_mean": [0.0] * 516, "btg_pressure_daily_mean": [0.0] * 516}, index=idx)
+    monkeypatch.setattr(fr, "get_feature_arm",
+                         lambda arm, **kw: local_btg_df if arm == "local_btg_temp_pressure_diagnostic" else plus_currents_df)
+
+    pool = _distinct_pool()  # 7 distinct lengths
+    # Request 9 gaps; the deterministic stratified selector can only find 7
+    # (one per length) from this 7-length pool -- the actual selected count.
+    mod.run_tsicl_bounded(pool, arms=["target_only"], context_modes=["full_series"],
+                           n_gaps=9, out_dir=tmp_path, max_calls=60)
+    metadata = json.loads((tmp_path / "run_metadata.json").read_text())
+    assert metadata["requested_max_n_gaps"] == 9
+    assert metadata["actual_selected_n_gaps"] == 7
+    assert metadata["support"] == "bounded_7_gaps"
+    assert "bounded_9_gaps" not in (tmp_path / "run_manifest.json").read_text()
+
+
+def test_resume_with_different_feature_table_content_raises_config_mismatch(monkeypatch, tmp_path):
+    _patch_common_tsicl_bounded(monkeypatch)
+    import experiments.oxygen.feature_registry as fr
+    idx = pd.date_range("2018-01-01", periods=516)
+    local_btg_df = pd.DataFrame({"btg_water_temp_daily_mean": [0.0] * 516, "btg_pressure_daily_mean": [0.0] * 516}, index=idx)
+
+    plus_currents_v1 = pd.DataFrame({"plv_solar_wm2": [0.0] * 516}, index=idx)
+    monkeypatch.setattr(fr, "get_feature_arm",
+                         lambda arm, **kw: local_btg_df if arm == "local_btg_temp_pressure_diagnostic" else plus_currents_v1)
+    pool = _distinct_pool()
+    rc1 = mod.run_tsicl_bounded(pool, arms=["target_only"], context_modes=["full_series"],
+                                 n_gaps=7, out_dir=tmp_path, max_calls=60)
+    assert rc1 == 0
+
+    # Second invocation: feature-table *content* differs (simulating a real
+    # feature-table edit) even though the requested arms/gaps are identical.
+    # The prior bug (features_sha256="n/a_multiple_arms") could not detect
+    # this at all -- the corrected identity must reject it.
+    monkeypatch.setattr(mod, "_sha256_file", lambda path: "different_hash_" + str(path))
+    rc2 = mod.run_tsicl_bounded(pool, arms=["target_only"], context_modes=["full_series"],
+                                 n_gaps=7, out_dir=tmp_path, max_calls=60)
+    assert rc2 == 1
+
+
+def test_resume_with_different_selected_gap_ids_raises_config_mismatch(monkeypatch, tmp_path):
+    _patch_common_tsicl_bounded(monkeypatch)
+    import experiments.oxygen.feature_registry as fr
+    idx = pd.date_range("2018-01-01", periods=516)
+    plus_currents_df = pd.DataFrame({"plv_solar_wm2": [0.0] * 516}, index=idx)
+    local_btg_df = pd.DataFrame({"btg_water_temp_daily_mean": [0.0] * 516, "btg_pressure_daily_mean": [0.0] * 516}, index=idx)
+    monkeypatch.setattr(fr, "get_feature_arm",
+                         lambda arm, **kw: local_btg_df if arm == "local_btg_temp_pressure_diagnostic" else plus_currents_df)
+
+    pool_a = _distinct_pool()
+    rc1 = mod.run_tsicl_bounded(pool_a, arms=["target_only"], context_modes=["full_series"],
+                                 n_gaps=7, out_dir=tmp_path, max_calls=60)
+    assert rc1 == 0
+
+    # Same arms/context/support size, but a different underlying gap-ID
+    # selection (different start dates -> different deterministic subset
+    # despite identical shape) -- must still be caught by the gap-ID hash,
+    # not silently resumed against mismatched gap identities.
+    pool_b = _distinct_pool()
+    pool_b["gap_id"] = pool_b["gap_id"] + "_variant"
+    rc2 = mod.run_tsicl_bounded(pool_b, arms=["target_only"], context_modes=["full_series"],
+                                 n_gaps=7, out_dir=tmp_path, max_calls=60)
+    assert rc2 == 1
+
+
+def test_arm_registry_config_sha256_changes_with_columns():
+    h1 = mod._arm_registry_config_sha256(["target_only"])
+    h2 = mod._arm_registry_config_sha256(["calendar_seasonal"])
+    assert h1 != h2
+
+
+def test_gap_ids_sha256_is_order_independent_but_content_sensitive():
+    assert mod._gap_ids_sha256(["g1", "g2"]) == mod._gap_ids_sha256(["g2", "g1"])
+    assert mod._gap_ids_sha256(["g1", "g2"]) != mod._gap_ids_sha256(["g1", "g3"])
