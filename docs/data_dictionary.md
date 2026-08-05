@@ -1,12 +1,12 @@
 # Data dictionary
 
-Column definitions for every public CSV under `data_public/` and
-`results_public/`. For the small standalone CSVs used by the live demo
+Column definitions for every public CSV under `data/` and
+`results/`. For the small standalone CSVs used by the live demo
 (`demo/data/`), see the "What the notebook does" section of
 `demo/README.md` -- they are subsets/derivatives of the tables documented
 below, not a separate schema.
 
-## data_public/oxygen/oxygen_daily_target.csv
+## data/oxygen/oxygen_daily_target.csv
 
 One row per calendar day, 2015-07-01 to 2026-05-31 (BTGOXD2 sensor, mg/L).
 Same construction logic as the chlorophyll daily target, applied to a
@@ -23,11 +23,11 @@ second sensor.
 | raw_prom_non_na_count, raw_prom_na_count | Count of non-missing / missing raw hourly readings |
 | negative_oxygen_count, zero_oxygen_count, invalid_oxygen_count | QA counters for out-of-range or invalid hourly readings |
 | first_valid_hour, last_valid_hour, longest_invalid_run_hours | Same meaning as the chlorophyll target table |
-| source_variable | Sensor code (`BTGOXD2`); see `docs/data_sources_and_attribution.md` for why this sensor was selected over `BTGOXD`/`BTGOXSATPC` |
+| source_variable | Sensor code (`BTGOXD2`); see the report (`manuscript/report/`) for sensor-selection rationale |
 | unit | Physical unit (mg/L) |
 | timezone_status | Timezone handling/conversion note |
 
-## data_public/oxygen/oxygen_validation_gaps.csv
+## data/oxygen/oxygen_validation_gaps.csv
 
 The artificial-gap validation pool for oxygen. Same schema pattern as
 `chlorophyll_validation_gaps.csv` (one row per artificial gap), plus a
@@ -35,7 +35,7 @@ The artificial-gap validation pool for oxygen. Same schema pattern as
 
 - **`primary`** (406 gaps, L in {1, 3, 7, 10, 14, 21, 30}) -- the support
   behind every oxygen benchmark result and headline finding in this
-  repository (`results_public/oxygen/oxygen_benchmark_by_length.csv` and
+  repository (`results/oxygen/oxygen_benchmark_by_length.csv` and
   every other oxygen results table are computed only on this tier).
 - **`exploratory_extended`** (6 gaps, L in {45, 60, 90, 120}) -- longer
   gaps included in the pool but **not** used in any published benchmark
@@ -46,12 +46,12 @@ The artificial-gap validation pool for oxygen. Same schema pattern as
 Any claim about oxygen reconstruction accuracy in this repository refers to
 the `primary` tier (L=1-30 days) unless explicitly stated otherwise.
 
-## data_public/oxygen/oxygen_real_gap_inventory_by_class.csv
+## data/oxygen/oxygen_real_gap_inventory_by_class.csv
 
 Naturally-occurring missing-data periods, grouped by length class
 (short/medium/long), with gap counts and median/max length per class.
 
-## data_public/oxygen/oxygen_local_btg_diagnostic_features.csv
+## data/oxygen/oxygen_local_btg_diagnostic_features.csv
 
 One row per calendar day (same 3,988-row coverage as the oxygen daily target).
 Daily aggregation of two hourly station variables measured on the *same
@@ -73,31 +73,31 @@ station with the oxygen sensor, their availability may covary with oxygen
 sensor outages for reasons unrelated to any true physical relationship. This
 table feeds only the `local_btg_temp_pressure_diagnostic` arm of the oxygen
 benchmark, which is diagnostic/appendix-only in every released oxygen result --
-`results_public/oxygen/oxygen_benchmark_by_length.csv` and every other released
+`results/oxygen/oxygen_benchmark_by_length.csv` and every other released
 oxygen table are computed on the external-only arms, not this one. No lag or
 rolling-window features are derived from these columns anywhere in this
 repository; only same-day daily aggregates are used.
 
-## results_public/oxygen/oxygen_benchmark_by_length.csv
+## results/oxygen/oxygen_benchmark_by_length.csv
 
 One row per (method, gap length): gap-weighted MAE (mg/L) and gap count,
 across the oxygen artificial-gap pool. Pivot on `method_label` to compare
 methods.
 
-## results_public/oxygen/oxygen_paired_deltas_vs_tsicl_physical_covariates.csv
+## results/oxygen/oxygen_paired_deltas_vs_tsicl_physical_covariates.csv
 
 One row per comparator method: paired MAE delta (TS-ICL physical
 covariates minus comparator), 95% bootstrap CI, and whether the CI
 excludes zero (statistically resolved).
 
-## results_public/oxygen/oxygen_tail_quantile_band_metrics.csv, oxygen_tail_persistence_metrics.csv
+## results/oxygen/oxygen_tail_quantile_band_metrics.csv, oxygen_tail_persistence_metrics.csv
 
 Relative improvement of the strongest TS-ICL arm over interpolation,
 broken out by empirical oxygen quantile band and by tail-run persistence
 (isolated / short / sustained). Backs Figure 7 of the report
-(`figures/oxygen/figure_oxygen_tail_diagnostics.pdf`).
+(`manuscript/report/figures/fig_oxygen_tail_diagnostics_v6.pdf`).
 
-## data_public/chlorophyll/chlorophyll_daily_target.csv
+## data/chlorophyll/chlorophyll_daily_target.csv
 
 One row per calendar day, 2015-07-01 to 2026-05-31.
 
@@ -123,7 +123,7 @@ One row per calendar day, 2015-07-01 to 2026-05-31.
 | timezone_status | Note on timezone handling/conversion status for that day's source data |
 | source_file_count_or_source_note | Provenance note: number of source files contributing, or a note about source |
 
-## data_public/chlorophyll/chlorophyll_predictor_features_curated.csv
+## data/chlorophyll/chlorophyll_predictor_features_curated.csv
 
 One row per calendar day. A curated set of external/spatial predictor
 features (calendar, sea-surface temperature, wind, satellite chlorophyll
@@ -147,10 +147,10 @@ data that day). Key feature families:
 | chl_patch*, chl_anom_* | Spatial patchiness and anomaly features derived from satellite chlorophyll |
 | eval_event_spike | Internal QA flag for sudden spikes; not a predictor |
 
-See `docs/data_sources_and_attribution.md` for the underlying satellite/
-reanalysis product attributions.
+See `docs/data_sources.md` for the underlying satellite/reanalysis product
+attributions.
 
-## data_public/shared/external_current_kinematic_extension.csv
+## data/shared/external_current_kinematic_extension.csv
 
 Not chlorophyll- or oxygen-specific -- shared between both case studies. One row
 per calendar day (same 3,988-row date coverage as every other daily table in this
@@ -192,7 +192,7 @@ a written float64 value back to the same bit pattern.
 See `tests/test_feature_table_reconstruction.py` for the exact column-set and
 bitwise/hash-equality verification against the private 265-column snapshot.
 
-## data_public/chlorophyll/chlorophyll_validation_gaps.csv
+## data/chlorophyll/chlorophyll_validation_gaps.csv
 
 One row per artificial gap in the canonical chlorophyll validation pool
 (hundreds of gaps spanning multiple lengths and seasons).
@@ -215,7 +215,7 @@ One row per artificial gap in the canonical chlorophyll validation pool
 | regime | Gap-construction protocol label; `strict_observed_only` for every row in this released pool |
 | target_table_checksum | Checksum of the target table version used to build this gap pool, for reproducibility verification |
 
-## data_public/chlorophyll/chlorophyll_matched_support_449.csv
+## data/chlorophyll/chlorophyll_matched_support_449.csv
 
 The 449-gap matched support (L=1,3,7,14,30) every headline
 external-tabular/gap-edge/GP/engineered-hybrid comparator is scored on --
@@ -230,7 +230,7 @@ an exact subset of `chlorophyll_validation_gaps.csv` above (see
 | is_high_chl_event | Gap-level high-chlorophyll event flag (90th-percentile threshold, constant within a gap) -- same definition as `chlorophyll_validation_gaps.csv`'s `is_high_chl_event`; not used to select the 449 matched gaps, only for event/non-event stratified reporting. (A private overnight script had renamed this column `event_p85`; it is not an 85th-percentile flag -- corrected here to its actual name.) |
 | n_days | Same as `gap_length` |
 
-## results_public/chlorophyll/chlorophyll_matched_support_method_metrics.csv, chlorophyll_matched_support_by_length.csv, chlorophyll_matched_support_summary.csv
+## results/chlorophyll/chlorophyll_matched_support_method_metrics.csv, chlorophyll_matched_support_by_length.csv, chlorophyll_matched_support_summary.csv
 
 Frozen released metrics for the 449-gap matched support (and, for
 comparison, the same methods' full-681-gap numbers where available), one row
@@ -250,15 +250,15 @@ methods.
 | n_gaps, n_rows | Gap and hidden-day-row counts for this support |
 | mae_day_weighted, mae_gap_weighted, rmse, bias_mean, median_abs_error, p90_abs_error | Released error metrics on the log10 scale |
 
-## data_public/chlorophyll/chlorophyll_real_gap_inventory.csv
+## data/chlorophyll/chlorophyll_real_gap_inventory.csv
 
 One row per real (naturally occurring) gap in the observed record.
 
 | Column | Description |
 |---|---|
-| gap_id | Unique identifier |
+| gap_id | Unique identifier, e.g. `REAL_L010_20150701`, `REAL_L091_20200211`, `REAL_OPEN_20260515`. The `L###` segment is a **duration-class prefix** (short/medium/long/very-long bucket), not an exact-length encoding -- e.g. `REAL_L091_20200211` is the 256-day gap, not a 91-day one. Always read the exact length from `length_days`, never parse it out of `gap_id`. `REAL_OPEN_*` marks a gap still open at the end of the record (no post-edge observation yet). |
 | start_date, end_date | First/last missing day |
-| length_days | Gap length in days |
+| length_days | Gap length in days (the authoritative length -- see `gap_id` note above) |
 | gap_class | Categorical length bucket (e.g. short/medium/long) |
 | seasons | Season(s) spanned by the gap |
 | year_start, year_end | Calendar year(s) spanned |
@@ -269,7 +269,7 @@ One row per real (naturally occurring) gap in the observed record.
 | extrapolation_beyond_validation | Whether this gap's length exceeds the maximum validated gap length (60 days) |
 | notes | Free-text notes on the gap, where applicable |
 
-## results_public/chlorophyll/chlorophyll_reconstruction_tsicl_satellite_proxy.csv
+## results/chlorophyll/chlorophyll_reconstruction_tsicl_satellite_proxy.csv
 
 Day-level TS-ICL reconstruction output (satellite chlorophyll proxy
 covariate configuration), covering both real and artificial gap positions.
@@ -291,23 +291,27 @@ with a `_chl_mg_m3` column in the same computation.
 | artificial_validation_supported | True if this gap length/configuration has validation-grade support from the artificial-gap pool |
 | event_caveat | Free-text note on event-day handling; no event-specific bias correction is applied in this output |
 | quantile_calibrated | Whether the quantile outputs have been calibration-checked |
-| scenario_only_256day | True if this row belongs to the 256-day scenario-only gap |
+| scenario_only_256day | Legacy field name -- despite "scenario," this flags rows that are **real, observed** gap positions falling outside the validated artificial-gap length envelope (currently just the one 256-day gap), not a synthetic/constructed scenario. See `docs/evidence_and_limitations.md`. |
 
-**Correction note (2026-07-28):** earlier versions of this file had a
-`pred_chl` column already in physical units (mg/m³) sitting next to
-`q05...q95` columns that were still on the log10 scale, with no unit in
-the column name to disambiguate. That was a genuine schema bug -- using
-those `q05...q95` values directly as physical-unit uncertainty bounds
-produced nonsensical results (including negative chlorophyll). The schema
-above replaces it; no underlying model output was changed, only the
-column names and the addition of correctly back-transformed physical-scale
-quantile columns. See `tests/test_quantile_schema.py` for the regression
-check.
+Every column name states its own scale explicitly (`_log10_chl` vs.
+`_chl_mg_m3`) specifically so that a log10 quantile can never be mistaken
+for a physical-unit one; see `tests/test_quantile_schema.py` for the
+regression check pinning this schema.
 
-## results_public/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv
+## results/chlorophyll/chlorophyll_reconstruction_engineered_hybrid.csv
 
 Full daily series (observed + reconstructed) under the engineered hybrid
 pipeline's validation-aware method assignment.
+
+**Candidate vs. selected component**: `engineered_hybrid` as a whole is one
+of two independent **candidate** reconstructions for a real gap (see
+`docs/evidence_and_limitations.md`) -- it is not validated truth. Within
+that candidate, the `method` column records which **component** ("Rule D")
+selected for that specific gap length (Gaussian process for L=1-3, Kalman
+smoother for L=4-29, gap-edge residual model for L>=30) -- a deterministic
+routing decision, not a per-gap fitted choice, and not itself a claim that
+the routed component is more accurate than the alternative candidate
+(`tsicl_satellite_proxy`).
 
 | Column | Description |
 |---|---|
@@ -329,7 +333,7 @@ pipeline's validation-aware method assignment.
 | extrapolation_flag | True if this reconstruction extrapolates beyond the validated gap-length envelope |
 | notes | Free-text notes, including method assignment rationale |
 
-## results_public/chlorophyll/chlorophyll_benchmark_summary.csv
+## results/chlorophyll/chlorophyll_benchmark_summary.csv
 
 One row per pairwise method comparison at the "all gaps" stratum, from
 paired bootstrap testing over the artificial-gap pool.
@@ -349,7 +353,7 @@ paired bootstrap testing over the artificial-gap pool.
 | interpretation | Categorical summary (e.g. significant_improvement, directional_not_significant) |
 | evidence_tier | Evidence-hierarchy label for this comparison |
 
-## results_public/chlorophyll/chlorophyll_artificial_gap_scores.csv
+## results/chlorophyll/chlorophyll_artificial_gap_scores.csv
 
 Tidy long-format table of method performance by stratum (gap length,
 season, or event status).
@@ -364,7 +368,7 @@ season, or event status).
 | rmse | Root mean squared error |
 | median_ae | Median absolute error |
 
-## results_public/chlorophyll/chlorophyll_covariate_mechanism_summary.csv
+## results/chlorophyll/chlorophyll_covariate_mechanism_summary.csv
 
 Two sections in one file, distinguished by `table_section`.
 
@@ -390,7 +394,7 @@ a real mechanism and not an artifact).
 | delta_mae_mean, delta_mae_ci_lo, delta_mae_ci_hi | Mean and confidence interval of the MAE difference |
 | significant | Whether the difference is statistically significant |
 
-## results_public/chlorophyll/chlorophyll_event_performance_summary.csv
+## results/chlorophyll/chlorophyll_event_performance_summary.csv
 
 One row per method, comparing event-day vs. non-event-day performance.
 
@@ -406,7 +410,7 @@ One row per method, comparing event-day vs. non-event-day performance.
 | false_flatten_rate_event_days | Fraction of event days where the method failed to predict any elevated value |
 | false_bloom_rate_nonevent_days | Fraction of non-event days where the method falsely predicted an elevated value |
 
-## results_public/chlorophyll/chlorophyll_real_gap_candidate_outputs.csv
+## results/chlorophyll/chlorophyll_real_gap_candidate_outputs.csv
 
 One row per real gap, summarizing both candidate methods' outputs.
 
@@ -424,7 +428,7 @@ One row per real gap, summarizing both candidate methods' outputs.
 | note_real_gap_caveat | Standing note: real gaps have no withheld ground truth |
 | note_256day_scenario | Note flagging the 256-day gap as scenario-only, where applicable |
 
-## results_public/chlorophyll/chlorophyll_real_gap_candidate_outputs_daily.csv
+## results/chlorophyll/chlorophyll_real_gap_candidate_outputs_daily.csv
 
 Full per-day join of the daily target table against both candidate
 reconstruction methods and the real-gap inventory, one row per calendar
