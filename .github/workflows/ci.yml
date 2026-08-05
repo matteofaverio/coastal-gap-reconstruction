@@ -22,7 +22,7 @@ jobs:
         # Runs generically over the whole tests/ directory rather than a
         # hand-maintained file list, so new test files are picked up
         # automatically. Notebook execution needs no TS-ICL checkpoint
-        # download (notebook 06 degrades gracefully without it); the demo
+        # download (notebook 04 degrades gracefully without it); the demo
         # smoke test falls back to cached predictions and does not require
         # live TS-ICL either -- both stay within CI's normal network/time
         # budget. Maintainer-only tests gated behind RUN_PRIVATE_SNAPSHOT_

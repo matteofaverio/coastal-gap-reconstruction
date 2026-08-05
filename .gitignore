@@ -6,9 +6,8 @@ __pycache__/
 # Notebook checkpoints
 .ipynb_checkpoints/
 
-# Virtual environments
+# Virtual environments (including environments/tsicl/.venv/)
 .venv/
-.venv_tsicl_demo/
 venv/
 env/
 
@@ -20,7 +19,7 @@ dist/
 # Test artifacts
 .pytest_cache/
 
-# Local data scratch folders (not the tracked data_public/ or results_public/ trees)
+# Local data scratch folders (not the tracked data/ or results/ trees)
 data_local/
 scratch/
 *.tmp
@@ -34,7 +33,9 @@ checkpoints/
 # OS cruft
 .DS_Store
 
-# LaTeX auxiliaries / Tectonic build artifacts
+# LaTeX auxiliaries / Tectonic build artifacts (Tectonic's default output
+# filename, main.pdf, is never the tracked PDF name in manuscript/ -- those
+# are copied to their final, tracked filenames after compiling)
 *.aux
 *.log
 *.out
@@ -47,6 +48,7 @@ checkpoints/
 *.fdb_latexmk
 *.synctex.gz
 tectonic.log
+manuscript/*/main.pdf
 
 # ruff cache
 .ruff_cache/
