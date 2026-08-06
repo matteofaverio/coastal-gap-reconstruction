@@ -6,7 +6,7 @@ with chlorophyll-a and dissolved-oxygen records from the Tongoy Balsa buoy in
 Chile, asking how much of a missing coastal time series can be reconstructed
 from the observations around the gap and from external ocean–atmosphere data.
 
-![Project overview: the observed chlorophyll record and its gaps, one artificial-gap validation example, and the main benchmark result for both case studies](assets/project_overview.png)
+![Tongoy Bay monitoring site, artificial-gap validation design, and chlorophyll and oxygen benchmark results](assets/project_overview.png)
 
 ## The problem
 
