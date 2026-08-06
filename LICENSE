@@ -24,6 +24,5 @@ SOFTWARE.
 
 NOTE: This MIT License applies to the source code in this repository
 (`src/`, notebook code cells, and configuration files). It does NOT apply to
-the data files under `data_public/` and `results_public/`, which are
-licensed/attributed separately. See `DATA_LICENSE_AND_ATTRIBUTION.md` for
-details.
+the data files under `data/` and `results/`, which are
+licensed/attributed separately. See `docs/data_sources.md` for details.

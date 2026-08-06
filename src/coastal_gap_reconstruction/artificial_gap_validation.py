@@ -24,6 +24,17 @@ Design rules enforced here:
 `eligible_col` overrides so this framework runs unchanged against a target
 table for any sensor/variable -- see `data_loading.TARGET_COL` /
 `data_loading.ELIGIBLE_COL` for the chlorophyll defaults.
+
+Scope note: `generate_gap_candidates` here is an illustrative candidate
+generator, not a reproduction of the exact released validation pools. The
+released pools (`data/chlorophyll/chlorophyll_validation_gaps.csv`,
+`data/oxygen/oxygen_validation_gaps.csv`) carry extra columns
+(event/regime flags, support-role labels, context-availability checks,
+checksums) produced by additional private research code that is not part of
+this public module. Treat the released CSVs as the authoritative pool
+definitions, and this function as a way to explore or extend gap sampling
+on your own data with the same masking/eligibility rules -- not as the code
+that generated the numbers in the report.
 """
 
 from __future__ import annotations
@@ -37,7 +48,16 @@ import pandas as pd
 from .data_loading import ELIGIBLE_COL, TARGET_COL
 from .gap_detection import find_eligible_runs
 
-GAP_LENGTHS = [1, 3, 7, 14, 30, 45, 60]
+# Default gap lengths for this module's illustrative sampler. This matches
+# the chlorophyll released pool's length set (see
+# data/chlorophyll/chlorophyll_validation_gaps.csv) but, per the
+# module docstring, does NOT reproduce that pool's exact gap instances or
+# extra metadata columns -- generate_gap_candidates(target_df, gap_lengths=...)
+# re-samples independently. The oxygen released pool uses a different length
+# set: primary support [1, 3, 7, 10, 14, 21, 30] plus exploratory extended
+# lengths [45, 60, 90, 120] -- pass gap_lengths explicitly for that case
+# rather than relying on this chlorophyll-shaped default.
+GAP_LENGTHS = [1, 3, 7, 10, 14, 21, 30, 45, 60]
 RANDOM_SEED = 42
 MAX_GAPS_PER_LENGTH = 100
 

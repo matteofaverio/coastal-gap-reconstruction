@@ -82,7 +82,6 @@ def compute_gap_metrics(
             "gap_length": gap_length,
             "season": gap_info.get("season", np.nan),
             "year": gap_info.get("year", np.nan),
-            "is_high_chl_event": gap_info.get("is_high_chl_event", np.nan),
             "target_mean_true": gap_info.get("target_mean_true", np.nan),
             "n_valid": n_valid,
             "coverage": round(coverage, 4) if not np.isnan(coverage) else np.nan,

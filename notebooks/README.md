@@ -1,39 +1,40 @@
 # Notebooks
 
-Numbered, runnable notebooks covering the full pipeline for both case
-studies. `tests/test_notebooks_smoke.py` executes every notebook marked
-"executable" below on every CI run.
+Six notebooks covering the full pipeline for both case studies, in reading
+order. `tests/test_notebooks_smoke.py` executes every notebook end to end
+on every CI run.
 
-## Core reading path
+| Notebook | Purpose | Executes locally | Uses cached public results |
+|---|---|---|---|
+| [`01_data_and_gap_audit.ipynb`](01_data_and_gap_audit.ipynb) | Chlorophyll target coverage/missingness audit, then the artificial-gap validation pool that makes method comparison possible | yes | no |
+| [`02_artificial_gap_validation.ipynb`](02_artificial_gap_validation.ipynb) | Runs the validation protocol for real: the three Model 0 baselines, scored against the pool | yes | no |
+| [`03_classical_and_probabilistic_models.ipynb`](03_classical_and_probabilistic_models.ipynb) | External-predictor tabular models and gap-edge residual/probabilistic models | yes (small samples; full runs in `docs/reproducibility.md`) | partial |
+| [`04_tsicl_and_covariates.ipynb`](04_tsicl_and_covariates.ipynb) | The real TS-ICL calling API, then the full cross-method benchmark comparison and covariate-mechanism ranking | yes (TS-ICL cells need `environments/tsicl/`, degrade gracefully otherwise) | partial |
+| [`05_real_gap_candidates.ipynb`](05_real_gap_candidates.ipynb) | Real-gap inventory, candidate-method routing, and assembly, applied to the 128 naturally-occurring chlorophyll gaps | yes | yes |
+| [`06_oxygen_case_study.ipynb`](06_oxygen_case_study.ipynb) | Case Study 2: adapting the workflow to oxygen, and the released oxygen benchmark result | yes | yes |
 
-1. [`../demo/gap_reconstruction_walkthrough.ipynb`](../demo/gap_reconstruction_walkthrough.ipynb) — visual, live, includes a real TS-ICL run.
-2. `01_target_and_gap_audit.ipynb` — target construction and missingness audit.
-3. `02_artificial_gap_validation.ipynb` — validation protocol and gap pool.
-4. `07_benchmark_comparison_and_diagnostics.ipynb` — full method comparison.
-5. `10_oxygen_case_study.ipynb` — transfer to a second sensor.
-6. `09_adapting_the_workflow_to_a_new_sensor.ipynb` — checklist to extend to a third.
+For the full, always-executable, visual, multi-configuration comparison
+(target-only vs. +satellite chlorophyll vs. +wind/SST, on a real 14-day
+gap, plotted against withheld ground truth, live TS-ICL run included), see
+[`../demo/gap_reconstruction_walkthrough.ipynb`](../demo/gap_reconstruction_walkthrough.ipynb)
+and `bash demo/run_demo.sh`.
 
-## Full index
+## Frozen vs. newly-computed
 
-| Notebook | Purpose | Executes locally | Uses cached public results | Audience | Reading path role |
-|---|---|---|---|---|---|
-| `01_target_and_gap_audit.ipynb` | Coverage/missingness audit for the daily chlorophyll target | yes | no | anyone | core |
-| `02_artificial_gap_validation.ipynb` | Validation protocol and artificial-gap pool | yes | no | anyone | core |
-| `03_baselines.ipynb` | Climatology/persistence/interpolation, scored | yes | no | anyone | depth |
-| `04_engineered_tabular_models.ipynb` | External-predictor tabular models | yes | no | ML-focused | depth |
-| `05_gap_edge_residual_models.ipynb` | Gap-edge residual correction models | partial* | yes | ML-focused | depth |
-| `06_tsicl_zero_shot_imputation.ipynb` | Real TS-ICL API usage template | requires TS-ICL env | no | ML-focused | depth |
-| `07_benchmark_comparison_and_diagnostics.ipynb` | Full cross-method benchmark | yes | no | anyone | core |
-| `08_real_gap_candidate_reconstructions.ipynb` | Applying validated methods to real gaps | yes | no | anyone | depth |
-| `09_adapting_the_workflow_to_a_new_sensor.ipynb` | Markdown checklist for a new sensor/target | n/a (markdown) | n/a | maintainers | core |
-| `10_oxygen_case_study.ipynb` | Case Study 2: oxygen, worked result of notebook 9 | yes | no | anyone | core |
+Every notebook is explicit about which values it computes fresh (from the
+public data tables) and which it loads from an already-released `results/`
+table -- see `docs/evidence_and_limitations.md` for what evidential weight
+each carries. None of these six notebooks runs a complete expensive
+benchmark; see `docs/reproducibility.md` for the standard and optional
+full-grid reproduction commands.
 
-\* Notebook 05 loads and visualizes the released public benchmark tables and
-figure; the full gap-edge residual model training pipeline itself is not
-republished (see the notebook's opening cell for why). It explains and
-visualizes the model family without reproducing the private training run.
+## Setup
 
-Notebook 06 is a template for the real `TSICL()` API used elsewhere in this
-repository — see `demo/gap_reconstruction_walkthrough.ipynb` for the full
-executable, visual, multi-configuration comparison, and `demo/README.md` for
-the tested installation route.
+```bash
+uv sync --extra notebooks --extra test
+uv run jupyter lab notebooks/01_data_and_gap_audit.ipynb
+```
+
+Notebooks 04 and the demo need the separate `environments/tsicl/`
+environment for live TS-ICL inference (`docs/reproducibility.md`); every
+other notebook needs only the core locked environment.

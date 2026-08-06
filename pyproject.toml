@@ -27,8 +27,8 @@ stats = ["scipy>=1.9"]
 # torch dependency needed to *develop against* src/coastal_gap_reconstruction/tsicl_helpers.py
 # (tensor-shape utilities) without pulling in tsicl or its checkpoint.
 tsicl-dev = ["torch>=2.0"]
-notebooks = ["jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
-test = ["pytest>=7", "nbconvert>=7", "ipykernel", "jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1", "pillow"]
+notebooks = ["jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1"]
+test = ["pytest>=7", "nbconvert>=7", "ipykernel", "jupyter", "matplotlib>=3.6", "scipy>=1.9", "scikit-learn>=1.1"]
 
 [dependency-groups]
 dev = ["ruff>=0.6"]

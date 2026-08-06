@@ -1,0 +1,36 @@
+method_id,method_label,support,gap_length,n_gaps,n_rows,mae_day_weighted,mae_gap_weighted
+canonical_interpolation,Linear interpolation,matched_449,1,99,99,0.10769747834586549,0.10769747834586549
+canonical_interpolation,Linear interpolation,matched_449,3,100,300,0.13293575947879285,0.13293575947879283
+canonical_interpolation,Linear interpolation,matched_449,7,100,700,0.19043209474879189,0.19043209474879189
+canonical_interpolation,Linear interpolation,matched_449,14,100,1400,0.25352671601704807,0.25352671601704807
+canonical_interpolation,Linear interpolation,matched_449,30,50,1500,0.2778535437902792,0.27785354379027927
+gp_m1,Gaussian process,matched_449,1,99,99,0.10420781943715145,0.10420781943715145
+gp_m1,Gaussian process,matched_449,3,100,300,0.1290122657610556,0.12901226576105562
+gp_m1,Gaussian process,matched_449,7,100,700,0.19886519863945595,0.19886519863945598
+gp_m1,Gaussian process,matched_449,14,100,1400,0.24809510389581546,0.24809510389581546
+gp_m1,Gaussian process,matched_449,30,50,1500,0.26600065684637675,0.2660006568463767
+ext_tabular_extratrees,External tabular (ExtraTrees),matched_449,1,99,99,0.248289200490306,0.248289200490306
+ext_tabular_extratrees,External tabular (ExtraTrees),matched_449,3,100,300,0.25659119894805466,0.25659119894805466
+ext_tabular_extratrees,External tabular (ExtraTrees),matched_449,7,100,700,0.274016334893687,0.27401633489368693
+ext_tabular_extratrees,External tabular (ExtraTrees),matched_449,14,100,1400,0.2670908576601604,0.26709085766016044
+ext_tabular_extratrees,External tabular (ExtraTrees),matched_449,30,50,1500,0.29456111515848593,0.29456111515848593
+tier_ch_deployed,Gap-edge residual model,matched_449,1,99,99,0.12647380851686021,0.12647380851686021
+tier_ch_deployed,Gap-edge residual model,matched_449,3,100,300,0.14306485930434146,0.14306485930434143
+tier_ch_deployed,Gap-edge residual model,matched_449,7,100,700,0.18539572935438237,0.18539572935438237
+tier_ch_deployed,Gap-edge residual model,matched_449,14,100,1400,0.23849619906892103,0.23849619906892106
+tier_ch_deployed,Gap-edge residual model,matched_449,30,50,1500,0.26511757133577973,0.2651175713357798
+tsicl_target_only,TS-ICL target-only,matched_449,1,99,99,0.1061204870918182,0.1061204870918182
+tsicl_target_only,TS-ICL target-only,matched_449,3,100,300,0.12305229319065494,0.12305229319065493
+tsicl_target_only,TS-ICL target-only,matched_449,7,100,700,0.18598744923581503,0.185987449235815
+tsicl_target_only,TS-ICL target-only,matched_449,14,100,1400,0.2384534949344483,0.2384534949344483
+tsicl_target_only,TS-ICL target-only,matched_449,30,50,1500,0.25941147153876953,0.25941147153876953
+tsicl_satellite_proxy,TS-ICL satellite-proxy,matched_449,1,99,99,0.10604184839611099,0.10604184839611099
+tsicl_satellite_proxy,TS-ICL satellite-proxy,matched_449,3,100,300,0.12221201005508187,0.12221201005508187
+tsicl_satellite_proxy,TS-ICL satellite-proxy,matched_449,7,100,700,0.17959535601482327,0.17959535601482324
+tsicl_satellite_proxy,TS-ICL satellite-proxy,matched_449,14,100,1400,0.2344870374977888,0.2344870374977888
+tsicl_satellite_proxy,TS-ICL satellite-proxy,matched_449,30,50,1500,0.25422102695010834,0.25422102695010834
+ext_tabular_hgb,External tabular (HGB),matched_449,1,99,99,0.2538817201946792,0.2538817201946792
+ext_tabular_hgb,External tabular (HGB),matched_449,3,100,300,0.2780561221451893,0.2780561221451893
+ext_tabular_hgb,External tabular (HGB),matched_449,7,100,700,0.2818249104870826,0.28182491048708264
+ext_tabular_hgb,External tabular (HGB),matched_449,14,100,1400,0.2727727048795246,0.27277270487952465
+ext_tabular_hgb,External tabular (HGB),matched_449,30,50,1500,0.30749160553346216,0.30749160553346216

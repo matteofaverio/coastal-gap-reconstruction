@@ -1,12 +1,13 @@
 """Builds the small CSV files used by demo/gap_reconstruction_walkthrough.ipynb.
 
 Not required to run the demo (the CSVs are already committed under demo/data/).
-Kept for transparency and reproducibility. Run from the public_export/ root:
+Kept for transparency and reproducibility. Run from the repository root:
 
     python3 demo/build_demo_data.py
 
-Reads only from data_public/ (public, redistributable chlorophyll data already
-in this repository) -- does not touch anything in the private research repo.
+Reads only from data/ (public, redistributable chlorophyll data already
+in this repository) -- does not read from or write to any private/internal
+data source.
 """
 import pandas as pd
 
@@ -25,9 +26,9 @@ REAL_GAP_END = pd.Timestamp("2015-07-14")
 
 
 def main():
-    target = pd.read_csv("data_public/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
+    target = pd.read_csv("data/chlorophyll/chlorophyll_daily_target.csv", parse_dates=["date"])
     feat = pd.read_csv(
-        "data_public/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"]
+        "data/chlorophyll/chlorophyll_predictor_features_curated.csv", parse_dates=["date"]
     )
 
     window_start = GAP_START - pd.Timedelta(days=CONTEXT_DAYS)

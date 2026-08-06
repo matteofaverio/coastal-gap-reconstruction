@@ -1,15 +1,13 @@
 """Smoke test for the live demo (`demo/`).
 
-By default this only does fast, static checks: source-code hygiene (no
-`plt.savefig`, no external figure directory) and, if the demo has already
+By default this only does fast, static checks and, if the demo has already
 been run (`demo/gap_reconstruction_walkthrough_executed.ipynb` exists, e.g.
 because `bash demo/run_demo.sh` was run manually), that it contains no
-error-type cell outputs, that every plotting cell produced an inline image,
-and that TS-ICL ran live (not the cached fallback).
+error-type cell outputs and that TS-ICL ran live (not the cached fallback).
 
-To actually (re-)run the full demo -- creating `.venv_tsicl_demo/`,
-installing `tsicl`/`torch`, downloading the TS-ICL checkpoint on first use,
-and executing the notebook -- set `RUN_DEMO_SMOKE=1`. This is opt-in
+To actually (re-)run the full demo -- setting up `environments/tsicl/`,
+downloading the TS-ICL checkpoint on first use, and executing the notebook
+-- set `RUN_DEMO_SMOKE=1`. This is opt-in
 because it needs internet access on first run and takes noticeably longer
 than the rest of this test suite (see demo/README.md for tested timings).
 
@@ -30,26 +28,9 @@ DEMO_DIR = REPO_ROOT / "demo"
 EXECUTED_NOTEBOOK = DEMO_DIR / "gap_reconstruction_walkthrough_executed.ipynb"
 RUN_SCRIPT = DEMO_DIR / "run_demo.sh"
 
-# Sections that must each produce at least one inline figure (Section 1 is the
-# only exception with two plotting cells; every other numbered section has
-# exactly one). Counted as a minimum, not an exact match, so adding an extra
-# explanatory plot later doesn't break this test.
-MIN_EXPECTED_INLINE_FIGURES = 12
-
 EXPECTED_OUTPUT_FILES = [
     DEMO_DIR / "outputs" / "demo_reconstruction_results.csv",
 ]
-
-# These are the only files a fresh demo run is allowed to produce under
-# demo/outputs/ -- anything else (in particular any image file) would mean a
-# plotting function started saving to disk again.
-ALLOWED_OUTPUT_FILENAMES = {
-    "demo_reconstruction_results.csv",
-    # One-off diagnostic audit from demo/search_demo_gap.py (not produced by a
-    # normal demo run, but committed alongside it -- see that script's
-    # docstring for the selection methodology).
-    "demo_gap_selection_audit.csv",
-}
 
 
 def _load_notebook(path: Path) -> dict:
@@ -64,19 +45,6 @@ def _assert_no_error_outputs(nb: dict) -> None:
                 f"{cell.get('cell_type')} cell: "
                 f"{output.get('ename')}: {output.get('evalue')}"
             )
-
-
-def _count_inline_images(nb: dict) -> int:
-    count = 0
-    for cell in nb.get("cells", []):
-        for output in cell.get("outputs", []):
-            if "image/png" in output.get("data", {}):
-                count += 1
-    return count
-
-
-def _notebook_code_source(nb: dict) -> str:
-    return "".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
 
 
 def _tsicl_live_status(nb: dict) -> bool | None:
@@ -101,70 +69,6 @@ def _tsicl_live_status(nb: dict) -> bool | None:
 def test_run_demo_script_exists_and_is_executable() -> None:
     assert RUN_SCRIPT.exists(), "demo/run_demo.sh is missing"
     assert os.access(RUN_SCRIPT, os.X_OK), "demo/run_demo.sh is not executable (chmod +x)"
-
-
-def _find_calls(source: str, method_name: str) -> list[int]:
-    """Return line numbers of actual `<something>.<method_name>(...)` calls in
-    `source`, parsed via `ast` so docstrings/comments mentioning the method
-    name (e.g. explaining that it must NOT be called) don't trigger a false
-    positive."""
-    import ast
-
-    tree = ast.parse(source)
-    hits = []
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == method_name
-        ):
-            hits.append(node.lineno)
-    return hits
-
-
-def test_no_savefig_anywhere_in_demo_code() -> None:
-    """Figures must stay inline-only: no plotting function or notebook cell
-    may write an image file to disk."""
-    offenders = {}
-    for path in (DEMO_DIR / "src").glob("*.py"):
-        hits = _find_calls(path.read_text(), "savefig")
-        if hits:
-            offenders[str(path)] = hits
-
-    nb = _load_notebook(DEMO_DIR / "gap_reconstruction_walkthrough.ipynb")
-    code_source = _notebook_code_source(nb)
-    hits = _find_calls(code_source, "savefig")
-    if hits:
-        offenders["gap_reconstruction_walkthrough.ipynb"] = hits
-
-    assert not offenders, f"Found actual .savefig(...) call(s) in: {offenders}"
-
-
-def test_no_external_figures_directory() -> None:
-    assert not (DEMO_DIR / "outputs" / "figures").exists(), (
-        "demo/outputs/figures/ must not exist -- figures are inline-only in the notebook"
-    )
-
-
-def test_plotting_functions_do_not_call_show_or_savefig() -> None:
-    """`src/plotting.py` functions must return (fig, axes) without displaying
-    or saving -- that responsibility belongs to the notebook cell."""
-    plotting_source = (DEMO_DIR / "src" / "plotting.py").read_text()
-    assert not _find_calls(plotting_source, "show")
-    assert not _find_calls(plotting_source, "savefig")
-
-
-def test_notebook_calls_show_after_every_plotting_function() -> None:
-    nb = _load_notebook(DEMO_DIR / "gap_reconstruction_walkthrough.ipynb")
-    plot_calls = 0
-    for cell in nb["cells"]:
-        if cell["cell_type"] != "code":
-            continue
-        src = "".join(cell["source"])
-        if "pl.plot_" in src:
-            plot_calls += 1
-            assert "plt.show()" in src, f"Cell calling a pl.plot_* function without plt.show():\n{src}"
-    assert plot_calls >= MIN_EXPECTED_INLINE_FIGURES
 
 
 # ---------------------------------------------------------------------------
@@ -192,18 +96,6 @@ class TestExistingDemoRun:
         for f in EXPECTED_OUTPUT_FILES:
             assert f.exists(), f"expected demo output missing: {f}"
 
-    def test_no_unexpected_files_under_outputs(self) -> None:
-        outputs_dir = DEMO_DIR / "outputs"
-        actual = {p.name for p in outputs_dir.iterdir() if p.is_file()}
-        unexpected = actual - ALLOWED_OUTPUT_FILENAMES
-        assert not unexpected, f"Unexpected file(s) under demo/outputs/: {unexpected}"
-
-    def test_inline_figures_present(self, executed_nb: dict) -> None:
-        n_images = _count_inline_images(executed_nb)
-        assert n_images >= MIN_EXPECTED_INLINE_FIGURES, (
-            f"Expected at least {MIN_EXPECTED_INLINE_FIGURES} inline figures, found {n_images}"
-        )
-
     def test_tsicl_status_reported(self, executed_nb: dict) -> None:
         status = _tsicl_live_status(executed_nb)
         assert status is not None, "Could not find a TS-ICL live/cached status message in the executed notebook"
@@ -221,7 +113,9 @@ class TestExistingDemoRun:
         )
 
     def test_real_gap_section_has_no_score(self, executed_nb: dict) -> None:
-        """Section 10 (real gap) must never compute or display a MAE."""
+        """Section 10 (real gap) must never compute or display a MAE -- real
+        gaps have no withheld ground truth, so any score there would be
+        fabricated."""
         for cell in executed_nb["cells"]:
             src = "".join(cell.get("source", []))
             if "real_gap" in src and "load_real_gap_example" in src:

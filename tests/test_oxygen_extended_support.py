@@ -12,8 +12,8 @@ from pathlib import Path
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-GAP_POOL = REPO_ROOT / "data_public" / "oxygen" / "oxygen_validation_gaps.csv"
-BENCHMARK_BY_LENGTH = REPO_ROOT / "results_public" / "oxygen" / "oxygen_benchmark_by_length.csv"
+GAP_POOL = REPO_ROOT / "data" / "oxygen" / "oxygen_validation_gaps.csv"
+BENCHMARK_BY_LENGTH = REPO_ROOT / "results" / "oxygen" / "oxygen_benchmark_by_length.csv"
 
 PRIMARY_LENGTHS = {1, 3, 7, 10, 14, 21, 30}
 EXTENDED_LENGTHS = {45, 60, 90, 120}

@@ -1,8 +1,10 @@
 """Small plotting helpers for the figure types used in this benchmark.
 
 These are intentionally minimal -- enough to reproduce the basic shape of
-the figures shipped under figures/chlorophyll/, not a full plotting library.
-Requires matplotlib (not a hard dependency of the package; import lazily).
+the target-and-gaps / gap-length-performance figures used elsewhere in
+this repository (e.g. notebook 01, `assets/project_overview.png`), not a
+full plotting library. Requires matplotlib (not a hard dependency of the
+package; import lazily).
 """
 
 from __future__ import annotations

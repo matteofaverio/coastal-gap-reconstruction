@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CSV_PATH = REPO_ROOT / "results_public" / "chlorophyll" / "chlorophyll_reconstruction_tsicl_satellite_proxy.csv"
+CSV_PATH = REPO_ROOT / "results" / "chlorophyll" / "chlorophyll_reconstruction_tsicl_satellite_proxy.csv"
 
 QUANTILE_LEVELS = ["q05", "q10", "q25", "q50", "q75", "q90", "q95"]
 

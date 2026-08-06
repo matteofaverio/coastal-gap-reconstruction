@@ -18,12 +18,18 @@ jobs:
         run: uv sync --extra notebooks --extra test --locked
       - name: ruff check
         run: uv run ruff check .
-      - name: Unit tests
-        run: uv run pytest tests/test_demo_methods.py tests/test_oxygen_extended_support.py tests/test_quantile_schema.py -q
-      - name: Notebook smoke tests (no TS-ICL checkpoint download)
-        run: uv run pytest tests/test_notebooks_smoke.py -q
-      - name: Demo smoke tests (falls back to cached predictions; does not require live TS-ICL)
-        run: uv run pytest tests/test_demo_smoke.py -q
+      - name: Test suite (unit, schema, notebook smoke, demo smoke -- all of tests/)
+        # Runs generically over the whole tests/ directory rather than a
+        # hand-maintained file list, so new test files are picked up
+        # automatically. Notebook execution needs no TS-ICL checkpoint
+        # download (notebook 04 degrades gracefully without it); the demo
+        # smoke test falls back to cached predictions and does not require
+        # live TS-ICL either -- both stay within CI's normal network/time
+        # budget. Maintainer-only tests gated behind RUN_PRIVATE_SNAPSHOT_
+        # COMPARISON / RUN_DEMO_SMOKE are skipped here by design (they need
+        # private-repository files or a live TS-ICL checkpoint download not
+        # available in CI).
+        run: uv run pytest tests/ -q
 
   build-documents:
     runs-on: ubuntu-latest

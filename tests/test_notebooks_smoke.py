@@ -5,12 +5,12 @@ top to bottom without raising an exception, against the packages declared
 in `pyproject.toml`'s `notebooks` extra (`pip install -e ".[notebooks]"`)
 plus `nbconvert`/`ipykernel`.
 
-Notebook 06 (`06_tsicl_zero_shot_imputation.ipynb`) is included here because
-it degrades gracefully: it attempts to load TS-ICL live via
-`demo/src/methods.load_tsicl()`, which never raises (it returns a status
-object with `live=False` if `tsicl`/`torch` are not installed), so the
-notebook executes cleanly either way. The always-live TS-ICL run lives in
-`demo/`, exercised separately by `test_demo_smoke.py`.
+Notebook 04 (`04_tsicl_and_covariates.ipynb`) is included here because it
+degrades gracefully: it attempts to load TS-ICL live via
+`coastal_gap_reconstruction.tsicl_helpers.load_tsicl()`, which never raises
+(it returns a status object with `live=False` if `tsicl`/`torch` are not
+installed), so the notebook executes cleanly either way. The always-live
+TS-ICL run lives in `demo/`, exercised separately by `test_demo_smoke.py`.
 
 Run with:
 

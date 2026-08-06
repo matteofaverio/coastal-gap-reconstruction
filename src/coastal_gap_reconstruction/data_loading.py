@@ -1,5 +1,13 @@
 """Loaders for the public daily target and feature tables.
 
+`load_daily_target` and `load_feature_table` re-export from `daily_target.py` and
+`feature_tables.py` respectively, which hold the canonical implementations -- kept
+here too (not just moved) because existing notebooks import them from this module
+by name; this is the one authoritative implementation in both places, not a
+duplicate. `load_full_feature_table` moved to `feature_tables.py` in full (its
+implementation belongs with the other feature-table loader, not here); import it
+from there directly, or via the re-export below.
+
 These functions assume the standard column names used throughout this
 repository's public CSVs:
 
@@ -15,9 +23,21 @@ from pathlib import Path
 
 import pandas as pd
 
+from .daily_target import load_daily_target as _load_daily_target
+from .feature_tables import load_feature_table as _load_feature_table
+from .feature_tables import load_full_feature_table
+
 TARGET_COL = "chl_mean"
 ELIGIBLE_COL = "target_eligible_default"
 DATE_COL = "date"
+
+__all__ = [
+    "load_daily_target",
+    "load_feature_table",
+    "load_full_feature_table",
+    "load_validation_gap_pool",
+    "load_real_gap_inventory",
+]
 
 
 def load_daily_target(path: str | Path) -> pd.DataFrame:
@@ -30,9 +50,7 @@ def load_daily_target(path: str | Path) -> pd.DataFrame:
         "target_eligible_default" columns (see
         docs/data_dictionary.md for the full schema).
     """
-    df = pd.read_csv(path, parse_dates=[DATE_COL])
-    df = df.set_index(DATE_COL).sort_index()
-    return df
+    return _load_daily_target(path, date_col=DATE_COL)
 
 
 def load_feature_table(path: str | Path) -> pd.DataFrame:
@@ -41,9 +59,7 @@ def load_feature_table(path: str | Path) -> pd.DataFrame:
     Works for any of the curated feature CSVs as long as they have a
     "date" column.
     """
-    df = pd.read_csv(path, parse_dates=[DATE_COL])
-    df = df.set_index(DATE_COL).sort_index()
-    return df
+    return _load_feature_table(path)
 
 
 def load_validation_gap_pool(path: str | Path) -> pd.DataFrame:

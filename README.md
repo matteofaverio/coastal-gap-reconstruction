@@ -1,135 +1,130 @@
-# Coastal Gap Reconstruction
+# Reconstructing gaps in coastal sensor records
 
-Historical reconstruction of gaps in coastal in-situ sensor time series, using
-chlorophyll-a at a Chilean monitoring station as the primary case and
-dissolved oxygen at the same station as a transfer case. The methodology is
-diagnostic, not forecasting: it uses artificial-gap validation (withholding
-known values and scoring the reconstruction) to compare classical baselines,
-tabular machine learning, and a zero-shot time-series foundation model
-(TS-ICL).
+I developed this project during my applied-mathematics internship at CEAZA
+(June–August 2026), under the supervision of Dr. Orlando Astudillo. I worked
+with chlorophyll-a and dissolved-oxygen records from the Tongoy Balsa buoy in
+Chile, asking how much of a missing coastal time series can be reconstructed
+from the observations around the gap and from external ocean–atmosphere data.
 
-## Project outputs
+![Project overview: the observed chlorophyll record and its gaps, one artificial-gap validation example, and the main benchmark result for both case studies](assets/project_overview.png)
 
-| Output | Path |
-|---|---|
-| Final report (PDF) | [`manuscript/report/coastal_gap_reconstruction_report.pdf`](manuscript/report/coastal_gap_reconstruction_report.pdf) |
-| English academic presentation (PDF) | [`manuscript/presentation/coastal_gap_reconstruction_presentation_en.pdf`](manuscript/presentation/coastal_gap_reconstruction_presentation_en.pdf) |
-| Spanish colleague-facing presentation (PDF) | [`manuscript/presentation_colleagues_es/coastal_gap_reconstruction_presentation_es.pdf`](manuscript/presentation_colleagues_es/coastal_gap_reconstruction_presentation_es.pdf) |
-| Scientific poster (PDF) | [`manuscript/poster/coastal_gap_reconstruction_poster.pdf`](manuscript/poster/coastal_gap_reconstruction_poster.pdf) |
-| Live visual demo | [`demo/gap_reconstruction_walkthrough.ipynb`](demo/gap_reconstruction_walkthrough.ipynb) |
-| Notebook index | [`notebooks/README.md`](notebooks/README.md) |
-| Public data and result tables | [`data_public/`](data_public/), [`results_public/`](results_public/) |
+## The problem
 
-## Workflow
+Coastal in-situ sensors go offline: biofouling, maintenance, transmission
+failures. The record ends up full of holes, some a day long, some spanning
+months. I wanted a defensible answer to "what probably happened during that
+gap" — defensible meaning: validated against real withheld data, not just
+plausible-looking.
 
-```
-daily target + QC  →  real-gap audit  →  artificial gaps
-   →  common model comparison  →  stratified diagnostics
-   →  candidate reconstruction of real gaps
-```
+The approach is diagnostic reconstruction, not forecasting. Every method here
+is allowed to see data from *after* a gap, not only before it, because the
+goal is filling in history, not predicting the future.
 
-Every result comes from the same pipeline, applied to both case studies.
-Artificial gaps (known, withheld values) produce validation-grade evidence;
-real gaps (naturally missing, no withheld truth) produce plausibility-only
-candidate outputs. See `docs/evidence_hierarchy.md` for the full framing.
+## What I worked on
+
+- Built the daily chlorophyll and dissolved-oxygen targets from CEAZAMet's
+  hourly in-situ data, with an explicit eligibility rule and QC.
+- Designed an **artificial-gap validation** protocol: hide real, known
+  values, run every candidate method as if they were missing, score the
+  predictions against the values that were secretly retained. This is the
+  only evidence in the repository that supports ranking methods — real
+  (naturally occurring) gaps have no withheld truth to check against.
+- Benchmarked a model ladder for both targets: climatology/persistence/
+  interpolation baselines, external-predictor tabular models, a Gaussian
+  process and a state-space model, and **TS-ICL**, a zero-shot time-series
+  foundation model, evaluated with and without external covariates.
+- Applied validated methods to the real gaps in the chlorophyll record,
+  publishing two independent, method-specific candidate reconstructions,
+  clearly labeled as candidates, not as validated numbers. Oxygen
+  currently has a real-gap inventory and classification only — no
+  oxygen reconstruction candidate is published.
+- Wrote up both case studies in a report, two presentations, and a poster.
 
 ## Main findings
 
-- Linear interpolation is a strong reference method, especially at short gap
-  lengths.
-- External-covariate-only tabular models (calendar, meteorology, satellite
-  predictors, with no target-sensor history) do not improve on interpolation
-  as direct reconstructors, for either case study.
-- TS-ICL, conditioned on an appropriate covariate, gives the strongest pooled
-  result across both case studies. The improvement over interpolation is
-  resolved (confidence interval excludes zero) at short gaps and on
-  high-chlorophyll event days; at mid-range gap lengths (7/14/30 days) the
-  direction is consistent but not statistically resolved. See
-  `docs/methodology/tsicl_usage.md` for the per-length breakdown.
-- High-chlorophyll events and the oxygen distribution tails remain difficult
-  for every method, including TS-ICL.
+- Linear interpolation is a genuinely strong baseline, especially at short
+  gap lengths — beating it is not automatic.
+- External-predictor tabular models (calendar, meteorology, satellite
+  proxies, no target-sensor history) did not consistently beat
+  interpolation, for either target.
+- TS-ICL, conditioned on the right covariate, gave the strongest pooled
+  result for both case studies: **+10.1%** MAE improvement over
+  interpolation for chlorophyll (satellite chlorophyll proxy covariate,
+  CI excludes zero) and **+8.0%** for oxygen (physical-covariate arm — SST,
+  wind, solar, currents — the first comparator to beat interpolation on
+  oxygen at all, 95% CI [4.5%, 11.4%]).
+- Covariate effects were selective, not universally beneficial: some
+  covariate configurations hurt performance. A negative-control experiment
+  supported that temporal alignment and covariate information mattered,
+  rather than performance improving merely because extra input channels
+  were added.
+- Every method under-predicts high-chlorophyll event days, and TS-ICL's
+  oxygen improvement does not hold uniformly across the distribution (it
+  loses to interpolation in the high tail). Neither limitation is solved.
+- Real-gap outputs remain **candidates**: there is no withheld ground truth
+  for a naturally occurring gap, so no real-gap number is presented as
+  validated accuracy.
 
-## Limitations
+See `docs/evidence_and_limitations.md` for the full evidence hierarchy and
+known limitations before citing any number from this repository.
 
-- Every method under-predicts the amplitude of high-chlorophyll event days;
-  see `docs/methodology/event_limitation.md`.
-- TS-ICL's pooled improvement on oxygen does not hold uniformly in either
-  distribution tail; see `notebooks/10_oxygen_case_study.ipynb`.
-- Real-gap candidate outputs are not validation evidence — there is no
-  withheld ground truth for a naturally occurring gap. Treat them as
-  plausible fill values only.
+## Explore the project
 
-## Adapting to a new sensor
+| | |
+|---|---|
+| Report (PDF) | [`manuscript/report/coastal_gap_reconstruction_report.pdf`](manuscript/report/coastal_gap_reconstruction_report.pdf) |
+| English presentation (PDF) | [`manuscript/presentation/coastal_gap_reconstruction_presentation_en.pdf`](manuscript/presentation/coastal_gap_reconstruction_presentation_en.pdf) |
+| Presentación en español (PDF) | [`manuscript/presentation_colleagues_es/coastal_gap_reconstruction_presentation_es.pdf`](manuscript/presentation_colleagues_es/coastal_gap_reconstruction_presentation_es.pdf) |
+| Poster (PDF) | [`manuscript/poster/coastal_gap_reconstruction_poster.pdf`](manuscript/poster/coastal_gap_reconstruction_poster.pdf) |
+| Six notebooks | [`notebooks/`](notebooks/) — start at [`01_data_and_gap_audit.ipynb`](notebooks/01_data_and_gap_audit.ipynb) |
+| Live, visual demo (real TS-ICL run) | [`demo/gap_reconstruction_walkthrough.ipynb`](demo/gap_reconstruction_walkthrough.ipynb) |
+| Chlorophyll / oxygen experiment code | [`experiments/chlorophyll/`](experiments/chlorophyll/), [`experiments/oxygen/`](experiments/oxygen/) |
+| Public data and results | [`data/`](data/), [`results/`](results/) |
 
-`notebooks/09_adapting_the_workflow_to_a_new_sensor.ipynb` is a checklist,
-and `notebooks/10_oxygen_case_study.ipynb` is its worked result. The pipeline
-functions (`generate_gap_candidates`, `apply_artificial_gap`,
-`run_all_baselines`, `compute_gap_metrics`) take `target_col`/`eligible_col`
-arguments rather than hardcoding chlorophyll's column names — start a new
-case from `config/contracts/target_contract_template.yaml`.
-
-## Quick start
+## Running the code
 
 ```bash
 git clone https://github.com/matteofaverio/coastal-gap-reconstruction
 cd coastal-gap-reconstruction
-uv sync --extra notebooks --extra test   # installs the exact locked environment (uv.lock)
-uv run jupyter lab notebooks/01_target_and_gap_audit.ipynb
+uv sync --extra notebooks --extra test --locked
 uv run pytest tests/
+uv run jupyter lab notebooks/01_data_and_gap_audit.ipynb
 ```
 
-This installs the notebook-executable core (pandas/numpy/matplotlib/scipy/
-scikit-learn/jupyter) at the exact versions recorded in `uv.lock`; it does not
-install TS-ICL or torch. CI runs against this same locked environment. For the
-live zero-shot TS-ICL demo, see `demo/README.md` (`bash demo/run_demo.sh`),
-which builds its own, separately (informally) pinned isolated environment,
-kept out of `uv.lock` because `tsicl` pins a narrow `torch` range that would
-otherwise force unrelated constraints onto the core lock.
+Most of this repository — every notebook except one, the whole test suite,
+every result table — needs no TS-ICL or torch install. TS-ICL lives in its
+own separately locked environment (`environments/tsicl/`, used by
+`notebooks/04_tsicl_and_covariates.ipynb` and the demo); expensive full-grid
+reproduction is documented but optional. See `docs/reproducibility.md` for
+the three levels (quick / standard / expensive) and exact commands.
+Automated tests and CI (`.github/workflows/ci.yml`) cover the core package,
+notebooks, and document builds.
 
-If you don't have [uv](https://docs.astral.sh/uv/) installed, a plain-`pip`
-equivalent works but is not version-pinned:
-`python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[notebooks,test]"`.
+## Evidence and limitations
 
-## Repository map
+Read `docs/evidence_and_limitations.md` before treating any number in this
+repository as more certain than it is. Short version: artificial-gap
+results are validated; real-gap outputs are plausible candidates only; the
+longest real gap (256 days) is explicitly out of the validated range.
+`docs/methods.md` covers how each method works, and `docs/data_dictionary.md`
+documents every column in `data/` and `results/`.
 
-```
-config/contracts/        machine-checkable target/gap-pool definitions
-data_public/              daily targets, predictor features, gap inventories
-results_public/           benchmark scores, candidate reconstructions
-figures/                  key figures referenced in the docs
-manuscript/               report, presentations, poster (PDF + LaTeX source)
-notebooks/                numbered, runnable notebooks (see notebooks/README.md)
-demo/                     live, runnable TS-ICL demo
-src/coastal_gap_reconstruction/  reusable Python utilities
-tests/                    smoke tests for the demo and public notebooks
-docs/                     methodology write-ups and data dictionary
-```
+## Acknowledgements and references
 
-## Reproducibility
+This work was carried out during my applied-mathematics internship at CEAZA
+(Centro de Estudios Avanzados en Zonas Áridas, June–August 2026), under the
+supervision of Dr. Orlando Astudillo. Thanks to CEAZA/CEAZAMet for the
+monitoring data and the scientific context that made this possible.
 
-- Python: `>=3.10` (tested on 3.11/3.12; not verified below 3.10).
-- Environment: `pyproject.toml` optional-dependency groups
-  (`notebooks`, `plotting`, `stats`, `tsicl-dev`, `test`); see
-  `CONTRIBUTING.md` for the locked/pinned setup used for CI and the
-  reported demo timings.
-- Tests: `pytest tests/`.
-- CI: `.github/workflows/ci.yml` runs lint, tests, notebook smoke tests, and
-  document compilation on every push/PR (see that workflow file for exact
-  steps; it has not been exercised on GitHub Actions itself since this
-  repository is developed locally before push — see `CONTRIBUTING.md`).
-- Documents: `manuscript/README.md` for the exact compilation command for
-  each PDF (Tectonic).
+TS-ICL: Etienne Le Naour, Tahar Nabil, Adrien Petralia, "TS-ICL: A Flexible
+Time-Indexed Foundation Model for Time Series via In-Context Learning,"
+2026 ([EDF-Lab/ts-icl](https://github.com/EDF-Lab/ts-icl)). TS-ICL is
+governed by its own separate non-commercial license, not this repository's
+MIT license — see `docs/reproducibility.md`.
 
-## Citation and licenses
+## License and data
 
-- [`CITATION.cff`](CITATION.cff) — how to cite this repository (code only).
 - [`LICENSE`](LICENSE) — MIT, applies to code.
-- [`DATA_LICENSE_AND_ATTRIBUTION.md`](DATA_LICENSE_AND_ATTRIBUTION.md) — data,
-  results, and figures are not MIT licensed; required attribution for
-  CEAZAMet/CEAZA, NASA/PO.DAAC MUR SST, and Copernicus/CMEMS.
-- TS-ICL (used in `demo/` and `notebooks/06_tsicl_zero_shot_imputation.ipynb`)
-  is separately licensed by its original authors — see `demo/README.md`.
-
-Further detail — the full evidence hierarchy, per-notebook execution status,
-the complete data dictionary, and the sensor-adaptation checklist — lives in
-`docs/`, `notebooks/README.md`, and `manuscript/README.md` rather than here.
+- [`docs/data_sources.md`](docs/data_sources.md) — data, results, and
+  figures are not MIT licensed; required attribution for CEAZAMet/CEAZA,
+  NASA/PO.DAAC MUR SST, and Copernicus Marine Service.
