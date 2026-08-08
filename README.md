@@ -1,7 +1,6 @@
 # Reconstructing gaps in coastal sensor records
 
-I developed this project during my applied-mathematics internship at CEAZA
-(June–August 2026), under the supervision of Dr. Orlando Astudillo. I worked
+I developed this project during my internship at CEAZA (Center of Advanced Studies in Arid Regions, June–August 2026), under the supervision of Dr. Orlando Astudillo. I worked
 with chlorophyll-a and dissolved-oxygen records from the Tongoy Balsa buoy in
 Chile, asking how much of a missing coastal time series can be reconstructed
 from the observations around the gap and from external ocean–atmosphere data.
@@ -13,12 +12,9 @@ from the observations around the gap and from external ocean–atmosphere data.
 Coastal in-situ sensors go offline: biofouling, maintenance, transmission
 failures. The record ends up full of holes, some a day long, some spanning
 months. I wanted a defensible answer to "what probably happened during that
-gap" — defensible meaning: validated against real withheld data, not just
-plausible-looking.
+gap".
 
-The approach is diagnostic reconstruction, not forecasting. Every method here
-is allowed to see data from *after* a gap, not only before it, because the
-goal is filling in history, not predicting the future.
+The approach is diagnostic reconstruction (imputation). 
 
 ## What I worked on
 
@@ -34,10 +30,7 @@ goal is filling in history, not predicting the future.
   process and a state-space model, and **TS-ICL**, a zero-shot time-series
   foundation model, evaluated with and without external covariates.
 - Applied validated methods to the real gaps in the chlorophyll record,
-  publishing two independent, method-specific candidate reconstructions,
-  clearly labeled as candidates, not as validated numbers. Oxygen
-  currently has a real-gap inventory and classification only — no
-  oxygen reconstruction candidate is published.
+  publishing two independent, method-specific candidate reconstructions.
 - Wrote up both case studies in a report, two presentations, and a poster.
 
 ## Main findings
@@ -53,14 +46,12 @@ goal is filling in history, not predicting the future.
   CI excludes zero) and **+8.0%** for oxygen (physical-covariate arm — SST,
   wind, solar, currents — the first comparator to beat interpolation on
   oxygen at all, 95% CI [4.5%, 11.4%]).
-- Covariate effects were selective, not universally beneficial: some
+- Covariate effects were selective: some
   covariate configurations hurt performance. A negative-control experiment
-  supported that temporal alignment and covariate information mattered,
-  rather than performance improving merely because extra input channels
-  were added.
-- Every method under-predicts high-chlorophyll event days, and TS-ICL's
+  supported that temporal alignment and covariate information mattered
+- Every method under predicts high-chlorophyll event days, and TS-ICL's
   oxygen improvement does not hold uniformly across the distribution (it
-  loses to interpolation in the high tail). Neither limitation is solved.
+  loses to interpolation in both distribution tails). Neither limitation is solved.
 - Real-gap outputs remain **candidates**: there is no withheld ground truth
   for a naturally occurring gap, so no real-gap number is presented as
   validated accuracy.
